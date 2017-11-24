@@ -1,0 +1,164 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+#include "ch.h"
+#include "chprintf.h"
+#include "hal.h"
+#include "shell.h"
+
+#include "aseba_vm/aseba_node.h"
+#include "aseba_vm/skel_user.h"
+#include "aseba_vm/aseba_can_interface.h"
+#include "aseba_vm/aseba_bridge.h"
+#include "camera/po8030.h"
+#include "cmd.h"
+#include "config_flash_storage.h"
+#include "i2c_bus.h"
+#include "leds.h"
+#include "main.h"
+#include "memory_protection.h"
+#include "motors.h"
+#include "usbcfg.h"
+#include "utility.h"
+
+#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
+
+messagebus_t bus;
+MUTEX_DECL(bus_lock);
+CONDVAR_DECL(bus_condvar);
+
+parameter_namespace_t parameter_root, aseba_ns;
+
+static THD_WORKING_AREA(selector_thd_wa, 2048);
+
+static bool load_config(void)
+{
+    extern uint32_t _config_start;
+
+    return config_load(&parameter_root, &_config_start);
+}
+
+static THD_FUNCTION(selector_thd, arg)
+{
+    (void) arg;
+    chRegSetThreadName(__FUNCTION__);
+
+    uint8_t stop_loop = 0;
+    systime_t time;
+
+    while(stop_loop == 0) {
+    	time = chVTGetSystemTime();
+
+		switch(get_selector()) {
+			case 0: // Aseba.
+				aseba_vm_start();
+				stop_loop = 1;
+				break;
+
+			case 1: // Shell.
+				shell_start();
+				stop_loop = 1;
+				break;
+
+			case 2:
+				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
+				break;
+
+			case 3:
+				break;
+
+			case 4:
+				break;
+
+			case 5:
+				break;
+
+			case 6:
+				break;
+
+			case 7:
+				break;
+
+			case 8:
+				break;
+
+			case 9:
+				break;
+
+			case 10:
+				break;
+
+			case 11:
+				break;
+
+			case 12:
+				break;
+
+			case 13:
+				break;
+
+			case 14:
+				break;
+
+			case 15:
+				break;
+		}
+    }
+}
+
+int main(void)
+{
+
+    halInit();
+    chSysInit();
+    mpu_init();
+
+    /** Inits the Inter Process Communication bus. */
+    messagebus_init(&bus, &bus_lock, &bus_condvar);
+
+    parameter_namespace_declare(&parameter_root, NULL, NULL);
+
+    // Init the peripherals.
+	clear_leds();
+	set_body_led(0);
+	set_front_led(0);
+	usb_start();
+	i2c_start();
+	dcmi_start();
+	po8030_start();
+	motors_init();
+	// Turn off proximity pulses.
+	palClearPad(GPIOB, GPIOB_PULSE_0);
+	palClearPad(GPIOB, GPIOB_PULSE_1);
+	palClearPad(GPIOE, GPIOE_PULSE_2);
+	palClearPad(GPIOE, GPIOE_PULSE_3);
+
+	// Initialise Aseba system, declaring parameters
+    parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
+    aseba_declare_parameters(&aseba_ns);
+
+    /* Load parameter tree from flash. */
+    load_config();
+
+    /* Start AsebaCAN. Must be after config was loaded because the CAN id
+     * cannot be changed at runtime. */
+    aseba_vm_init();
+    aseba_can_start(&vmState);
+
+    chThdCreateStatic(selector_thd_wa, sizeof(selector_thd_wa), NORMALPRIO, selector_thd, NULL);
+
+    /* Infinite loop. */
+    while (1) {
+        chThdSleepMilliseconds(1000);
+    }
+}
+
+#define STACK_CHK_GUARD 0xe2dee396
+uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
+
+void __stack_chk_fail(void)
+{
+    chSysHalt("Stack smashing detected");
+}

@@ -1,0 +1,34 @@
+dependency-dir: src/
+
+include_directories:
+    - ChibiOS_ext/os/hal/include
+    - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx
+        
+depends:
+    - cmp_mem_access
+    - crc
+    - parameter
+    - chibios-syscalls
+    - msgbus
+
+source:
+    - src/config_flash_storage.c
+
+target.arm:
+    - ChibiOS_ext/os/hal/src/dcmi.c
+    - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
+    - src/cmd.c
+    - src/i2c_bus.c
+    - src/leds.c
+    - src/main.c
+    - src/memory_protection.c
+    - src/motors.c
+    - src/panic.c
+    - src/usbcfg.c
+    - src/utility.c    
+    - src/camera/po8030.c
+    - src/camera/dcmi_camera.c
+    - src/flash/flash.c
+
+templates:
+    src/src.mk.jinja: src/src.mk

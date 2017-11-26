@@ -13,6 +13,7 @@
 #include "aseba_vm/aseba_can_interface.h"
 #include "aseba_vm/aseba_bridge.h"
 #include "camera/po8030.h"
+#include "sensors/proximity.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
 #include "i2c_bus.h"
@@ -48,6 +49,9 @@ static THD_FUNCTION(selector_thd, arg)
     uint8_t stop_loop = 0;
     systime_t time;
 
+    messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
+    proximity_msg_t prox_values;
+
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
 
@@ -62,7 +66,23 @@ static THD_FUNCTION(selector_thd, arg)
 				stop_loop = 1;
 				break;
 
-			case 2:
+			case 2: // Read proximity sensors.
+				messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
+
+				if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
+					continue;
+				}
+
+				// Sensors info print: each line contains data related to a single sensor.
+		        for (uint8_t i = 0; i < sizeof(prox_values.ambient)/sizeof(prox_values.ambient[0]); i++) {
+		        //for (uint8_t i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
+		        	chprintf((BaseSequentialStream *)&SDU1, "%4d,", prox_values.ambient[i]);
+		        	chprintf((BaseSequentialStream *)&SDU1, "%4d,", prox_values.reflected[i]);
+		        	chprintf((BaseSequentialStream *)&SDU1, "%4d", prox_values.delta[i]);
+		        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+		        }
+		        chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
@@ -129,11 +149,7 @@ int main(void)
 	dcmi_start();
 	po8030_start();
 	motors_init();
-	// Turn off proximity pulses.
-	palClearPad(GPIOB, GPIOB_PULSE_0);
-	palClearPad(GPIOB, GPIOB_PULSE_1);
-	palClearPad(GPIOE, GPIOE_PULSE_2);
-	palClearPad(GPIOE, GPIOE_PULSE_3);
+	proximity_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

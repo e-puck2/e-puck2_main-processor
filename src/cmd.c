@@ -12,6 +12,7 @@
 #include "vm/natives.h"
 #include "camera/po8030.h"
 #include "camera/dcmi_camera.h"
+#include "sensors/battery_level.h"
 #include "config_flash_storage.h"
 #include "leds.h"
 #include "main.h"
@@ -716,6 +717,14 @@ static void cmd_set_speed(BaseSequentialStream *chp, int argc, char **argv)
     }
 }
 
+static void cmd_get_battery(BaseSequentialStream *chp, int argc, char **argv)
+{
+	(void) chp;
+    (void) argc;
+    (void) argv;
+    chprintf(chp, "Battery raw value = %d\r\n", get_battery_raw());
+}
+
 const ShellCommand shell_commands[] = {
     {"mem", cmd_mem},
     {"threads", cmd_threads},
@@ -744,6 +753,7 @@ const ShellCommand shell_commands[] = {
 	{"cam_send", cmd_cam_send},
 	{"set_led", cmd_set_led},
 	{"set_speed", cmd_set_speed},
+	{"batt", cmd_get_battery},
     {NULL, NULL}
 };
 

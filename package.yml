@@ -17,7 +17,8 @@ source:
 target.arm:
     - ChibiOS_ext/os/hal/src/dcmi.c
     - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
-    - src/sensors/proximity.c    
+    - src/sensors/battery_level.c
+    - src/sensors/proximity.c
     - src/cmd.c
     - src/i2c_bus.c
     - src/leds.c

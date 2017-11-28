@@ -13,6 +13,7 @@
 #include "aseba_vm/aseba_can_interface.h"
 #include "aseba_vm/aseba_bridge.h"
 #include "camera/po8030.h"
+#include "sensors/battery_level.h"
 #include "sensors/proximity.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
@@ -150,6 +151,7 @@ int main(void)
 	po8030_start();
 	motors_init();
 	proximity_start();
+	battery_level_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

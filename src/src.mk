@@ -18,6 +18,7 @@ CSRC += ./src/main.c
 CSRC += ./src/memory_protection.c
 CSRC += ./src/motors.c
 CSRC += ./src/panic.c
+CSRC += ./src/sensors/battery_level.c
 CSRC += ./src/sensors/proximity.c
 CSRC += ./src/usbcfg.c
 CSRC += ./src/utility.c

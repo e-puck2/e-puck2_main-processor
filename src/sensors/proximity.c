@@ -49,7 +49,7 @@ uint8_t calibrationInProgress = 0;
 uint8_t calibrationState = 0;
 uint8_t calibrationNumSamples = 0;
 int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
-proximity_msg_t proxMsg;
+proximity_msg_t prox_values;
 
 void calibrate_ir(void) {
 	calibrationState = 0;
@@ -63,7 +63,7 @@ int get_prox(unsigned int sensor_number) {
 	if (sensor_number > 7) {
 		return 0;
 	} else {
-		return proxMsg.delta[sensor_number];
+		return prox_values.delta[sensor_number];
 	}
 }
 
@@ -72,7 +72,7 @@ int get_calibrated_prox(unsigned int sensor_number) {
 	if (sensor_number > 7) {
 		return 0;
 	} else {
-		temp = proxMsg.delta[sensor_number] - proxMsg.initValue[sensor_number];
+		temp = prox_values.delta[sensor_number] - prox_values.initValue[sensor_number];
 		if (temp>0) {
 			return temp;
 		} else {
@@ -85,7 +85,7 @@ int get_ambient_light(unsigned int sensor_number) {
 	if (sensor_number > 7) {
 		return 0;
 	} else {
-		return proxMsg.ambient[sensor_number];
+		return prox_values.ambient[sensor_number];
 	}
 }
 
@@ -182,46 +182,44 @@ static THD_FUNCTION(proximity_thd, arg)
     (void) arg;
     chRegSetThreadName(__FUNCTION__);
 
-    proximity_msg_t prox_value;
-
     messagebus_topic_t proximity_topic;
     MUTEX_DECL(prox_topic_lock);
     CONDVAR_DECL(prox_topic_condvar);
-    messagebus_topic_init(&proximity_topic, &prox_topic_lock, &prox_topic_condvar, &prox_value, sizeof(prox_value));
+    messagebus_topic_init(&proximity_topic, &prox_topic_lock, &prox_topic_condvar, &prox_values, sizeof(prox_values));
     messagebus_advertise_topic(&bus, &proximity_topic, "/proximity");
 
     while (true) {
 
     	chBSemWait(&adc2_ready);
 
-    	prox_value.ambient[0] = adc2_values[0];
-    	prox_value.ambient[1] = adc2_values[4];
-    	prox_value.ambient[2] = adc2_values[8];
-        prox_value.ambient[3] = adc2_values[12];
-        prox_value.ambient[4] = adc2_values[1];
-        prox_value.ambient[5] = adc2_values[5];
-        prox_value.ambient[6] = adc2_values[9];
-        prox_value.ambient[7] = adc2_values[13];
+    	prox_values.ambient[0] = adc2_values[0];
+    	prox_values.ambient[1] = adc2_values[4];
+    	prox_values.ambient[2] = adc2_values[8];
+    	prox_values.ambient[3] = adc2_values[12];
+    	prox_values.ambient[4] = adc2_values[1];
+    	prox_values.ambient[5] = adc2_values[5];
+    	prox_values.ambient[6] = adc2_values[9];
+    	prox_values.ambient[7] = adc2_values[13];
 
-        prox_value.reflected[0] = adc2_values[2];
-        prox_value.reflected[1] = adc2_values[6];
-        prox_value.reflected[2] = adc2_values[10];
-        prox_value.reflected[3] = adc2_values[14];
-        prox_value.reflected[4] = adc2_values[3];
-        prox_value.reflected[5] = adc2_values[7];
-        prox_value.reflected[6] = adc2_values[11];
-        prox_value.reflected[7] = adc2_values[15];
+    	prox_values.reflected[0] = adc2_values[2];
+    	prox_values.reflected[1] = adc2_values[6];
+    	prox_values.reflected[2] = adc2_values[10];
+    	prox_values.reflected[3] = adc2_values[14];
+    	prox_values.reflected[4] = adc2_values[3];
+    	prox_values.reflected[5] = adc2_values[7];
+    	prox_values.reflected[6] = adc2_values[11];
+    	prox_values.reflected[7] = adc2_values[15];
 
         for (int i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
-        	prox_value.delta[i] = prox_value.ambient[i] - prox_value.reflected[i];
+        	prox_values.delta[i] = prox_values.ambient[i] - prox_values.reflected[i];
         }
 
-        messagebus_topic_publish(&proximity_topic, &prox_value, sizeof(prox_value));
+        messagebus_topic_publish(&proximity_topic, &prox_values, sizeof(prox_values));
 
         if(calibrationInProgress) {
         	switch(calibrationState) {
 				case 0:
-					memset(proxMsg.initValue, 0, PROXIMITY_NB_CHANNELS * sizeof(unsigned int));
+					memset(prox_values.initValue, 0, PROXIMITY_NB_CHANNELS * sizeof(unsigned int));
 					memset(calibrationSum, 0, PROXIMITY_NB_CHANNELS * sizeof(int32_t));
 					calibrationNumSamples = 0;
 					calibrationState = 1;
@@ -234,7 +232,7 @@ static THD_FUNCTION(proximity_thd, arg)
 					calibrationNumSamples++;
 					if(calibrationNumSamples == 100) {
 						for(int i=0; i<PROXIMITY_NB_CHANNELS; i++) {
-							prox_value.initValue[i] = calibrationSum[i]/100;
+							prox_values.initValue[i] = calibrationSum[i]/100;
 						}
 						calibrationInProgress = 0;
 					}

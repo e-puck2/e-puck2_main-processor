@@ -10,6 +10,7 @@
 #include "chtm.h"
 #include "common/types.h"
 #include "vm/natives.h"
+#include "audio/audio_thread.h"
 #include "camera/po8030.h"
 #include "camera/dcmi_camera.h"
 #include "sensors/battery_level.h"
@@ -725,6 +726,26 @@ static void cmd_get_battery(BaseSequentialStream *chp, int argc, char **argv)
     chprintf(chp, "Battery raw value = %d\r\n", get_battery_raw());
 }
 
+static void cmd_audio_play(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    uint16_t freq;
+    if (argc != 1) {
+        chprintf(chp,
+                 "Usage: audio_play freq\r\nfreq=100..20000 Hz\r\n");
+    } else {
+    	freq = (uint16_t) atoi(argv[0]);
+        dac_play(freq);
+    }
+}
+
+static void cmd_audio_stop(BaseSequentialStream *chp, int argc, char **argv)
+{
+	(void) chp;
+    (void) argc;
+    (void) argv;
+    dac_stop();
+}
+
 const ShellCommand shell_commands[] = {
     {"mem", cmd_mem},
     {"threads", cmd_threads},
@@ -754,6 +775,8 @@ const ShellCommand shell_commands[] = {
 	{"set_led", cmd_set_led},
 	{"set_speed", cmd_set_speed},
 	{"batt", cmd_get_battery},
+	{"audio_play", cmd_audio_play},
+	{"audio_stop", cmd_audio_stop},
     {NULL, NULL}
 };
 

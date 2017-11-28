@@ -12,9 +12,11 @@
 #include "aseba_vm/skel_user.h"
 #include "aseba_vm/aseba_can_interface.h"
 #include "aseba_vm/aseba_bridge.h"
+#include "audio/audio_thread.h"
 #include "camera/po8030.h"
 #include "sensors/battery_level.h"
 #include "sensors/proximity.h"
+#include "sensors/VL53L0X/VL53L0X.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
 #include "i2c_bus.h"
@@ -53,6 +55,8 @@ static THD_FUNCTION(selector_thd, arg)
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
 
+    uint8_t tof_measuring = 0;
+
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
 
@@ -87,7 +91,12 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
-			case 3:
+			case 3: // Distance sensor reading.
+				if(tof_measuring == 0) {
+					tof_measuring = 1;
+					VL53L0X_init_demo();
+				}
+				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
 			case 4:
@@ -152,6 +161,7 @@ int main(void)
 	motors_init();
 	proximity_start();
 	battery_level_start();
+	dac_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

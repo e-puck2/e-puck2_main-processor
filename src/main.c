@@ -14,6 +14,7 @@
 #include "aseba_vm/aseba_bridge.h"
 #include "audio/audio_thread.h"
 #include "camera/po8030.h"
+#include "epuck1x/Asercom.h"
 #include "sensors/battery_level.h"
 #include "sensors/imu.h"
 #include "sensors/proximity.h"
@@ -97,12 +98,9 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
-			case 3: // Distance sensor reading.
-				if(tof_measuring == 0) {
-					tof_measuring = 1;
-					VL53L0X_init_demo();
-				}
-				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
+			case 3: // Asercom protocol.
+				run_asercom();
+				stop_loop = 1;
 				break;
 
 			case 4: // Read IMU raw sensors values.
@@ -114,7 +112,12 @@ static THD_FUNCTION(selector_thd, arg)
 		    	chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
-			case 5:
+			case 5: // Distance sensor reading.
+				if(tof_measuring == 0) {
+					tof_measuring = 1;
+					VL53L0X_init_demo();
+				}
+				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
 			case 6:

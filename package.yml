@@ -25,7 +25,9 @@ source:
 target.arm:
     - ChibiOS_ext/os/hal/src/dcmi.c
     - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
-    - src/audio/audio_thread.c    
+    - src/audio/audio_thread.c
+    - src/epuck1x/epuck1x-wrapper.c
+    - src/epuck1x/Asercom.c
     - src/sensors/battery_level.c
     - src/sensors/imu.c
     - src/sensors/mpu9250.c

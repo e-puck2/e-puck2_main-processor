@@ -28,6 +28,7 @@
 #include "main.h"
 #include "memory_protection.h"
 #include "motors.h"
+#include "spi_comm.h"
 #include "usbcfg.h"
 #include "utility.h"
 
@@ -63,6 +64,9 @@ static THD_FUNCTION(selector_thd, arg)
     imu_msg_t imu_values;
 
     uint8_t tof_measuring = 0;
+
+    uint8_t toEsp32 = 'c', fromEsp32 = 0;
+    	int16_t len = 0;
 
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
@@ -120,7 +124,13 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
-			case 6:
+			case 6: // ESP32 UART communication test.
+				sdPut(&SD3, toEsp32);
+				len = sdReadTimeout(&SD3, &fromEsp32, 1, MS2ST(50));
+				if(len > 0) {
+					sdPut(&SDU1, fromEsp32);
+				}
+				chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
 				break;
 
 			case 7:
@@ -180,6 +190,14 @@ int main(void)
 	exti_start();
 	imu_start();
 	ir_remote_start();
+	spi_comm_start();
+	static SerialConfig ser_cfg = {
+	    2500000,
+	    0,
+	    0,
+	    0,
+	};
+	sdStart(&SD3, &ser_cfg); // UART3.
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

@@ -27,6 +27,7 @@ CSRC += ./src/sensors/battery_level.c
 CSRC += ./src/sensors/imu.c
 CSRC += ./src/sensors/mpu9250.c
 CSRC += ./src/sensors/proximity.c
+CSRC += ./src/spi_comm.c
 CSRC += ./src/usbcfg.c
 CSRC += ./src/utility.c
 CSRC += src/chibios-syscalls/malloc_lock.c

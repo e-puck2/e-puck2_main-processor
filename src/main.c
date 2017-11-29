@@ -15,11 +15,14 @@
 #include "audio/audio_thread.h"
 #include "camera/po8030.h"
 #include "sensors/battery_level.h"
+#include "sensors/imu.h"
 #include "sensors/proximity.h"
 #include "sensors/VL53L0X/VL53L0X.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
+#include "exti.h"
 #include "i2c_bus.h"
+#include "ir_remote.h"
 #include "leds.h"
 #include "main.h"
 #include "memory_protection.h"
@@ -54,6 +57,9 @@ static THD_FUNCTION(selector_thd, arg)
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
+
+    messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
+    imu_msg_t imu_values;
 
     uint8_t tof_measuring = 0;
 
@@ -99,7 +105,13 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
-			case 4:
+			case 4: // Read IMU raw sensors values.
+		    	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+		    	if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
+		    		continue;
+		    	}
+		    	chprintf((BaseSequentialStream *)&SDU1, "%Ax=%-7d Ay=%-7d Az=%-7d Gx=%-7d Gy=%-7d Gz=%-7d (%x)\r\n", imu_values.acc_raw[0], imu_values.acc_raw[1], imu_values.acc_raw[2], imu_values.gyro_raw[0], imu_values.gyro_raw[1], imu_values.gyro_raw[2], imu_values.status);
+		    	chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
 			case 5:
@@ -162,6 +174,9 @@ int main(void)
 	proximity_start();
 	battery_level_start();
 	dac_start();
+	exti_start();
+	imu_start();
+	ir_remote_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

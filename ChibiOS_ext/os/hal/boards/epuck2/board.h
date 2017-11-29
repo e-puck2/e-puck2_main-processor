@@ -665,7 +665,7 @@
                                      PIN_PUPDR_FLOATING(GPIOD_SPI1_CS_ENC_R) | \
                                      PIN_PUPDR_FLOATING(GPIOD_ENC_R_INT) |	\
                                      PIN_PUPDR_PULLDOWN(GPIOD_LED_FRONT) |  \
-                                     PIN_PUPDR_PULLDOWN(GPIOD_IMU_INT))
+                                     PIN_PUPDR_FLOATING(GPIOD_IMU_INT))
 #define VAL_GPIOD_ODR               (PIN_ODR_HIGH(GPIOD_CAN_RX) |			\
                                      PIN_ODR_HIGH(GPIOD_CAN_TX) |			\
                                      PIN_ODR_HIGH(GPIOD_SDIO_CMD) |			\

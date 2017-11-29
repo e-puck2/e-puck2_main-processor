@@ -27,9 +27,13 @@ target.arm:
     - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
     - src/audio/audio_thread.c    
     - src/sensors/battery_level.c
+    - src/sensors/imu.c
+    - src/sensors/mpu9250.c
     - src/sensors/proximity.c
     - src/cmd.c
+    - src/exti.c
     - src/i2c_bus.c
+    - src/ir_remote.c    
     - src/leds.c
     - src/main.c
     - src/memory_protection.c

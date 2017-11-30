@@ -239,7 +239,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS =
+ULIBS = libPDMFilter_CM4F_GCC.a
 
 #
 # End of user defines

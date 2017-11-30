@@ -534,24 +534,17 @@ int run_asercom(void) {
                         break;
 
                     case 'u': // get last micro volumes
-//                        n = e_get_micro_volume(0);
-//                        buffer[i++] = n & 0xff;
-//                        buffer[i++] = n >> 8;
-//
-//                        n = e_get_micro_volume(1);
-//                        buffer[i++] = n & 0xff;
-//                        buffer[i++] = n >> 8;
-//
-//                        n = e_get_micro_volume(2);
-//                        buffer[i++] = n & 0xff;
-//                        buffer[i++] = n >> 8;
+                        n = e_get_micro_volume(0);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
 
-                        buffer[i++] = 0;
-                        buffer[i++] = 0;
-                        buffer[i++] = 0;
-                        buffer[i++] = 0;
-                        buffer[i++] = 0;
-                        buffer[i++] = 0;
+                        n = e_get_micro_volume(1);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+
+                        n = e_get_micro_volume(2);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
                         break;
                     case 'U': // get micro buffer
 //                        ptr = (char *) e_mic_scan;
@@ -1042,12 +1035,12 @@ int run_asercom(void) {
                     break;
 
                 case 'U':
-//                    sprintf(buffer, "u,%d,%d,%d\r\n", e_get_micro_volume(0), e_get_micro_volume(1), e_get_micro_volume(2));
-//                    if (use_bt) {
-//                        uart1_send_text(buffer);
-//                    } else {
-//                        uart2_send_text(buffer);
-//                    }
+                    sprintf(buffer, "u,%d,%d,%d\r\n", e_get_micro_volume(0), e_get_micro_volume(1), e_get_micro_volume(2));
+                    if (use_bt) {
+                        uart1_send_text(buffer);
+                    } else {
+                        uart2_send_text(buffer);
+                    }
                     break;
                 case 'V': // get version information
 //                    if (use_bt) {

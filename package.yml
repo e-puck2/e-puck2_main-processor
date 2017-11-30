@@ -24,8 +24,12 @@ source:
 
 target.arm:
     - ChibiOS_ext/os/hal/src/dcmi.c
+    - ChibiOS_ext/os/hal/src/spi3_slave.c
+    - ChibiOS_ext/os/hal/ports/STM32/LLD/SPIv1/spi3_slave_lld.c
     - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
     - src/audio/audio_thread.c
+    - src/audio/microphone.c
+    - src/audio/mp45dt02_processing.c
     - src/epuck1x/epuck1x-wrapper.c
     - src/epuck1x/Asercom.c
     - src/sensors/battery_level.c

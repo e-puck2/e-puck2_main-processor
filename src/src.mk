@@ -6,9 +6,13 @@ INCDIR += ./ChibiOS_ext/os/hal/ports/STM32/STM32F4xx
 INCDIR += src/
 
 
+CSRC += ./ChibiOS_ext/os/hal/ports/STM32/LLD/SPIv1/spi3_slave_lld.c
 CSRC += ./ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
 CSRC += ./ChibiOS_ext/os/hal/src/dcmi.c
+CSRC += ./ChibiOS_ext/os/hal/src/spi3_slave.c
 CSRC += ./src/audio/audio_thread.c
+CSRC += ./src/audio/microphone.c
+CSRC += ./src/audio/mp45dt02_processing.c
 CSRC += ./src/camera/dcmi_camera.c
 CSRC += ./src/camera/po8030.c
 CSRC += ./src/cmd.c

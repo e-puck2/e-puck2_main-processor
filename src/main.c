@@ -13,6 +13,7 @@
 #include "aseba_vm/aseba_can_interface.h"
 #include "aseba_vm/aseba_bridge.h"
 #include "audio/audio_thread.h"
+#include "audio/microphone.h"
 #include "camera/po8030.h"
 #include "epuck1x/Asercom.h"
 #include "sensors/battery_level.h"
@@ -198,6 +199,7 @@ int main(void)
 	    0,
 	};
 	sdStart(&SD3, &ser_cfg); // UART3.
+	mic_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

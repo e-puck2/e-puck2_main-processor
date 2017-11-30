@@ -11,6 +11,7 @@
 #include "common/types.h"
 #include "vm/natives.h"
 #include "audio/audio_thread.h"
+#include "audio/microphone.h"
 #include "camera/po8030.h"
 #include "camera/dcmi_camera.h"
 #include "sensors/battery_level.h"
@@ -746,6 +747,17 @@ static void cmd_audio_stop(BaseSequentialStream *chp, int argc, char **argv)
     dac_stop();
 }
 
+static void cmd_volume(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    uint8_t mic;
+    if (argc != 1) {
+        chprintf(chp, "Usage: volume mic_num.\r\nmic_num=0..3\r\n");
+    } else {
+        mic = (uint8_t) atoi(argv[0]);
+        chprintf(chp, "%d\r\n", mic_get_volume(mic));
+    }
+}
+
 const ShellCommand shell_commands[] = {
     {"mem", cmd_mem},
     {"threads", cmd_threads},
@@ -777,6 +789,7 @@ const ShellCommand shell_commands[] = {
 	{"batt", cmd_get_battery},
 	{"audio_play", cmd_audio_play},
 	{"audio_stop", cmd_audio_stop},
+	{"volume", cmd_volume},
     {NULL, NULL}
 };
 

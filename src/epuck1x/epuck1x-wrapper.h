@@ -148,6 +148,26 @@ void e_acc_calibr(void);
 void e_display_angle(void);
 
 
+// Microphone handling.
+#define MIC0_BUFFER	0
+#define MIC1_BUFFER	1
+#define MIC2_BUFFER	2
+
+/*! \brief Get the last value of a given micro
+ * \param micro_id		micro's ID (0, 1, or 2)
+ *							(use \ref MIC0_BUFFER, \ref MIC1_BUFFER , \ref MIC2_BUFFER)
+ * \return result		last value of the micro
+ */
+int e_get_micro(unsigned int micro_id);
+
+int e_get_micro_average(unsigned int micro_id, unsigned int filter_size);
+
+/*! \brief Get the difference between the highest and lowest sample.
+ * \param micro_id		micro's ID (0, 1, or 2)
+ *							(use \ref MIC0_BUFFER, \ref MIC1_BUFFER , \ref MIC2_BUFFER)
+ * \return result		volume
+ */
+int e_get_micro_volume (unsigned int micro_id);
 
 #ifdef __cplusplus
 }

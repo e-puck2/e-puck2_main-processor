@@ -64,7 +64,7 @@
 // clock of 2 MHz coming from the I2S.
 //
 // I2S source clock is PLLI2SCLK = 32 MHz (see mcuconf.h):
-// PLLI2SCLK = HSE/PLLM x PLLN/PLLR = 8/8 x 192/6 = 32 MHz.
+// PLLI2SCLK = HSE/PLLM x PLLN/PLLR = 24/24 x 192/6 = 32 MHz.
 //
 // I2S divider is composed by I2SDIV (linear prescaler) and ODD (odd factor), divider = (I2SDIV x 2) + ODD.
 // I2S clock = PLLI2SCLK / divider => divider = PLLI2SCLK / I2S clock

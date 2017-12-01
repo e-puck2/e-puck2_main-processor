@@ -143,7 +143,9 @@ static THD_FUNCTION(selector_thd, arg)
 			case 9:
 				break;
 
-			case 10:
+			case 10: // Gumstix extension.
+				i2c_stop();
+				stop_loop = 1;
 				break;
 
 			case 11:

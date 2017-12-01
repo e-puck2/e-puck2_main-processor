@@ -56,7 +56,7 @@
 /*
  * IO pins assignments.
  */
-#define GPIOA_PIN0					0U
+#define GPIOA_CAM_MCLK				0U
 #define GPIOA_BATT_AN				1U
 #define GPIOA_MIC_TIMER_IN			2U
 #define GPIOA_MIC_TIMER_OUT			3U
@@ -64,7 +64,7 @@
 #define GPIOA_AUDIO_SPEAKER			5U
 #define GPIOA_CAM_PCLK				6U
 #define GPIOA_SPI1_MOSI				7U
-#define GPIOA_CAM_MCLK				8U
+#define GPIOA_PIN8					8U
 #define GPIOA_USB_PRESENT			9U
 #define GPIOA_DIST_INT				10U
 #define GPIOA_OTG_FS_DM             11U
@@ -234,7 +234,7 @@
 /*
  * GPIOA setup:
  *
- * PA0  - PIN0						(input floating).
+ * PA0  - CAM MCLK					(alternate 2).
  * PA1  - BATT AN					(analog).
  * PA2  - MIC TIMER INPUT CLOCK		(alternate 3).
  * PA3  - MIC TIMER OUTPUT CLOCK	(alternate 3).
@@ -251,7 +251,7 @@
  * PA14 - SWCLK                     (alternate 0).
  * PA15 - SPI1 CS ESP32				(output pushpull maximum).
  */
-#define VAL_GPIOA_MODER             (PIN_MODE_ALTERNATE(GPIOA_PIN0) |         	\
+#define VAL_GPIOA_MODER             (PIN_MODE_ALTERNATE(GPIOA_CAM_MCLK) |         	\
                                      PIN_MODE_ANALOG(GPIOA_BATT_AN) |		\
                                      PIN_MODE_ALTERNATE(GPIOA_MIC_TIMER_IN) | \
                                      PIN_MODE_ALTERNATE(GPIOA_MIC_TIMER_OUT) | \
@@ -259,7 +259,7 @@
                                      PIN_MODE_ANALOG(GPIOA_AUDIO_SPEAKER) |	\
                                      PIN_MODE_ALTERNATE(GPIOA_CAM_PCLK) |	\
                                      PIN_MODE_ALTERNATE(GPIOA_SPI1_MOSI) |	\
-                                     PIN_MODE_INPUT(GPIOA_CAM_MCLK) |	\
+                                     PIN_MODE_INPUT(GPIOA_PIN8) |	\
                                      PIN_MODE_INPUT(GPIOA_USB_PRESENT) | 	\
                                      PIN_MODE_INPUT(GPIOA_DIST_INT) |  		\
                                      PIN_MODE_ALTERNATE(GPIOA_OTG_FS_DM) |  \
@@ -267,7 +267,7 @@
                                      PIN_MODE_ALTERNATE(GPIOA_SWDIO) |      \
                                      PIN_MODE_ALTERNATE(GPIOA_SWCLK) |      \
                                      PIN_MODE_OUTPUT(GPIOA_SPI1_CS_ESP32))
-#define VAL_GPIOA_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOA_PIN0) |     	\
+#define VAL_GPIOA_OTYPER            (PIN_OTYPE_PUSHPULL(GPIOA_CAM_MCLK) |     	\
                                      PIN_OTYPE_PUSHPULL(GPIOA_BATT_AN) |	\
                                      PIN_OTYPE_PUSHPULL(GPIOA_MIC_TIMER_IN) | \
                                      PIN_OTYPE_PUSHPULL(GPIOA_MIC_TIMER_OUT) | \
@@ -275,7 +275,7 @@
                                      PIN_OTYPE_PUSHPULL(GPIOA_AUDIO_SPEAKER) | \
                                      PIN_OTYPE_PUSHPULL(GPIOA_CAM_PCLK) |	\
                                      PIN_OTYPE_PUSHPULL(GPIOA_SPI1_MOSI) |	\
-                                     PIN_OTYPE_PUSHPULL(GPIOA_CAM_MCLK) |	\
+                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN8) |	\
                                      PIN_OTYPE_PUSHPULL(GPIOA_USB_PRESENT) |\
                                      PIN_OTYPE_PUSHPULL(GPIOA_DIST_INT) |  	\
                                      PIN_OTYPE_PUSHPULL(GPIOA_OTG_FS_DM) |  \
@@ -283,7 +283,7 @@
                                      PIN_OTYPE_PUSHPULL(GPIOA_SWDIO) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOA_SWCLK) |      \
                                      PIN_OTYPE_PUSHPULL(GPIOA_SPI1_CS_ESP32))
-#define VAL_GPIOA_OSPEEDR           (PIN_OSPEED_100M(GPIOA_PIN0) |       	\
+#define VAL_GPIOA_OSPEEDR           (PIN_OSPEED_100M(GPIOA_CAM_MCLK) |       	\
                                      PIN_OSPEED_100M(GPIOA_BATT_AN) |		\
                                      PIN_OSPEED_100M(GPIOA_MIC_TIMER_IN) |	\
                                      PIN_OSPEED_100M(GPIOA_MIC_TIMER_OUT) |	\
@@ -291,7 +291,7 @@
                                      PIN_OSPEED_100M(GPIOA_AUDIO_SPEAKER) |	\
                                      PIN_OSPEED_100M(GPIOA_CAM_PCLK) |		\
                                      PIN_OSPEED_100M(GPIOA_SPI1_MOSI) |		\
-                                     PIN_OSPEED_100M(GPIOA_CAM_MCLK) |		\
+                                     PIN_OSPEED_100M(GPIOA_PIN8) |		\
                                      PIN_OSPEED_100M(GPIOA_USB_PRESENT) |	\
                                      PIN_OSPEED_100M(GPIOA_DIST_INT) |     	\
                                      PIN_OSPEED_100M(GPIOA_OTG_FS_DM) |     \
@@ -299,7 +299,7 @@
                                      PIN_OSPEED_100M(GPIOA_SWDIO) |         \
                                      PIN_OSPEED_100M(GPIOA_SWCLK) |         \
                                      PIN_OSPEED_100M(GPIOA_SPI1_CS_ESP32))
-#define VAL_GPIOA_PUPDR             (PIN_PUPDR_PULLUP(GPIOA_PIN0) |     	\
+#define VAL_GPIOA_PUPDR             (PIN_PUPDR_PULLUP(GPIOA_CAM_MCLK) |     	\
                                      PIN_PUPDR_FLOATING(GPIOA_BATT_AN) |	\
                                      PIN_PUPDR_FLOATING(GPIOA_MIC_TIMER_IN) | \
                                      PIN_PUPDR_FLOATING(GPIOA_MIC_TIMER_OUT) | \
@@ -307,7 +307,7 @@
                                      PIN_PUPDR_FLOATING(GPIOA_AUDIO_SPEAKER) | \
                                      PIN_PUPDR_PULLUP(GPIOA_CAM_PCLK) |		\
                                      PIN_PUPDR_FLOATING(GPIOA_SPI1_MOSI) |	\
-                                     PIN_PUPDR_FLOATING(GPIOA_CAM_MCLK) |		\
+                                     PIN_PUPDR_FLOATING(GPIOA_PIN8) |		\
                                      PIN_PUPDR_FLOATING(GPIOA_USB_PRESENT) |\
                                      PIN_PUPDR_FLOATING(GPIOA_DIST_INT) |  	\
                                      PIN_PUPDR_FLOATING(GPIOA_OTG_FS_DM) |  \
@@ -315,7 +315,7 @@
                                      PIN_PUPDR_FLOATING(GPIOA_SWDIO) |      \
                                      PIN_PUPDR_FLOATING(GPIOA_SWCLK) |      \
                                      PIN_PUPDR_FLOATING(GPIOA_SPI1_CS_ESP32))
-#define VAL_GPIOA_ODR               (PIN_ODR_HIGH(GPIOA_PIN0) |           	\
+#define VAL_GPIOA_ODR               (PIN_ODR_HIGH(GPIOA_CAM_MCLK) |           	\
                                      PIN_ODR_HIGH(GPIOA_BATT_AN) |			\
                                      PIN_ODR_HIGH(GPIOA_MIC_TIMER_IN) |		\
                                      PIN_ODR_HIGH(GPIOA_MIC_TIMER_OUT) |	\
@@ -323,7 +323,7 @@
                                      PIN_ODR_HIGH(GPIOA_AUDIO_SPEAKER) |	\
                                      PIN_ODR_HIGH(GPIOA_CAM_PCLK) |			\
                                      PIN_ODR_HIGH(GPIOA_SPI1_MOSI) |		\
-                                     PIN_ODR_HIGH(GPIOA_CAM_MCLK) |			\
+                                     PIN_ODR_HIGH(GPIOA_PIN8) |			\
                                      PIN_ODR_HIGH(GPIOA_USB_PRESENT) |		\
                                      PIN_ODR_HIGH(GPIOA_DIST_INT) |        	\
                                      PIN_ODR_HIGH(GPIOA_OTG_FS_DM) |        \
@@ -331,7 +331,7 @@
                                      PIN_ODR_HIGH(GPIOA_SWDIO) |            \
                                      PIN_ODR_HIGH(GPIOA_SWCLK) |            \
                                      PIN_ODR_HIGH(GPIOA_SPI1_CS_ESP32))
-#define VAL_GPIOA_AFRL              (PIN_AFIO_AF(GPIOA_PIN0, 2) |         	\
+#define VAL_GPIOA_AFRL              (PIN_AFIO_AF(GPIOA_CAM_MCLK, 2) |         	\
                                      PIN_AFIO_AF(GPIOA_BATT_AN, 0) |		\
                                      PIN_AFIO_AF(GPIOA_MIC_TIMER_IN, 3) |	\
                                      PIN_AFIO_AF(GPIOA_MIC_TIMER_OUT, 3) |	\
@@ -339,7 +339,7 @@
                                      PIN_AFIO_AF(GPIOA_AUDIO_SPEAKER, 0) |	\
                                      PIN_AFIO_AF(GPIOA_CAM_PCLK, 13) |		\
                                      PIN_AFIO_AF(GPIOA_SPI1_MOSI, 5))
-#define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_CAM_MCLK, 0) |		\
+#define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_PIN8, 0) |		\
                                      PIN_AFIO_AF(GPIOA_USB_PRESENT, 0) |	\
                                      PIN_AFIO_AF(GPIOA_DIST_INT, 0) |     	\
                                      PIN_AFIO_AF(GPIOA_OTG_FS_DM, 10) |     \

@@ -460,7 +460,7 @@
  * PB8  - SCL                       (alternate 4).
  * PB9  - SDA                       (alternate 4).
  * PB10 - SPI1_CS_ENC_L             (output pushpull maximum).
- * PB11 - ENC_L_INT                 (input floating).
+ * PB11 - ENC_L_INT                 (input pullup).
  * PB12 - PULSE_0                   (output pushpull maximum).
  * PB13 - MIC_SPI2_SCK              (alternate 5).
  * PB14 - PULSE_1                   (output pushpull maximum).
@@ -525,7 +525,7 @@
                                      PIN_PUPDR_FLOATING(GPIOB_SCL) |        \
                                      PIN_PUPDR_FLOATING(GPIOB_SDA) |        \
                                      PIN_PUPDR_FLOATING(GPIOB_SPI1_CS_ENC_L) |\
-                                     PIN_PUPDR_FLOATING(GPIOB_ENC_L_INT) |  \
+                                     PIN_PUPDR_PULLUP(GPIOB_ENC_L_INT) |    \
                                      PIN_PUPDR_FLOATING(GPIOB_PULSE_0) |    \
                                      PIN_PUPDR_FLOATING(GPIOB_MIC_SPI2_SCK) |\
                                      PIN_PUPDR_FLOATING(GPIOB_PULSE_1) |    \
@@ -696,7 +696,7 @@
  * PD10 - LED5                      (output pushpull maximum).
  * PD11 - LED7                      (output pushpull maximum).
  * PD12 - SPI1_CS_ENC_R             (output pushpull maximum).
- * PD13 - ENC_R_INT                 (input floating).
+ * PD13 - ENC_R_INT                 (input pullup).
  * PD14 - LED_FRONT                 (output pushpull maximum).
  * PD15 - IMU_INT                   (input floating).
  */
@@ -761,7 +761,7 @@
                                      PIN_PUPDR_FLOATING(GPIOD_LED5) |       \
                                      PIN_PUPDR_FLOATING(GPIOD_LED7) |       \
                                      PIN_PUPDR_FLOATING(GPIOD_SPI1_CS_ENC_R) |\
-                                     PIN_PUPDR_FLOATING(GPIOD_ENC_R_INT) |  \
+                                     PIN_PUPDR_PULLUP(GPIOD_ENC_R_INT) |    \
                                      PIN_PUPDR_FLOATING(GPIOD_LED_FRONT) |  \
                                      PIN_PUPDR_FLOATING(GPIOD_IMU_INT))
 #define VAL_GPIOD_ODR               (PIN_ODR_HIGH(GPIOD_CAN_RX) |           \

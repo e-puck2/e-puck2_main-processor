@@ -68,7 +68,7 @@
 #define GPIOA_AUDIO_SPEAKER         5U
 #define GPIOA_CAM_PCLK              6U
 #define GPIOA_SPI1_MOSI             7U
-#define GPIOA_PIN8                  8U
+#define GPIOA_GEN_IO_1              8U
 #define GPIOA_USB_PRESENT           9U
 #define GPIOA_DIST_INT              10U
 #define GPIOA_OTG_FS_DM             11U
@@ -224,7 +224,7 @@
 #define LINE_AUDIO_SPEAKER          PAL_LINE(GPIOA, 5U)
 #define LINE_CAM_PCLK               PAL_LINE(GPIOA, 6U)
 #define LINE_SPI1_MOSI              PAL_LINE(GPIOA, 7U)
-#define LINE_PIN8                   PAL_LINE(GPIOA, 8U)
+#define LINE_GEN_IO_1               PAL_LINE(GPIOA, 8U)
 #define LINE_USB_PRESENT            PAL_LINE(GPIOA, 9U)
 #define LINE_DIST_INT               PAL_LINE(GPIOA, 10U)
 #define LINE_OTG_FS_DM              PAL_LINE(GPIOA, 11U)
@@ -340,7 +340,7 @@
  * PA5  - AUDIO_SPEAKER             (analog).
  * PA6  - CAM_PCLK                  (alternate 13).
  * PA7  - SPI1_MOSI                 (alternate 5).
- * PA8  - PIN8                      (input floating).
+ * PA8  - GEN_IO_1                  (input pullup).
  * PA9  - USB_PRESENT               (input floating).
  * PA10 - DIST_INT                  (input floating).
  * PA11 - OTG_FS_DM                 (alternate 10).
@@ -357,7 +357,7 @@
                                      PIN_MODE_ANALOG(GPIOA_AUDIO_SPEAKER) | \
                                      PIN_MODE_ALTERNATE(GPIOA_CAM_PCLK) |   \
                                      PIN_MODE_ALTERNATE(GPIOA_SPI1_MOSI) |  \
-                                     PIN_MODE_INPUT(GPIOA_PIN8) |           \
+                                     PIN_MODE_INPUT(GPIOA_GEN_IO_1) |       \
                                      PIN_MODE_INPUT(GPIOA_USB_PRESENT) |    \
                                      PIN_MODE_INPUT(GPIOA_DIST_INT) |       \
                                      PIN_MODE_ALTERNATE(GPIOA_OTG_FS_DM) |  \
@@ -373,7 +373,7 @@
                                      PIN_OTYPE_PUSHPULL(GPIOA_AUDIO_SPEAKER) |\
                                      PIN_OTYPE_PUSHPULL(GPIOA_CAM_PCLK) |   \
                                      PIN_OTYPE_PUSHPULL(GPIOA_SPI1_MOSI) |  \
-                                     PIN_OTYPE_PUSHPULL(GPIOA_PIN8) |       \
+                                     PIN_OTYPE_PUSHPULL(GPIOA_GEN_IO_1) |   \
                                      PIN_OTYPE_PUSHPULL(GPIOA_USB_PRESENT) |\
                                      PIN_OTYPE_PUSHPULL(GPIOA_DIST_INT) |   \
                                      PIN_OTYPE_PUSHPULL(GPIOA_OTG_FS_DM) |  \
@@ -389,7 +389,7 @@
                                      PIN_OSPEED_HIGH(GPIOA_AUDIO_SPEAKER) | \
                                      PIN_OSPEED_HIGH(GPIOA_CAM_PCLK) |      \
                                      PIN_OSPEED_HIGH(GPIOA_SPI1_MOSI) |     \
-                                     PIN_OSPEED_HIGH(GPIOA_PIN8) |          \
+                                     PIN_OSPEED_HIGH(GPIOA_GEN_IO_1) |      \
                                      PIN_OSPEED_HIGH(GPIOA_USB_PRESENT) |   \
                                      PIN_OSPEED_HIGH(GPIOA_DIST_INT) |      \
                                      PIN_OSPEED_HIGH(GPIOA_OTG_FS_DM) |     \
@@ -405,7 +405,7 @@
                                      PIN_PUPDR_FLOATING(GPIOA_AUDIO_SPEAKER) |\
                                      PIN_PUPDR_PULLUP(GPIOA_CAM_PCLK) |     \
                                      PIN_PUPDR_FLOATING(GPIOA_SPI1_MOSI) |  \
-                                     PIN_PUPDR_FLOATING(GPIOA_PIN8) |       \
+                                     PIN_PUPDR_PULLUP(GPIOA_GEN_IO_1) |     \
                                      PIN_PUPDR_FLOATING(GPIOA_USB_PRESENT) |\
                                      PIN_PUPDR_FLOATING(GPIOA_DIST_INT) |   \
                                      PIN_PUPDR_FLOATING(GPIOA_OTG_FS_DM) |  \
@@ -421,7 +421,7 @@
                                      PIN_ODR_HIGH(GPIOA_AUDIO_SPEAKER) |    \
                                      PIN_ODR_HIGH(GPIOA_CAM_PCLK) |         \
                                      PIN_ODR_HIGH(GPIOA_SPI1_MOSI) |        \
-                                     PIN_ODR_HIGH(GPIOA_PIN8) |             \
+                                     PIN_ODR_HIGH(GPIOA_GEN_IO_1) |         \
                                      PIN_ODR_HIGH(GPIOA_USB_PRESENT) |      \
                                      PIN_ODR_HIGH(GPIOA_DIST_INT) |         \
                                      PIN_ODR_HIGH(GPIOA_OTG_FS_DM) |        \
@@ -437,7 +437,7 @@
                                      PIN_AFIO_AF(GPIOA_AUDIO_SPEAKER, 0U) | \
                                      PIN_AFIO_AF(GPIOA_CAM_PCLK, 13U) |     \
                                      PIN_AFIO_AF(GPIOA_SPI1_MOSI, 5U))
-#define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_PIN8, 0U) |          \
+#define VAL_GPIOA_AFRH              (PIN_AFIO_AF(GPIOA_GEN_IO_1, 0U) |      \
                                      PIN_AFIO_AF(GPIOA_USB_PRESENT, 0U) |   \
                                      PIN_AFIO_AF(GPIOA_DIST_INT, 0U) |      \
                                      PIN_AFIO_AF(GPIOA_OTG_FS_DM, 10U) |    \

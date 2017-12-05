@@ -89,11 +89,11 @@
         Mode="Alternate"
         Alternate="5" />
       <pin8
-        ID="PIN8"
+        ID="GEN_IO_1"
         Type="PushPull"
         Level="High"
         Speed="Maximum"
-        Resistor="Floating"
+        Resistor="PullUp"
         Mode="Input"
         Alternate="0" />
       <pin9

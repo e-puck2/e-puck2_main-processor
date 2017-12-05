@@ -807,7 +807,7 @@
  * PE4  - CAM_D4                    (alternate 13).
  * PE5  - CAM_D6                    (alternate 13).
  * PE6  - CAM_D7                    (alternate 13).
- * PE7  - SD_DETECT                 (input pullup).
+ * PE7  - SD_DETECT                 (input floating).
  * PE8  - MOT_L_IN2                 (output pushpull maximum).
  * PE9  - MOT_L_IN1                 (output pushpull maximum).
  * PE10 - MOT_L_IN4                 (output pushpull maximum).
@@ -872,7 +872,7 @@
                                      PIN_PUPDR_PULLUP(GPIOE_CAM_D4) |       \
                                      PIN_PUPDR_PULLUP(GPIOE_CAM_D6) |       \
                                      PIN_PUPDR_PULLUP(GPIOE_CAM_D7) |       \
-                                     PIN_PUPDR_PULLUP(GPIOE_SD_DETECT) |    \
+                                     PIN_PUPDR_FLOATING(GPIOE_SD_DETECT) |  \
                                      PIN_PUPDR_FLOATING(GPIOE_MOT_L_IN2) |  \
                                      PIN_PUPDR_FLOATING(GPIOE_MOT_L_IN1) |  \
                                      PIN_PUPDR_FLOATING(GPIOE_MOT_L_IN4) |  \

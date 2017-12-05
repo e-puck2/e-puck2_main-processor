@@ -526,9 +526,9 @@
                                      PIN_PUPDR_FLOATING(GPIOB_SDA) |        \
                                      PIN_PUPDR_FLOATING(GPIOB_SPI1_CS_ENC_L) |\
                                      PIN_PUPDR_FLOATING(GPIOB_ENC_L_INT) |  \
-                                     PIN_PUPDR_PULLDOWN(GPIOB_PULSE_0) |    \
+                                     PIN_PUPDR_FLOATING(GPIOB_PULSE_0) |    \
                                      PIN_PUPDR_FLOATING(GPIOB_MIC_SPI2_SCK) |\
-                                     PIN_PUPDR_PULLDOWN(GPIOB_PULSE_1) |    \
+                                     PIN_PUPDR_FLOATING(GPIOB_PULSE_1) |    \
                                      PIN_PUPDR_PULLUP(GPIOB_MIC12_DATA))
 #define VAL_GPIOB_ODR               (PIN_ODR_LOW(GPIOB_IR5_AN) |            \
                                      PIN_ODR_LOW(GPIOB_IR4_AN) |            \
@@ -542,9 +542,9 @@
                                      PIN_ODR_HIGH(GPIOB_SDA) |              \
                                      PIN_ODR_HIGH(GPIOB_SPI1_CS_ENC_L) |    \
                                      PIN_ODR_HIGH(GPIOB_ENC_L_INT) |        \
-                                     PIN_ODR_HIGH(GPIOB_PULSE_0) |          \
+                                     PIN_ODR_LOW(GPIOB_PULSE_0) |           \
                                      PIN_ODR_HIGH(GPIOB_MIC_SPI2_SCK) |     \
-                                     PIN_ODR_HIGH(GPIOB_PULSE_1) |          \
+                                     PIN_ODR_LOW(GPIOB_PULSE_1) |           \
                                      PIN_ODR_HIGH(GPIOB_MIC12_DATA))
 #define VAL_GPIOB_AFRL              (PIN_AFIO_AF(GPIOB_IR5_AN, 0U) |        \
                                      PIN_AFIO_AF(GPIOB_IR4_AN, 0U) |        \
@@ -867,8 +867,8 @@
                                      PIN_OSPEED_HIGH(GPIOE_MOT_R_IN4))
 #define VAL_GPIOE_PUPDR             (PIN_PUPDR_PULLUP(GPIOE_CAM_D2) |       \
                                      PIN_PUPDR_PULLUP(GPIOE_CAM_D3) |       \
-                                     PIN_PUPDR_PULLDOWN(GPIOE_PULSE_2) |    \
-                                     PIN_PUPDR_PULLDOWN(GPIOE_PULSE_3) |    \
+                                     PIN_PUPDR_FLOATING(GPIOE_PULSE_2) |    \
+                                     PIN_PUPDR_FLOATING(GPIOE_PULSE_3) |    \
                                      PIN_PUPDR_PULLUP(GPIOE_CAM_D4) |       \
                                      PIN_PUPDR_PULLUP(GPIOE_CAM_D6) |       \
                                      PIN_PUPDR_PULLUP(GPIOE_CAM_D7) |       \
@@ -883,8 +883,8 @@
                                      PIN_PUPDR_FLOATING(GPIOE_MOT_R_IN4))
 #define VAL_GPIOE_ODR               (PIN_ODR_HIGH(GPIOE_CAM_D2) |           \
                                      PIN_ODR_HIGH(GPIOE_CAM_D3) |           \
-                                     PIN_ODR_HIGH(GPIOE_PULSE_2) |          \
-                                     PIN_ODR_HIGH(GPIOE_PULSE_3) |          \
+                                     PIN_ODR_LOW(GPIOE_PULSE_2) |           \
+                                     PIN_ODR_LOW(GPIOE_PULSE_3) |           \
                                      PIN_ODR_HIGH(GPIOE_CAM_D4) |           \
                                      PIN_ODR_HIGH(GPIOE_CAM_D6) |           \
                                      PIN_ODR_HIGH(GPIOE_CAM_D7) |           \

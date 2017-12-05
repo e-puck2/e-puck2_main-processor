@@ -253,9 +253,9 @@
       <pin12
         ID="PULSE_0"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin13
@@ -269,9 +269,9 @@
       <pin14
         ID="PULSE_1"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin15
@@ -563,17 +563,17 @@
       <pin2
         ID="PULSE_2"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin3
         ID="PULSE_3"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin4

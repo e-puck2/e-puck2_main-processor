@@ -173,9 +173,9 @@
       <pin2
         ID="LED_BODY"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin3
@@ -529,9 +529,9 @@
       <pin14
         ID="LED_FRONT"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin15
@@ -611,65 +611,65 @@
       <pin8
         ID="MOT_L_IN2"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin9
         ID="MOT_L_IN1"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin10
         ID="MOT_L_IN4"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin11
         ID="MOT_L_IN3"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin12
         ID="MOT_R_IN2"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin13
         ID="MOT_R_IN1"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin14
         ID="MOT_R_IN3"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
       <pin15
         ID="MOT_R_IN4"
         Type="PushPull"
-        Level="High"
+        Level="Low"
         Speed="Maximum"
-        Resistor="PullDown"
+        Resistor="Floating"
         Mode="Output"
         Alternate="0" />
     </GPIOE>

@@ -32,6 +32,7 @@
 #include "spi_comm.h"
 #include "usbcfg.h"
 #include "utility.h"
+#include "communication.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
@@ -135,6 +136,10 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 7:
+				communication_start((BaseSequentialStream *)&SDU1);
+				 while (1) {
+			        chThdSleepMilliseconds(1000);
+			    }
 				break;
 
 			case 8:

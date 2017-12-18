@@ -4,9 +4,14 @@
 #include "cmp_mem_access/cmp_mem_access.h"
 #include "serial-datagram/serial_datagram.h"
 #include "communication.h"
+#include "msgbus/messagebus.h"
+#include "sensors/imu.h"
+#include "main.h"
 
 
 static mutex_t send_lock;
+
+messagebus_t messagebus;
 
 static void _stream_values_sndfn(void *arg, const void *p, size_t len)
 {
@@ -15,10 +20,9 @@ static void _stream_values_sndfn(void *arg, const void *p, size_t len)
     }
 }
 
-static int send_imu(cmp_ctx_t *cmp)
+static int send_imu(cmp_ctx_t *cmp, imu_msg_t* imu_values)
 {
-    float gyro[3] = {1.1, 2.2, 3.3};
-    float acc[3] = {4.4, 5.5, 6.6};
+    
     float t = (float)chVTGetSystemTimeX() / CH_CFG_ST_FREQUENCY;
 
     //imu_get_gyro(gyro);
@@ -29,61 +33,53 @@ static int send_imu(cmp_ctx_t *cmp)
     const char *gyro_id = "gyro";
     err = err || !cmp_write_str(cmp, gyro_id, strlen(gyro_id));
     err = err || !cmp_write_array(cmp, 3);
-    err = err || !cmp_write_float(cmp, gyro[0]);
-    err = err || !cmp_write_float(cmp, gyro[1]);
-    err = err || !cmp_write_float(cmp, gyro[2]);
+    err = err || !cmp_write_float(cmp, imu_values->gyro[0]);
+    err = err || !cmp_write_float(cmp, imu_values->gyro[1]);
+    err = err || !cmp_write_float(cmp, imu_values->gyro[2]);
     const char *acc_id = "acc";
     err = err || !cmp_write_str(cmp, acc_id, strlen(acc_id));
     err = err || !cmp_write_array(cmp, 3);
-    err = err || !cmp_write_float(cmp, acc[0]);
-    err = err || !cmp_write_float(cmp, acc[1]);
-    err = err || !cmp_write_float(cmp, acc[2]);
+    err = err || !cmp_write_float(cmp, imu_values->acceleration[0]);
+    err = err || !cmp_write_float(cmp, imu_values->acceleration[1]);
+    err = err || !cmp_write_float(cmp, imu_values->acceleration[2]);
     const char *time_id = "time";
     err = err || !cmp_write_str(cmp, time_id, strlen(time_id));
     err = err || !cmp_write_float(cmp, t);
     return err;
 }
 
+//example thread to send imu datas through messagepack + datagram format
 static THD_WORKING_AREA(comm_tx_stream_wa, 1024);
 static THD_FUNCTION(comm_tx_stream, arg)
 {
     BaseSequentialStream *out = (BaseSequentialStream*)arg;
 
+    messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
+    imu_msg_t imu_values;
+
     static char dtgrm[100];
     static cmp_mem_access_t mem;
     static cmp_ctx_t cmp;
     while (1) {
+
+        messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+
         cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
-        if (send_imu(&cmp) == 0) {
+        if (send_imu(&cmp, &imu_values) == 0) {
             chMtxLock(&send_lock);
             serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_values_sndfn, out);
             chMtxUnlock(&send_lock);
         }
 
-        chThdSleepMilliseconds(1000);
+        chThdSleepMilliseconds(500);
     }
 }
-
-
-
-// static char reply_buf[100];
-// static cmp_mem_access_t reply_mem;
-// static cmp_ctx_t reply_cmp;
 
 int ping_cb(cmp_ctx_t *cmp, void *arg)
 {
     (void)cmp;
     (void)arg;
-    // if (!cmp_read_nil(cmp)) {
-    //     return -1;
-    // }
-    // cmp_mem_access_init(&reply_cmp, &reply_mem, reply_buf, sizeof(reply_buf));
-    // const char *ping_resp = "ping";
-    // if (cmp_write_str(cmp, ping_resp, strlen(ping_resp))) {
-    //     chMtxLock(&send_lock);
-    //     serial_datagram_send(reply_buf, cmp_mem_access_get_pos(&reply_mem), _stream_imu_values_sndfn, arg);
-    //     chMtxUnlock(&send_lock);
-    // }
+    
     return 0;
 }
 

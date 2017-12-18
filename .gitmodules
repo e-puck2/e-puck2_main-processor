@@ -25,3 +25,6 @@
 [submodule "src/msgbus"]
 	path = src/msgbus
 	url = https://github.com/cvra/msgbus
+[submodule "src/serial-datagram"]
+	path = src/serial-datagram
+	url = https://github.com/cvra/serial-datagram.git

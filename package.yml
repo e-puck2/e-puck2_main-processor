@@ -21,6 +21,8 @@ source:
     - src/sensors/VL53L0X/Api/platform/src/vl53l0x_i2c_platform.c
     - src/sensors/VL53L0X/Api/platform/src/vl53l0x_platform.c
     - src/config_flash_storage.c
+    - src/communication.c
+    - src/serial-datagram/serial_datagram.c
 
 target.arm:
     - ChibiOS_ext/os/hal/src/dcmi.c

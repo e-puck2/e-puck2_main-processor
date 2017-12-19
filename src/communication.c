@@ -75,11 +75,35 @@ static THD_FUNCTION(comm_tx_stream, arg)
     }
 }
 
+static char reply_buf[100];
+static cmp_mem_access_t reply_mem;
+static cmp_ctx_t reply_cmp;
+
 int ping_cb(cmp_ctx_t *cmp, void *arg)
 {
     (void)cmp;
-    (void)arg;
-    
+    BaseSequentialStream *out = (BaseSequentialStream*)arg;
+
+    uint32_t size = 100;
+    bool err = false;
+    char ping_buf[size];
+
+    if( cmp_read_str(cmp, ping_buf, &size)){
+        cmp_mem_access_init(&reply_cmp, &reply_mem, reply_buf, sizeof(reply_buf));
+
+        const char *ping_resp = "ping";
+        err = err || !cmp_write_map(&reply_cmp, 1);
+        err = err || !cmp_write_str(&reply_cmp, ping_resp, strlen(ping_resp));
+        err = err || !cmp_write_str(&reply_cmp, ping_buf, strlen(ping_buf));
+
+        if(!err){
+            chMtxLock(&send_lock);
+            serial_datagram_send(reply_buf, cmp_mem_access_get_pos(&reply_mem), _stream_values_sndfn, out);
+            chMtxUnlock(&send_lock);
+        }
+        
+    }
+
     return 0;
 }
 

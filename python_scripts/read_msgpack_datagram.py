@@ -9,7 +9,9 @@ import msgpack
 #pip3 install msgpack-python
 
 def send_ping_cmd(serial):
-    msg = msgpack.packb({'ping': 'salut ça va ?'},  use_single_float=True)
+    #in python, we can simply write down the MessagePack message and it is automatically built
+    #here is an order called "ping" which has a string as data
+    msg = msgpack.packb({'ping': 'Hello there :-)'},  use_single_float=True)
     dtgrm = serial_datagram.encode(msg)
     serial.write(dtgrm)
     serial.flush()
@@ -63,6 +65,7 @@ def main():
                 time = data[field_to_found]
                 print('{:<{}} : {:.2f} seconds\n'.format(names[2], max_length, time))
 
+            #print the ping response
             field_to_found = 'ping'
             if(field_to_found in data):
                 print(data)

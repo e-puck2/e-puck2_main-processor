@@ -8,11 +8,58 @@
 #include "sensors/imu.h"
 #include "main.h"
 
+/*
+ * This module uses C MessagePack (CMP) to form messages and serial_datagram to 
+ * delimit the frame and to add to it a crc32 for verification
+ * The datagram module adds a CRC32 and an END of frame identifier. It also takes into account 
+ * the cases when the frame itself contains the END identifier and escapes it.
+ * 
+ * Each MessagePack message can be freely composed. It can only contain a number/string/array
+ * It is possible to identify what is sent by addind an ID to the datas.
+ * 
+ * Example : We send the order "ping" and the data of this order is "a message"
+ * then the message will look like that {"ping":"a message"}
+ * We could add several orders in the same frame. For example here the second order 
+ * contains a bool as data : {"ping":"a message", "order2": true }
+ * 
+ * Now to contruct this message, we need to proceed sequentially.
+ * When we want to indentify the datas with an ID, we need to add an information
+ * called map at the begining of the message telling how many orders are present
+ * 
+ * message containing :
+ * 1) Only one float data :
+ *    cmp_write_float(cmp, float)
+ * 2) An array containing a float and a string of datas :
+ *    cmp_write_array(cmp, array_size)
+ *    cmp_write_float(cmp, float)
+ *    cmp_write_str(cmp, string, string_size)
+ * 3) An order identified by an ID with an array containg a bool and an int as datas
+ *    cmp_write_map(cmp, 1)
+ *    cmp_write_str(cmp, ID_string, ID_string_size)
+ *    cmp_write_array(cmp, array_size)
+ *    cmp_write_bool(cmp, bool)
+ *    cmp_write_int(cmp, int)
+ * 4) Two orders in the same message. The first contains a bool and the other the same content as example 3
+ *    cmp_write_map(cmp, 2)
+ *    cmp_write_str(cmp, ID1_string, ID1_string_size)
+ *    cmp_write_bool(cmp, bool)
+ *    cmp_write_str(cmp, ID2_string, ID2_string_size)
+ *    cmp_write_array(cmp, array_size)
+ *    cmp_write_bool(cmp, bool)
+ *    cmp_write_int(cmp, int)
+ *
+ *   The same thing goes for the reading of a message. Each function used to read something
+ *   in the message moved the pointer to the next element of the message. So once an element of the 
+ *   message has been read, it cannot be read anymore.
+*/
 
 static mutex_t send_lock;
 
 messagebus_t messagebus;
 
+/*
+ * a simple wrapper to the system write function
+*/
 static void _stream_values_sndfn(void *arg, const void *p, size_t len)
 {
     if (len > 0) {
@@ -20,6 +67,9 @@ static void _stream_values_sndfn(void *arg, const void *p, size_t len)
     }
 }
 
+/*
+ * Function to comtruct the message pack frame.
+*/
 static int send_imu(cmp_ctx_t *cmp, imu_msg_t* imu_values)
 {
     
@@ -48,7 +98,9 @@ static int send_imu(cmp_ctx_t *cmp, imu_msg_t* imu_values)
     return err;
 }
 
-//example thread to send imu datas through messagepack + datagram format
+/*
+ * Example thread to send imu datas through messagepack + datagram format
+*/
 static THD_WORKING_AREA(comm_tx_stream_wa, 1024);
 static THD_FUNCTION(comm_tx_stream, arg)
 {
@@ -79,6 +131,9 @@ static char reply_buf[100];
 static cmp_mem_access_t reply_mem;
 static cmp_ctx_t reply_cmp;
 
+/*
+ * Function that resend the string contained in the message
+*/
 int ping_cb(cmp_ctx_t *cmp, void *arg)
 {
     (void)cmp;
@@ -107,6 +162,10 @@ int ping_cb(cmp_ctx_t *cmp, void *arg)
     return 0;
 }
 
+/*
+ * Function used to dispatch the order. It look a the ID field of the message pack frame
+ * and execute the callback correspondant to it
+*/
 void datagram_dispatcher_cb(const void *dtgrm, size_t len, void *arg)
 {
     struct dispatcher_entry_s *dispatcher_tab = arg;
@@ -138,10 +197,15 @@ void datagram_dispatcher_cb(const void *dtgrm, size_t len, void *arg)
     }
 }
 
-
+/*
+ * Thread dedicated to the reading of the frames received
+*/
 static THD_WORKING_AREA(comm_rx_wa, 1024);
 static THD_FUNCTION(comm_rx, arg)
 {
+    //table containing all the order we must process
+    //if a received order is not in this table,
+    //it will be dropped
     struct dispatcher_entry_s dispatcher_table[] = {
         {"ping", ping_cb, arg},
         {NULL, NULL, NULL}

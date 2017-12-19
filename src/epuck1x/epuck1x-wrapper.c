@@ -2,16 +2,16 @@
 #include <stdlib.h>
 #include <math.h>
 #include "epuck1x-wrapper.h"
-#include "..\audio\microphone.h"
-#include "..\camera\dcmi_camera.h"
-#include "..\camera\po8030.h"
-#include "..\sensors\imu.h"
-#include "..\sensors\proximity.h"
-#include "..\leds.h"
-#include "..\main.h"
-#include "..\motors.h"
-#include "..\usbcfg.h"
-#include "..\utility.h"
+#include "../audio/microphone.h"
+#include "../camera/dcmi_camera.h"
+#include "../camera/po8030.h"
+#include "../sensors/imu.h"
+#include "../sensors/proximity.h"
+#include "../leds.h"
+#include "../main.h"
+#include "../motors.h"
+#include "../usbcfg.h"
+#include "../utility.h"
 
 
 // LEDs handling.

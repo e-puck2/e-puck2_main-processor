@@ -13,8 +13,8 @@
 #include "chprintf.h"
 
 #include "epuck1x-wrapper.h"
-#include "..\usbcfg.h"
-#include "..\main.h"
+#include "../usbcfg.h"
+#include "../main.h"
 
 //#include <motor_led/e_epuck_ports.h>
 //#include <motor_led/e_init_port.h>

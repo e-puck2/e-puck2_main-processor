@@ -28,23 +28,25 @@ def main():
             #unpack the message pack frame
             data = msgpack.unpackb(dtgrm, use_list=False, encoding='utf-8') 
 
+            padding = len('accelerometer')
+
             #print acc datas only if they are present in the frame received
             field_to_found = 'acc'
             if(field_to_found in data):
                 buf = data[field_to_found]
-                print('accelerometer : x = ',buf[0],', y = ',buf[1],', z = ',buf[2])
+                print('{} : x = {:6.2f}, y = {:6.2f}, z = {:6.2f}'.format('accelerometer',buf[0], buf[1], buf[2]))
 
             #print gyro datas only if they are present in the frame received
             field_to_found = 'gyro'
             if(field_to_found in data):
                 buf = data[field_to_found]
-                print('gyro : x = ',buf[0],', y = ',buf[1],', z = ',buf[2])
+                print('{:<{}} : x = {:6.2f}, y = {:6.2f}, z = {:6.2f}'.format('gyro',padding, buf[0], buf[1], buf[2]))
 
             #print time data only if they are present in the frame received
             field_to_found = 'time'
             if(field_to_found in data):
                 time = data[field_to_found]
-                print('time = ',time)
+                print('{:<{}} : {:.2f} seconds\n'.format('time',padding, time))
 
         except (serial_datagram.CRCMismatchError, serial_datagram.FrameError):
             sys.stderr.write("CRC error")

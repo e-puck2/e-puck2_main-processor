@@ -195,7 +195,7 @@ int main(void)
 	ir_remote_start();
 	spi_comm_start();
 	static SerialConfig ser_cfg = {
-	    2500000,
+	    115200,
 	    0,
 	    0,
 	    0,

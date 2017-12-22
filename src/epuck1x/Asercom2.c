@@ -6,6 +6,7 @@
 #define IR_RECEIVER
 
 #include "..\main.h"
+#include "..\sensors\VL53L0X\VL53L0X.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -42,20 +43,20 @@
 #include "DataEEPROM.h"
 
 #include "memory.h"
-char buffer[3300];
-int e_mic_scan[3][MIC_SAMP_NB];
-unsigned int e_last_mic_scan_id;
-int selector;
-char c;
-int e_ambient_ir[10];						// ambient light measurement
-int e_ambient_and_reflected_ir[10];		// light when led is on
+extern char buffer[3300]; //extern char buffer[BUFFER_SIZE];
+//extern int e_mic_scan[3][MIC_SAMP_NB];
+//extern unsigned int e_last_mic_scan_id;
+extern int selector; //extern int selector;
+extern char c;
+//extern int e_ambient_ir[10];						// ambient light measurement
+//extern int e_ambient_and_reflected_ir[10];		// light when led is on
 
 #define uart1_send_static_text(msg) do { e_send_uart1_char(msg,sizeof(msg)-1); while(e_uart1_sending()); } while(0)
 #define uart1_send_text(msg) do { e_send_uart1_char(msg,strlen(msg)); while(e_uart1_sending()); } while(0)
 #define uart2_send_static_text(msg) do { e_send_uart2_char(msg,sizeof(msg)-1); while(e_uart2_sending()); } while(0)
 #define uart2_send_text(msg) do { e_send_uart2_char(msg,strlen(msg)); while(e_uart2_sending()); } while(0)
 
-int run_asercom(void) {
+int run_asercom2(void) {
     static char c1, c2, wait_cam = 0;
     static int i, j, n, speedr, speedl, positionr, positionl, LED_nbr, LED_action, accx, accy, accz, sound, gyrox, gyroy, gyroz;
     static int cam_mode, cam_width, cam_heigth, cam_zoom, cam_size, cam_x1, cam_y1;
@@ -259,6 +260,36 @@ int run_asercom(void) {
             i = 0;
             do {
                 switch ((int8_t)-c) {
+					case 0xA: // RGB setting => ESP32
+						break;
+
+					case 0xB: // Button state => ESP32
+						break;
+
+					case 0xC: // Get 4 microphones
+                        n = e_get_micro_volume(0);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+
+                        n = e_get_micro_volume(1);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+
+                        n = e_get_micro_volume(2);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+
+                        n = e_get_micro_volume(3);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+						break;
+
+					case 0xD: // Get distance sensor
+						n = VL53L0X_get_dist_mm();
+						buffer[i++] = n & 0xff;
+						buffer[i++] = n >> 8;
+						break;
+
                     case 'a': // Read acceleration sensors in a non filtered way, same as ASCII
                         if(use_bt) {
                             accx = e_get_acc_filtered(0, 1);
@@ -1015,9 +1046,9 @@ int run_asercom(void) {
                     break;
                 case 'V': // get version information
                     if (use_bt) {
-                        uart1_send_static_text("v,Version 1.2.2 August 2008 GCtronic\r\n");
+                        uart1_send_static_text("v,Version 2.0 January 2018 GCtronic\r\n");
                     } else {
-                        uart2_send_static_text("v,Version 1.2.2 August 2008 GCtronic\r\n");
+                        uart2_send_static_text("v,Version 2.0 January 2018 GCtronic\r\n");
                     }
                     sprintf(buffer, "HW version: %X\r\n", HWversion);
                     if (use_bt) {

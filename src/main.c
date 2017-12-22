@@ -16,6 +16,7 @@
 #include "audio/microphone.h"
 #include "camera/po8030.h"
 #include "epuck1x/Asercom.h"
+#include "epuck1x/Asercom2.h"
 #include "sensors/battery_level.h"
 #include "sensors/imu.h"
 #include "sensors/proximity.h"
@@ -29,9 +30,9 @@
 #include "main.h"
 #include "memory_protection.h"
 #include "motors.h"
+#include "selector.h"
 #include "spi_comm.h"
 #include "usbcfg.h"
-#include "utility.h"
 #include "communication.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
@@ -64,8 +65,6 @@ static THD_FUNCTION(selector_thd, arg)
 
     messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
     imu_msg_t imu_values;
-
-    uint8_t tof_measuring = 0;
 
     uint8_t toEsp32 = 'c', fromEsp32 = 0;
     	int16_t len = 0;
@@ -119,10 +118,7 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 5: // Distance sensor reading.
-				if(tof_measuring == 0) {
-					tof_measuring = 1;
-					VL53L0X_init_demo();
-				}
+				chprintf((BaseSequentialStream *)&SDU1, "range=%d mm\r\n", VL53L0X_get_dist_mm());
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
@@ -142,14 +138,17 @@ static THD_FUNCTION(selector_thd, arg)
 			    }
 				break;
 
-			case 8:
+			case 8: // Asercom protocol v2.
+				run_asercom2();
+				stop_loop = 1;
 				break;
 
 			case 9:
 				break;
 
 			case 10: // Gumstix extension.
-				i2c_stop();
+				//i2c_stop();
+				run_asercom();
 				stop_loop = 1;
 				break;
 

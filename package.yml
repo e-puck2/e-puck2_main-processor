@@ -3,6 +3,7 @@ dependency-dir: src/
 include_directories:
     - ChibiOS_ext/os/hal/include
     - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx
+    - src/epuck1x
         
 depends:
     - cmp_mem_access
@@ -32,8 +33,24 @@ target.arm:
     - src/audio/audio_thread.c
     - src/audio/microphone.c
     - src/audio/mp45dt02_processing.c
-    - src/epuck1x/epuck1x-wrapper.c
+    - src/epuck1x/a_d/advance_ad_scan/e_acc.c
+    - src/epuck1x/a_d/advance_ad_scan/e_ad_conv.c
+    - src/epuck1x/a_d/advance_ad_scan/e_micro.c
+    - src/epuck1x/a_d/advance_ad_scan/e_prox.c
+    - src/epuck1x/acc_gyro/e_lsm330.c
+    - src/epuck1x/camera/fast_2_timer/e_common.c
+    - src/epuck1x/codec/e_sound.c
+    - src/epuck1x/I2C/e_I2C_protocol.c
+    - src/epuck1x/motor_led/advance_one_timer/e_agenda.c
+    - src/epuck1x/motor_led/advance_one_timer/e_led.c
+    - src/epuck1x/motor_led/advance_one_timer/e_motors.c
+    - src/epuck1x/motor_led/advance_one_timer/e_remote_control.c
+    - src/epuck1x/motor_led/e_init_port.c
+    - src/epuck1x/uart/e_uart_char.c
+    - src/epuck1x/utility/utility.c
     - src/epuck1x/Asercom.c
+    - src/epuck1x/Asercom2.c
+    - src/epuck1x/DataEEPROM.c
     - src/sensors/battery_level.c
     - src/sensors/imu.c
     - src/sensors/mpu9250.c
@@ -47,9 +64,9 @@ target.arm:
     - src/memory_protection.c
     - src/motors.c
     - src/panic.c
+    - src/selector.c
     - src/spi_comm.c
     - src/usbcfg.c
-    - src/utility.c
     - src/camera/po8030.c
     - src/camera/dcmi_camera.c
     - src/flash/flash.c

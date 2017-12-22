@@ -13,13 +13,13 @@
 #include "chprintf.h"
 #include "usbcfg.h"
 
+uint16_t dist_mm = 0;
 
 //////////////////// PUBLIC FUNCTIONS /////////////////////////
 static THD_WORKING_AREA(waVL53L0XThd, 2048);
 static THD_FUNCTION(VL53L0XThd, arg) {
 
 	(void)arg;
-	uint16_t value;
 	VL53L0X_Dev_t device;
 
 	device.I2cDevAddr = VL53L0X_ADDR;
@@ -27,14 +27,10 @@ static THD_FUNCTION(VL53L0XThd, arg) {
 	VL53L0X_configAccuracy(&device, VL53L0X_LONG_RANGE);
 	VL53L0X_startMeasure(&device, VL53L0X_DEVICEMODE_CONTINUOUS_RANGING);
 
-
     /* Reader thread loop.*/
     while (TRUE) {
    		VL53L0X_getLastMeasure(&device);
-		value = device.Data.LastRangeMeasure.RangeMilliMeter;
-		
-		chprintf((BaseSequentialStream *)&SDU1, "range=%d\r\n" , value);
-    	
+   		dist_mm = device.Data.LastRangeMeasure.RangeMilliMeter;
 		chThdSleepMilliseconds(100);
     }
 }
@@ -206,11 +202,15 @@ VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device){
 	return VL53L0X_StopMeasurement(device);
 }
 
-void VL53L0X_init_demo(void){
+void VL53L0X_start(void){
 	chThdCreateStatic(waVL53L0XThd,
                      sizeof(waVL53L0XThd),
                      NORMALPRIO + 10,
                      VL53L0XThd,
                      NULL);
+}
+
+uint16_t VL53L0X_get_dist_mm(void) {
+	return dist_mm;
 }
 

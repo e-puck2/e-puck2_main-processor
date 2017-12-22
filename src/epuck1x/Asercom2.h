@@ -1,11 +1,11 @@
-#ifndef UTILITY_H
-#define UTILITY_H
+#ifndef _ASERCOM2
+#define _ASERCOM2
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int get_selector(void);
+void run_asercom2(void);
 
 #ifdef __cplusplus
 }

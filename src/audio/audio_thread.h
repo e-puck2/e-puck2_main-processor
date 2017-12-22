@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <hal.h>
+
 void audio_start(uint16_t freq);
 void dac_start(void);
 void dac_play(uint16_t freq);

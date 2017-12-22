@@ -3,6 +3,8 @@ INCDIR += ./ChibiOS_ext/os/hal/include
 
 INCDIR += ./ChibiOS_ext/os/hal/ports/STM32/STM32F4xx
 
+INCDIR += ./src/epuck1x
+
 INCDIR += src/
 
 
@@ -17,7 +19,23 @@ CSRC += ./src/camera/dcmi_camera.c
 CSRC += ./src/camera/po8030.c
 CSRC += ./src/cmd.c
 CSRC += ./src/epuck1x/Asercom.c
-CSRC += ./src/epuck1x/epuck1x-wrapper.c
+CSRC += ./src/epuck1x/Asercom2.c
+CSRC += ./src/epuck1x/DataEEPROM.c
+CSRC += ./src/epuck1x/I2C/e_I2C_protocol.c
+CSRC += ./src/epuck1x/a_d/advance_ad_scan/e_acc.c
+CSRC += ./src/epuck1x/a_d/advance_ad_scan/e_ad_conv.c
+CSRC += ./src/epuck1x/a_d/advance_ad_scan/e_micro.c
+CSRC += ./src/epuck1x/a_d/advance_ad_scan/e_prox.c
+CSRC += ./src/epuck1x/acc_gyro/e_lsm330.c
+CSRC += ./src/epuck1x/camera/fast_2_timer/e_common.c
+CSRC += ./src/epuck1x/codec/e_sound.c
+CSRC += ./src/epuck1x/motor_led/advance_one_timer/e_agenda.c
+CSRC += ./src/epuck1x/motor_led/advance_one_timer/e_led.c
+CSRC += ./src/epuck1x/motor_led/advance_one_timer/e_motors.c
+CSRC += ./src/epuck1x/motor_led/advance_one_timer/e_remote_control.c
+CSRC += ./src/epuck1x/motor_led/e_init_port.c
+CSRC += ./src/epuck1x/uart/e_uart_char.c
+CSRC += ./src/epuck1x/utility/utility.c
 CSRC += ./src/exti.c
 CSRC += ./src/flash/flash.c
 CSRC += ./src/i2c_bus.c
@@ -27,13 +45,13 @@ CSRC += ./src/main.c
 CSRC += ./src/memory_protection.c
 CSRC += ./src/motors.c
 CSRC += ./src/panic.c
+CSRC += ./src/selector.c
 CSRC += ./src/sensors/battery_level.c
 CSRC += ./src/sensors/imu.c
 CSRC += ./src/sensors/mpu9250.c
 CSRC += ./src/sensors/proximity.c
 CSRC += ./src/spi_comm.c
 CSRC += ./src/usbcfg.c
-CSRC += ./src/utility.c
 CSRC += src/chibios-syscalls/malloc_lock.c
 CSRC += src/chibios-syscalls/newlib_syscalls.c
 CSRC += src/msgbus/examples/chibios/port.c

@@ -1,6 +1,8 @@
 #ifndef BATTERY_LEVEL_H
 #define BATTERY_LEVEL_H
 
+#include <hal.h>
+
 /** Message reprensenting a measurement of the battery level. */
 typedef struct {
     float voltage;

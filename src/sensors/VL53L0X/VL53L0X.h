@@ -66,6 +66,8 @@ VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device);
  * continuoulsy measure the distance and varies the intensity of the leds to 
  * represent the measured distances.
  */
-void VL53L0X_init_demo(void);
+void VL53L0X_start(void);
+
+uint16_t VL53L0X_get_dist_mm(void);
 
 #endif /* VL53L0X_H*/

@@ -5,6 +5,8 @@
 extern "C" {
 #endif
 
+#include <hal.h>
+
 void i2c_start(void);
 void i2c_stop(void);
 i2cflags_t get_last_i2c_error(void);

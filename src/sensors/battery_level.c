@@ -14,7 +14,7 @@
 static uint16_t adc_value;
 static adcsample_t adc_samples[DMA_BUFFER_SIZE];
 static BSEMAPHORE_DECL(measurement_ready, true);
-battery_msg_t battery_value;
+static battery_msg_t battery_value;
 
 uint16_t get_battery_raw(void) {
 	return battery_value.raw_value;

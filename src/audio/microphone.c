@@ -18,8 +18,8 @@
  *       ###
  *
  */
-uint16_t mic_volume[4];
-int16_t mic_last[4];
+static uint16_t mic_volume[4];
+static int16_t mic_last[4];
 
 int16_t mic_get_last(uint8_t mic) {
 	if(mic < 4) {

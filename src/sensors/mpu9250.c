@@ -6,7 +6,7 @@
 #define STANDARD_GRAVITY 9.80665f
 #define DEG2RAD(deg) (deg / 180 * M_PI)
 
-uint32_t imuConfig;
+static uint32_t imuConfig;
 
 int8_t mpu9250_setup(int config) {
 	int8_t err = 0;

@@ -6,15 +6,15 @@
 
 #define DEFAULT_SPEED 600
 
-uint8_t checkGlitch = 0;
-uint8_t irWaitCmd = 0;
+static uint8_t checkGlitch = 0;
+static uint8_t irWaitCmd = 0;
 static uint8_t address_temp = 0;
 static uint8_t data_temp = 0;
 static uint8_t toggle_temp = 0;
-uint8_t address = 0;
-uint8_t data_ir = 0;
-uint8_t toggle = 2;
-uint8_t irCommand = 0;
+static uint8_t address = 0;
+static uint8_t data_ir = 0;
+static uint8_t toggle = 2;
+static uint8_t irCommand = 0;
 static BSEMAPHORE_DECL(command_received, true);
 
 uint8_t ir_remote_get_toggle(void) {

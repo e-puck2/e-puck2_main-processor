@@ -2,8 +2,8 @@
 #include <ch.h>
 #include "i2c_bus.h"
 
-i2cflags_t errors = 0;
-systime_t timeout = MS2ST(4); // 4 ms
+static i2cflags_t errors = 0;
+static systime_t timeout = MS2ST(4); // 4 ms
 
 void i2c_start(void) {
     /*

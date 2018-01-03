@@ -44,12 +44,12 @@
 static unsigned int adc2_values[PROXIMITY_NB_CHANNELS*2] = {0};
 static BSEMAPHORE_DECL(adc2_ready, true);
 static adcsample_t adc2_proximity_samples[PROXIMITY_NB_CHANNELS*2 * DMA_BUFFER_SIZE];
-uint8_t pulseSeqState = 0;
-uint8_t calibrationInProgress = 0;
-uint8_t calibrationState = 0;
-uint8_t calibrationNumSamples = 0;
-int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
-proximity_msg_t prox_values;
+static uint8_t pulseSeqState = 0;
+static uint8_t calibrationInProgress = 0;
+static uint8_t calibrationState = 0;
+static uint8_t calibrationNumSamples = 0;
+static int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
+static proximity_msg_t prox_values;
 
 void calibrate_ir(void) {
 	calibrationState = 0;

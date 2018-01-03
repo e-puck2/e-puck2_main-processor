@@ -122,15 +122,15 @@ static struct {
 //    uint32_t guard;
 //} cmsisDsp;
 
-uint16_t PDM_buffer_I2S[MP45DT02_BUFFER_SIZE_2B/2] = {0};
-uint16_t PCM_buffer_I2S[MP45DT02_DECIMATED_BUFFER_SIZE] = {0};
-uint16_t PCM_buffer_long_I2S[MIC_BUFFER_LEN] = {0};
-uint8_t pcm_index_I2S = 0;
+static uint16_t PDM_buffer_I2S[MP45DT02_BUFFER_SIZE_2B/2] = {0};
+static uint16_t PCM_buffer_I2S[MP45DT02_DECIMATED_BUFFER_SIZE] = {0};
+static uint16_t PCM_buffer_long_I2S[MIC_BUFFER_LEN] = {0};
+static uint8_t pcm_index_I2S = 0;
 
-uint16_t PDM_buffer_SPI[MP45DT02_BUFFER_SIZE_2B/2] = {0};
-uint16_t PCM_buffer_SPI[MP45DT02_DECIMATED_BUFFER_SIZE] = {0};
-uint16_t PCM_buffer_long_SPI[MIC_BUFFER_LEN] = {0};
-uint8_t pcm_index_SPI = 0;
+static uint16_t PDM_buffer_SPI[MP45DT02_BUFFER_SIZE_2B/2] = {0};
+static uint16_t PCM_buffer_SPI[MP45DT02_DECIMATED_BUFFER_SIZE] = {0};
+static uint16_t PCM_buffer_long_SPI[MIC_BUFFER_LEN] = {0};
+static uint8_t pcm_index_SPI = 0;
 
 static thread_t *I2SProcessingThd;
 static THD_WORKING_AREA(I2SProcessingThdWA, 1024);

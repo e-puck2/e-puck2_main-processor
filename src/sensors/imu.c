@@ -7,19 +7,19 @@
 #include "sensors/mpu9250.h"
 #include "exti.h"
 
-imu_msg_t imu_values;
+static imu_msg_t imu_values;
 
-uint8_t accAxisFilteringInProgress = 0;
-uint8_t accAxisFilteringState = 0;
-uint8_t accAxisSelected = 0;
-uint8_t accFilterSize = 0;
-uint8_t accCalibrationInProgress = 0;
+static uint8_t accAxisFilteringInProgress = 0;
+static uint8_t accAxisFilteringState = 0;
+static uint8_t accAxisSelected = 0;
+static uint8_t accFilterSize = 0;
+static uint8_t accCalibrationInProgress = 0;
 
-uint8_t gyroAxisFilteringInProgress = 0;
-uint8_t gyroAxisFilteringState = 0;
-uint8_t gyroAxisSelected = 0;
-uint8_t gyroFilterSize = 0;
-uint8_t gyroCalibrationInProgress = 0;
+static uint8_t gyroAxisFilteringInProgress = 0;
+static uint8_t gyroAxisFilteringState = 0;
+static uint8_t gyroAxisSelected = 0;
+static uint8_t gyroFilterSize = 0;
+static uint8_t gyroCalibrationInProgress = 0;
 
 static THD_FUNCTION(imu_reader_thd, arg) {
      (void) arg;

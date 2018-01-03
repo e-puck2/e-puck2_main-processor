@@ -52,6 +52,27 @@ static bool load_config(void)
     return config_load(&parameter_root, &_config_start);
 }
 
+static void serial_start(void)
+{
+	static SerialConfig ser_cfg = {
+	    115200,
+	    0,
+	    0,
+	    0,
+	};
+
+	sdStart(&SD3, &ser_cfg); // UART3.
+}
+
+static void sdc_start(void){
+	static uint8_t sd_scratchpad[512]; // Working area for SDC driver.
+	static const SDCConfig sdccfg = { //  SDIO configuration.
+	  sd_scratchpad,
+	  SDC_MODE_1BIT // Use 1-bit mode instead of 4-bit to avoid conflicts with the microphones.
+	};
+	sdcStart(&SDCD1, &sdccfg);
+}
+
 static THD_FUNCTION(selector_thd, arg)
 {
     (void) arg;
@@ -199,20 +220,9 @@ int main(void)
 	ir_remote_start();
 	spi_comm_start();
 	VL53L0X_start();
-	static SerialConfig ser_cfg = {
-	    115200,
-	    0,
-	    0,
-	    0,
-	};
-	sdStart(&SD3, &ser_cfg); // UART3.
+	serial_start();
 	mic_start();
-	static uint8_t sd_scratchpad[512]; // Working area for SDC driver.
-	static const SDCConfig sdccfg = { //  SDIO configuration.
-	  sd_scratchpad,
-	  SDC_MODE_1BIT // Use 1-bit mode instead of 4-bit to avoid conflicts with the microphones.
-	};
-	sdcStart(&SDCD1, &sdccfg);
+	sdc_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

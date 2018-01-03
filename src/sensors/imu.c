@@ -150,7 +150,9 @@ int16_t get_acc_filtered(uint8_t axis, uint8_t filter_size) {
 void calibrate_acc(void) {
 	accCalibrationInProgress = 1;
 	get_acc_filtered(0, 50);
+	accCalibrationInProgress = 1;
 	get_acc_filtered(1, 50);
+	accCalibrationInProgress = 1;
 	get_acc_filtered(2, 50);
 	accCalibrationInProgress = 0;
 }
@@ -201,7 +203,9 @@ int16_t get_gyro_offset(uint8_t axis) {
 void calibrate_gyro(void) {
 	gyroCalibrationInProgress = 1;
 	get_gyro_filtered(0, 50);
+	gyroCalibrationInProgress = 1;
 	get_gyro_filtered(1, 50);
+	gyroCalibrationInProgress = 1;
 	get_gyro_filtered(2, 50);
 	gyroCalibrationInProgress = 0;
 }

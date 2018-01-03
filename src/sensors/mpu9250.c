@@ -93,9 +93,9 @@ void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16
     	*status = buf[0];
     }
     if (acc) {
-    	acc_raw[0] = read_word(&buf[1]);
-    	acc_raw[1] = read_word(&buf[3]);
-    	acc_raw[2] = read_word(&buf[5]);
+    	acc_raw[0] = -read_word(&buf[1]);
+    	acc_raw[1] = -read_word(&buf[3]);
+    	acc_raw[2] = -read_word(&buf[5]);
         acc[0] = (float)acc_raw[0] * acc_res[imuConfig & 0x3];
         acc[1] = (float)acc_raw[1] * acc_res[imuConfig & 0x3];
         acc[2] = (float)acc_raw[2] * acc_res[imuConfig & 0x3];

@@ -198,6 +198,7 @@ int main(void)
 	imu_start();
 	ir_remote_start();
 	spi_comm_start();
+	VL53L0X_start();
 	static SerialConfig ser_cfg = {
 	    115200,
 	    0,

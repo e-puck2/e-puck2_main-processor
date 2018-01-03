@@ -19,13 +19,12 @@ unsigned int getBatteryValueRaw(void) {
 	return get_battery_raw();
 }
 
+float getBatteryValueVoltage(void){
+	return get_battery_voltage();
+}
+
 unsigned int getBatteryValuePercentage(void) {
-//    if(isEpuckVersion1_3()) {
-//        return 100*(float)(e_acc_scan[2][e_last_acc_scan_id]-MIN_BATT_VALUE)/(float)BATT_VALUES_RANGE;
-//    } else {
-//        return 0;
-//    }
-    return 0;
+    return (unsigned int)get_battery_percentage();
 }
 
 void resetTime(void) {

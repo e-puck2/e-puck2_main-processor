@@ -9,6 +9,7 @@ extern "C" {
 void wait(long num);
 int getselector(void);
 unsigned int getBatteryValueRaw(void);
+float getBatteryValueVoltage(void);
 unsigned int getBatteryValuePercentage(void);
 void resetTime(void);
 float getDiffTimeMs(void);

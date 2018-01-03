@@ -9,7 +9,7 @@
 // - ADC clock div = 8 => APB2/8 = 84/8 = 10.5 MHz
 // - [sampling (480 cycles) + conversion (12 cycles)] x 1'000'000/10'500'000 = about 46.9 us
 
-#define DMA_BUFFER_SIZE (16)
+#define DMA_BUFFER_SIZE (32)
 
 static uint16_t adc_value;
 static adcsample_t adc_samples[DMA_BUFFER_SIZE];
@@ -18,6 +18,14 @@ static battery_msg_t battery_value;
 
 uint16_t get_battery_raw(void) {
 	return battery_value.raw_value;
+}
+
+float get_battery_voltage(void) {
+    return battery_value.voltage;
+}
+
+float get_battery_percentage(void){
+    return battery_value.percentage;
 }
 
 static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n)
@@ -45,7 +53,7 @@ static const ADCConversionGroup group = {
     .cr1 = 0,
     .cr2 = ADC_CR2_SWSTART, /* manual start */
     .smpr1 = 0,
-    .smpr2 = ADC_SMPR2_SMP_AN0(ADC_SAMPLE_480),
+    .smpr2 = ADC_SMPR2_SMP_AN1(ADC_SAMPLE_480),
 
     .sqr1 = ADC_SQR1_NUM_CH(1),
     .sqr2 = 0,
@@ -73,7 +81,10 @@ static THD_FUNCTION(battery_thd, arg)
         /* Converts the measurement to volts and publish the measurement on the
          * bus. */
         battery_value.raw_value = adc_value;
-        // battery_value.voltage = ...;
+        battery_value.voltage = adc_value / COEFF_ADC_TO_VOLT;
+        battery_value.percentage =  (battery_value.voltage - MIN_VOLTAGE) * 
+                                    (MAX_PERCENTAGE - MIN_PERCENTAGE) / 
+                                    (MAX_VOLTAGE - MIN_VOLTAGE) + MIN_PERCENTAGE;
         messagebus_topic_publish(&battery_topic, &battery_value, sizeof(battery_value));
 
         /* Sleep for some time. */

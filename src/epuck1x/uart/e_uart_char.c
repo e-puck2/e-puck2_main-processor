@@ -1,6 +1,6 @@
 #include <hal.h>
 #include "e_uart_char.h"
-#include "..\usbcfg.h"
+#include "../usbcfg.h"
 
 void e_init_uart1(void) {
 	return;

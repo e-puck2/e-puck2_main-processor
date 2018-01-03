@@ -24,7 +24,7 @@
  */
 
 #include "e_lsm330.h"
-#include "..\sensors\imu.h"
+#include "../sensors/imu.h"
 
 
 /*!\brief Configure and turn on the device.

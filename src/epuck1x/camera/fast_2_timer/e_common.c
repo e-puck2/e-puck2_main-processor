@@ -1,6 +1,6 @@
 #include "e_poxxxx.h"
-#include "..\camera\dcmi_camera.h"
-#include "..\camera\po8030.h"
+#include "../camera/dcmi_camera.h"
+#include "../camera/po8030.h"
 #include <stdlib.h>
 
 int e_poxxxx_config_cam(unsigned int sensor_x1,unsigned int sensor_y1,

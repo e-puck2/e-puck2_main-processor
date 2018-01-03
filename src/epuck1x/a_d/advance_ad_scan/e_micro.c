@@ -28,7 +28,7 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
  */
 
 #include "e_micro.h"
-#include "..\audio\microphone.h"
+#include "../audio/microphone.h"
 
 /*****************************************************
  * user function                                     *

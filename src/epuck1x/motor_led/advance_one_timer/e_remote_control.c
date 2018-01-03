@@ -52,7 +52,7 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
  */
 
 #include "e_remote_control.h"
-#include "..\ir_remote.h"
+#include "../ir_remote.h"
 
 
 /*! \brief Initialise the IR receiver ports */

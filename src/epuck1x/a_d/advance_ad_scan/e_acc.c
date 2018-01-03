@@ -63,7 +63,7 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
 
 #include "math.h"
 #include "e_acc.h"
-#include "..\sensors\imu.h"
+#include "../sensors/imu.h"
 #include <stdlib.h>
 
 /*****************************************************

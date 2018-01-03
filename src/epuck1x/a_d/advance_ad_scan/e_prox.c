@@ -55,7 +55,7 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
  */
 
 #include "e_prox.h"
-#include "..\sensors\proximity.h"
+#include "../sensors/proximity.h"
 
 /*! \brief To calibrate your ir sensor
  * \warning Call this function one time before calling e_get_calibrated_prox

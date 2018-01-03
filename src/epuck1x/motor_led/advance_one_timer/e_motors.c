@@ -44,7 +44,7 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
  * \author Code: Francesco Mondada, Lucas Meier \n Doc: Jonathan Besuchet
  */
 #include "e_motors.h"
-#include "..\motors.h"
+#include "../motors.h"
 #include <stdlib.h>
 
 /* If powersave is enabled, the motor library will not leave 

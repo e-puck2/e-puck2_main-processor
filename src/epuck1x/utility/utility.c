@@ -1,6 +1,6 @@
 #include "utility.h"
-#include "..\sensors\battery_level.h"
-#include "..\selector.h"
+#include "../sensors/battery_level.h"
+#include "../selector.h"
 
 //#define MAX_BATT_VALUE 2560 // corresponds to 4.2 volts
 //#define MIN_BATT_VALUE 2070 // corresponds to 3.4 volts

@@ -28,7 +28,7 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
  */
 
 #include "e_I2C_protocol.h"
-#include "..\i2c_bus.h"
+#include "../i2c_bus.h"
 
 /*! \brief Initialize the microcontroller for I2C uses
  * \return 1 to confirme the oparation and 0 for an error

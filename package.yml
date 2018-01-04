@@ -31,6 +31,7 @@ target.arm:
     - ChibiOS_ext/os/hal/ports/STM32/LLD/SPIv1/spi3_slave_lld.c
     - ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
     - src/audio/audio_thread.c
+    - src/audio/play_melody.c
     - src/audio/microphone.c
     - src/audio/mp45dt02_processing.c
     - src/epuck1x/a_d/advance_ad_scan/e_acc.c

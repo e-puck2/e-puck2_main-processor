@@ -7,6 +7,15 @@
 #define DAC_BUFFER_SIZE2 360
 
 /*
+ * The DAC of the uC is configured to output a buffer given in a circular manner, 
+ * in our case a sine wave to produce sound. A GPT (general purpose timer) is used to trigger
+ * the DAC. Each time the DAC is triggered, it output the following value of the buffer.
+ * 
+ * By changing the interval of the GPT, we change the frequency of the sound.
+ * 
+ */
+
+/*
  * DAC test buffer (sine wave).
  */
 static const dacsample_t dac_buffer[DAC_BUFFER_SIZE2] = {
@@ -46,6 +55,8 @@ static DACConversionGroup dac_conversion;
 
 static uint8_t dac_state = STATE_STOPPED;
 
+/***************************INTERNAL FUNCTIONS************************************/
+
 /*
  * DAC error callback.
  */
@@ -56,6 +67,11 @@ static void error_cb(DACDriver *dacp, dacerror_t err) {
 
   chSysHalt("DAC failure");
 }
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
 
 void dac_start(void)  {
     dac_conversion.num_channels = 1U;
@@ -97,7 +113,5 @@ void dac_stop(void) {
 	dac_state = STATE_STOPPED;
 }
 
-
-
-
+/**************************END PUBLIC FUNCTIONS***********************************/
 

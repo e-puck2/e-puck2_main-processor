@@ -4,6 +4,10 @@
 #include <stdint.h>
 #include <hal.h>
 
+
+/**
+ * \brief Starts the Ir remote process.
+ */
 void ir_remote_start(void);
 
 /**

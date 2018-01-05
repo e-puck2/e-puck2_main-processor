@@ -17,18 +17,12 @@ static uint8_t toggle = 2;
 static uint8_t irCommand = 0;
 static BSEMAPHORE_DECL(command_received, true);
 
-uint8_t ir_remote_get_toggle(void) {
-	return toggle;
-}
+/***************************INTERNAL FUNCTIONS************************************/
 
-uint8_t ir_remote_get_address(void) {
-	return address;
-}
-
-uint8_t ir_remote_get_data(void) {
-	return data_ir;
-}
-
+ /**
+ * @brief   Callback called when an pulse on the IR receptor is detected
+ * 			Reads the order given if any
+ */
 static void gpt11cb(GPTDriver *gptp) {
 	(void)gptp;
 
@@ -104,6 +98,7 @@ static void gpt11cb(GPTDriver *gptp) {
 	}
 }
 
+//General Purpose Timer configuration	
 static const GPTConfig gpt11cfg = {
 	31250,		/* 31.25kHz timer clock.*/
 	gpt11cb,	/* Timer callback.*/
@@ -111,6 +106,9 @@ static const GPTConfig gpt11cfg = {
 	0
 };
 
+ /**
+ * @brief  	Thread which interpretes the order received and executes it
+ */
 static THD_FUNCTION(remote_motion_thd, arg)
 {
     (void) arg;
@@ -180,6 +178,10 @@ static THD_FUNCTION(remote_motion_thd, arg)
 
 }
 
+ /**
+ * @brief  	Thread which looks for an EXTI_EVENT_IR_REMOTE_INT and 
+ * 			if one occurs, lauches a timer to begin to read the order
+ */
 static THD_FUNCTION(remote_cmd_recv_thd, arg)
 {
     (void) arg;
@@ -208,6 +210,11 @@ static THD_FUNCTION(remote_cmd_recv_thd, arg)
     }
 }
 
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
+
 void ir_remote_start(void) {
 	irWaitCmd = 1;
 	gptStart(&GPTD11, &gpt11cfg);
@@ -218,3 +225,17 @@ void ir_remote_start(void) {
 	static THD_WORKING_AREA(remote_cmd_recv_thd_wa, 128);
 	chThdCreateStatic(remote_cmd_recv_thd_wa, sizeof(remote_cmd_recv_thd_wa), NORMALPRIO, remote_cmd_recv_thd, NULL);
 }
+
+uint8_t ir_remote_get_toggle(void) {
+	return toggle;
+}
+
+uint8_t ir_remote_get_address(void) {
+	return address;
+}
+
+uint8_t ir_remote_get_data(void) {
+	return data_ir;
+}
+
+/**************************END PUBLIC FUNCTIONS***********************************/

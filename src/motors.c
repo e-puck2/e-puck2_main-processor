@@ -3,7 +3,11 @@
 #include "motors.h"
 #include "leds.h"
 
+#define MOTOR_TIMER_FREQ 100000 // [Hz]
+#define THRESV 650 // This is the speed under which the power save feature is active.
+
 static const uint8_t step_halt[4] = {0, 0, 0, 0};
+//table of the differents steps of to control the motors
 static const uint8_t step_table[8][4] = {
     {1, 0, 1, 0},
 	{0, 0, 1, 0},
@@ -15,9 +19,31 @@ static const uint8_t step_table[8][4] = {
 	{1, 0, 0, 0},
 };
 
+struct stepper_motor_s {
+    enum {
+        HALT=0,
+        FORWARD=1,
+        BACKWARD=2
+    } direction;
+    uint8_t step_index;
+    int32_t count;
+    void (*update)(const uint8_t *out);
+    void (*enable_power_save)(void);
+    void (*disable_power_save)(void);
+    PWMDriver *timer;
+};
+
 struct stepper_motor_s right_motor;
 struct stepper_motor_s left_motor;
 
+/***************************INTERNAL FUNCTIONS************************************/
+
+ /**
+ * @brief   Updates the right motor state
+ *
+ * @param[in] out       pointer to the table containing the next state
+ *
+ */
 static void right_motor_update(const uint8_t *out)
 {
     /* right motor */
@@ -27,6 +53,12 @@ static void right_motor_update(const uint8_t *out)
     out[3] ? palSetPad(GPIOE, GPIOE_MOT_R_IN4) : palClearPad(GPIOE, GPIOE_MOT_R_IN4);
 }
 
+ /**
+ * @brief   Updates the left motor state
+ *
+ * @param[in] out       pointer to the table containing the next state
+ *
+ */
 static void left_motor_update(const uint8_t *out)
 {
     /* left motor */
@@ -36,6 +68,12 @@ static void left_motor_update(const uint8_t *out)
     out[3] ? palSetPad(GPIOE, GPIOE_MOT_L_IN4) : palClearPad(GPIOE, GPIOE_MOT_L_IN4);
 }
 
+ /**
+ * @brief   Callback that updates the state of the right motor
+ *
+ * @param[in] gptp       pointer of the PWM driver (not used)
+ *
+ */
 static void right_motor_timer_callback(PWMDriver *gptp)
 {
     (void) gptp;
@@ -55,6 +93,12 @@ static void right_motor_timer_callback(PWMDriver *gptp)
     }
 }
 
+ /**
+ * @brief   Callback that updates the state of the left motor
+ *
+ * @param[in] gptp       pointer of the PWM driver (not used)
+ *
+ */
 static void left_motor_timer_callback(PWMDriver *gptp)
 {
     (void) gptp;
@@ -74,6 +118,13 @@ static void left_motor_timer_callback(PWMDriver *gptp)
     }
 }
 
+ /**
+ * @brief   Callback that turns off the power of the right motor
+ *          after a certain time to save energy. Called if power_save is enabled
+ *
+ * @param[in] pwmp       pointer of the PWM driver (not used)
+ *
+ */
 static void right_motor_pwm_ch1_cb(PWMDriver *pwmp) {
 	(void)pwmp;
     palClearPad(GPIOE, GPIOE_MOT_R_IN1);
@@ -82,6 +133,13 @@ static void right_motor_pwm_ch1_cb(PWMDriver *pwmp) {
     palClearPad(GPIOE, GPIOE_MOT_R_IN4);
 }
 
+ /**
+ * @brief   Callback that turns off the power of the left motor
+ *          after a certain time to save energy. Called if power_save is enabled
+ *
+ * @param[in] pwmp       pointer of the PWM driver (not used)
+ *
+ */
 static void left_motor_pwm_ch1_cb(PWMDriver *pwmp) {
 	(void)pwmp;
     palClearPad(GPIOE, GPIOE_MOT_L_IN1);
@@ -90,24 +148,46 @@ static void left_motor_pwm_ch1_cb(PWMDriver *pwmp) {
     palClearPad(GPIOE, GPIOE_MOT_L_IN4);
 }
 
+ /**
+ * @brief   Enables the power save feature of the right motor
+ */
 void right_motor_enable_power_save(void) {
-    pwmEnableChannel(&PWMD3, 0, (pwmcnt_t) (MOTOR_TIMER_FREQ/THRESV)); // Enable channel 1 to set duty cycle for power save.
-	pwmEnableChannelNotification(&PWMD3, 0); // Channel 1 interrupt enable to handle motor shutdown.
+    //Enable channel 1 to set duty cycle for power save.
+    pwmEnableChannel(&PWMD3, 0, (pwmcnt_t) (MOTOR_TIMER_FREQ/THRESV)); 
+    //Channel 1 interrupt enable to handle motor shutdown.
+	pwmEnableChannelNotification(&PWMD3, 0); 
 }
 
+ /**
+ * @brief   Enables the power save feature of the left motor
+ */
 void left_motor_enable_power_save(void) {
-    pwmEnableChannel(&PWMD4, 0, (pwmcnt_t) (MOTOR_TIMER_FREQ/THRESV)); // Enable channel 1 to set duty cycle for power save.
-	pwmEnableChannelNotification(&PWMD4, 0); // Channel 1 interrupt enable to handle motor shutdown.
+    //Enable channel 1 to set duty cycle for power save.
+    pwmEnableChannel(&PWMD4, 0, (pwmcnt_t) (MOTOR_TIMER_FREQ/THRESV)); 
+    //Channel 1 interrupt enable to handle motor shutdown.
+	pwmEnableChannelNotification(&PWMD4, 0); 
 }
 
+ /**
+ * @brief   Disables the power save feature of the right motor
+ */
 void right_motor_disable_power_save(void) {
 	pwmDisableChannel(&PWMD3, 0);
 }
 
+ /**
+ * @brief   Disables the power save feature of the left motor
+ */
 void left_motor_disable_power_save(void) {
 	pwmDisableChannel(&PWMD4, 0);
 }
 
+ /**
+ * @brief   Sets the speed of the chosen motor
+ * 
+ * @param m         pointer to the motor. See stepper_motor_s
+ * @param speed     speed desired in step/s
+ */
 void motor_set_speed(struct stepper_motor_s *m, int speed)
 {
     /* limit motor speed */
@@ -141,6 +221,11 @@ void motor_set_speed(struct stepper_motor_s *m, int speed)
     /* change motor step interval */
     pwmChangePeriod(m->timer, interval);
 }
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
 
 void right_motor_set_speed(int speed) {
 	motor_set_speed(&right_motor, speed);
@@ -215,3 +300,5 @@ void motors_init(void)
     pwmEnablePeriodicNotification(&PWMD4); // PWM general interrupt at the beginning of the period to handle motor steps.
 
 }
+
+/**************************END PUBLIC FUNCTIONS***********************************/

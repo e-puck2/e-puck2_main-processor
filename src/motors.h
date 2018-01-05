@@ -4,33 +4,39 @@
 #include <stdint.h>
 #include <hal.h>
 
-#define MOTOR_TIMER_FREQ 100000 // [Hz]
-#define MOTOR_SPEED_LIMIT 2200 // [steps/s]
-#define THRESV 650 // This the speed under which the power save feature is active.
+#define MOTOR_SPEED_LIMIT 2200 // [step/s]
 
-struct stepper_motor_s {
-    enum {
-        HALT=0,
-        FORWARD=1,
-        BACKWARD=2
-    } direction;
-    uint8_t step_index;
-    int32_t count;
-    void (*update)(const uint8_t *out);
-    void (*enable_power_save)(void);
-    void (*disable_power_save)(void);
-    PWMDriver *timer;
-};
-
-/** Set motor speed in steps per second. */
+ /**
+ * @brief   Sets the speed of the left motor
+ * 
+ * @param speed     speed desired in step/s
+ */
 void left_motor_set_speed(int speed);
+
+ /**
+ * @brief   Sets the speed of the right motor
+ * 
+ * @param speed     speed desired in step/s
+ */
 void right_motor_set_speed(int speed);
 
-/** Read motor position counter */
+ /**
+ * @brief   Reads the position counter of the left motor
+ * 
+ * @return          position counter of the left motor
+ */
 uint32_t left_motor_get_pos(void);
+
+ /**
+ * @brief   Reads the position counter of the right motor
+ * 
+ * @return          position counter of the right motor
+ */
 uint32_t right_motor_get_pos(void);
 
-/** Initialize motors */
+ /**
+ * @brief   Initializes the control of the motors.
+ */
 void motors_init(void);
 
 #endif /* MOTOR_H */

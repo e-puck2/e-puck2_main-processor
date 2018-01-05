@@ -21,6 +21,8 @@ typedef struct{
 	uint16_t length;
 }melody_t;
 
+thread_reference_t play_melody_ref = NULL;
+
 //Mario main theme melody
 static uint16_t mario_melody[] = {
   NOTE_E5, NOTE_E5, 0, NOTE_E5,
@@ -169,25 +171,58 @@ void play_note(uint16_t note, uint16_t duration_ms) {
 	dac_stop();
 }
 
+static THD_WORKING_AREA(waPlayMelodyThd, 128);
+static THD_FUNCTION(PlayMelodyThd, arg) {
+
+	(void)arg;
+
+	static melody_t* song = NULL;
+
+	while(1){
+		//this thread is wating until it receives a message
+		chSysLock();
+		song = (melody_t*) chThdSuspendS(&play_melody_ref);
+		chSysUnlock();
+
+		for (int thisNote = 0; thisNote < song->length; thisNote++) {
+
+			// to calculate the note duration, take one second
+			// divided by the note type.
+			//e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
+			uint16_t noteDuration = (uint16_t)(1000 / song->tempo[thisNote]);
+
+			play_note(song->notes[thisNote], noteDuration);
+
+			// to distinguish the notes, set a minimum time between them.
+			// the note's duration + 30% seems to work well:
+			uint16_t pauseBetweenNotes = (uint16_t)(noteDuration * 1.30);
+			chThdSleepMilliseconds(pauseBetweenNotes);
+
+		}
+	}
+
+	
+	
+}
+
+void play_melody_start(void){
+
+	//create the thread
+	chThdCreateStatic(waPlayMelodyThd, sizeof(waPlayMelodyThd), NORMALPRIO, PlayMelodyThd, NULL);
+}
 
 void play_melody(song_selection_t choice){
+
 	melody_t* song = &melody[choice];
 
-	for (int thisNote = 0; thisNote < song->length; thisNote++) {
-
-		// to calculate the note duration, take one second
-		// divided by the note type.
-		//e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
-		uint16_t noteDuration = (uint16_t)(1000 / song->tempo[thisNote]);
-
-		play_note(song->notes[thisNote], noteDuration);
-
-		// to distinguish the notes, set a minimum time between them.
-		// the note's duration + 30% seems to work well:
-		uint16_t pauseBetweenNotes = (uint16_t)(noteDuration * 1.30);
-		chThdSleepMilliseconds(pauseBetweenNotes);
-
+	//if the refercence is NULL, then the thread is already running
+	//when the refercence becomes not NULL, it means the thread is waiting
+	if(play_melody_ref != NULL){
+		//tell the thread to play the song given
+		chThdResume(&play_melody_ref, (msg_t) song);
 	}
+
+	
 }
 
 

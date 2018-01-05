@@ -13,6 +13,7 @@
 #include "aseba_vm/aseba_can_interface.h"
 #include "aseba_vm/aseba_bridge.h"
 #include "audio/audio_thread.h"
+#include "audio/play_melody.h"
 #include "audio/microphone.h"
 #include "camera/po8030.h"
 #include "epuck1x/Asercom.h"
@@ -223,6 +224,7 @@ int main(void)
 	serial_start();
 	mic_start();
 	sdc_start();
+	play_melody_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

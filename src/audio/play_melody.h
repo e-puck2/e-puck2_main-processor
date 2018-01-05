@@ -108,6 +108,7 @@ taken at https://www.princetronics.com/supermariothemesong/
 #define NOTE_D8  4699
 #define NOTE_DS8 4978
 
+//available songs
 typedef enum{
 	MARIO = 0,
 	UNDERWORLD,
@@ -116,20 +117,27 @@ typedef enum{
 }song_selection_t;
 
 /**
- * @brief play a note during a given time
+ * @brief Starts the play_melody module
+ * 				
+ */
+void play_melody_start(void);
+
+/**
+ * @brief Plays the selected melody. Does nothing if the module has not been started with start_play_start()
+ * 						This function doesn't block the current thread. It uses it's self thread
+ *
+ * @param choice 		Song selectec (see song_selection_t)
+ * 				
+ */
+void play_melody(song_selection_t choice);
+
+/**
+ * @brief Plays a note during a given time. This function blocks the calling thread during its execution
  *
  * @param note 			Note to play (Hz)
  * @param duration_ms	Duration of the note (ms)
  * 					
  */
 void play_note(uint16_t note, uint16_t duration_ms);
-
-/**
- * @brief play the selected melody
- *
- * @param choice 		Song selectec (see song_selection_t)
- * 				
- */
-void play_melody(song_selection_t choice);
 
 #endif /* PLAY_MELODY_H */

@@ -6,6 +6,7 @@
 #define IR_RECEIVER
 
 #include "../main.h"
+#include "../audio/play_melody.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -971,11 +972,11 @@ int run_asercom(void) {
                             first = 1;
                         }
                         switch (sound) {
-                            case 1: e_play_sound(0, 2112);
+                            case 1: play_melody(MARIO);//e_play_sound(0, 2112);
                                 break;
-                            case 2: e_play_sound(2116, 1760);
+                            case 2: play_melody(UNDERWORLD);//e_play_sound(2116, 1760);
                                 break;
-                            case 3: e_play_sound(3878, 3412);
+                            case 3: play_melody(STARWARS);//e_play_sound(3878, 3412);
                                 break;
                             case 4: e_play_sound(7294, 3732);
                                 break;

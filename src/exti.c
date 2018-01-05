@@ -4,6 +4,12 @@
 
 event_source_t exti_events;
 
+/***************************INTERNAL FUNCTIONS************************************/
+
+ /**
+ * @brief   Callback called when an exti occurs.
+ *          Broadcasts on the exti_events the flag triggered
+ */
 static void gpio_exti_callback(EXTDriver *extp, expchannel_t channel)
 {
     (void)extp;
@@ -18,6 +24,7 @@ static void gpio_exti_callback(EXTDriver *extp, expchannel_t channel)
     }
 }
 
+//Exti configuration
 static const EXTConfig extcfg = {
     {
         {EXT_CH_MODE_DISABLED, NULL},
@@ -46,7 +53,14 @@ static const EXTConfig extcfg = {
     }
 };
 
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
+
 void exti_start(void) {
 	chEvtObjectInit(&exti_events);
 	extStart(&EXTD1, &extcfg);
 }
+
+/**************************END PUBLIC FUNCTIONS***********************************/

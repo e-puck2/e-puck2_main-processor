@@ -83,7 +83,7 @@ int8_t po8030_config(format_t fmt, image_size_t imgsize);
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
 int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1, 
@@ -97,7 +97,7 @@ int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1,
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  * @retval others        see in the implementation for details
  *
  */
@@ -110,7 +110,7 @@ int8_t po8030_set_brightness(uint8_t value);
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
 int8_t po8030_set_contrast(uint8_t value);
@@ -123,7 +123,7 @@ int8_t po8030_set_contrast(uint8_t value);
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
 int8_t po8030_set_mirror(uint8_t vertical, uint8_t horizontal);
@@ -135,7 +135,7 @@ int8_t po8030_set_mirror(uint8_t vertical, uint8_t horizontal);
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
 int8_t po8030_set_awb(uint8_t awb);
@@ -153,7 +153,7 @@ int8_t po8030_set_awb(uint8_t awb);
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
 int8_t po8030_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b);
@@ -165,7 +165,7 @@ int8_t po8030_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b);
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
 int8_t po8030_set_ae(uint8_t ae);
@@ -179,7 +179,7 @@ int8_t po8030_set_ae(uint8_t ae);
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
 int8_t po8030_set_exposure(uint16_t integral, uint8_t fractional);

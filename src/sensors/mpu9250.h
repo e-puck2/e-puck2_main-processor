@@ -23,8 +23,35 @@
 #define MPU60X0_LOW_PASS_FILTER_5           (5 << 16) // acc: BW= 10Hz, delay=13.8ms, Fs=1kHz gyro: BW= 10Hz, delay=13.4ms, Fs=1kHz
 #define MPU60X0_LOW_PASS_FILTER_6           (6 << 16) // acc: BW=  5Hz, delay=19.0ms, Fs=1kHz gyro: BW=  5Hz, delay=18.6ms, Fs=1kHz
 
+
+ /**
+ * @brief   Setup of the mpu9250
+ * 
+ * @param config		Config options. Oring them is possible. See mpu60X0_setup() config options
+ * 
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
+ */
 int8_t mpu9250_setup(int config);
+
+ /**
+ * @brief   Perfoms a ping test
+ * 
+ * @return              1 if OK, 0 if not.
+ */
 bool mpu9250_ping(void);
+
+ /**
+ * @brief   Gets the last measures from the sensor
+ * 
+ * @param gyro		pointer to a buffer of at least a size of 3 elements to store the gyro measure [m/s^2]
+ * @param acc		pointer to a buffer of at least a size of 3 elements to store the acc measure [rad/s]
+ * @param temp		pointer to store the temperature measure
+ * @param gyro_raw	pointer to a buffer of at least a size of 3 elements to store the gyro raw measure
+ * @param acc_raw	pointer to a buffer of at least a size of 3 elements to store the acc raw measure
+ * @param status	pointer to store the interrupt status of the sensor
+ */
 void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status);
 
 #endif // MPU9250_H

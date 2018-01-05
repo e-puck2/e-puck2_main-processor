@@ -8,6 +8,42 @@
 
 static uint32_t imuConfig;
 
+/***************************INTERNAL FUNCTIONS************************************/
+
+ /**
+ * @brief   reads the id of the sensor
+ * 
+ * @param id            pointer to store the id of the sensor
+ * 
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
+ */
+int8_t mpu9250_read_id(uint8_t *id) {
+    int8_t err = 0;
+    if((err = read_reg(MPU9250_ADDRESS, WHO_AM_I_MPU9250, id)) != MSG_OK) {
+        return err;
+    }
+    return MSG_OK;
+}
+
+ /**
+ * @brief   reads a 16bit word from an 8bit buffer
+ * 
+ * @param buf           buffer to read
+ * 
+ * @return              The 16bit word read
+ */
+static int32_t read_word(const uint8_t *buf) // signed int16
+{
+    return (int16_t)((int8_t)buf[0]) << 8 | buf[1];
+}
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
+
 int8_t mpu9250_setup(int config) {
 	int8_t err = 0;
 	uint8_t regValue = 0;
@@ -59,23 +95,10 @@ int8_t mpu9250_setup(int config) {
 	
 }
 
-int8_t mpu9250_read_id(uint8_t *id) {
-	int8_t err = 0;
-    if((err = read_reg(MPU9250_ADDRESS, WHO_AM_I_MPU9250, id)) != MSG_OK) {
-        return err;
-    }
-    return MSG_OK;
-}
-
 bool mpu9250_ping(void) {
 	uint8_t id = 0;
 	mpu9250_read_id(&id);
 	return id == 0x68;
-}
-
-static int32_t read_word(const uint8_t *buf) // signed int16
-{
-    return (int16_t)((int8_t)buf[0]) << 8 | buf[1];
 }
 
 void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status) {
@@ -113,5 +136,5 @@ void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16
     }
 }
 
-
+/**************************END PUBLIC FUNCTIONS***********************************/
 

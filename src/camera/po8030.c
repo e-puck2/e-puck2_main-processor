@@ -4,54 +4,95 @@
 #include "usbcfg.h"
 #include "chprintf.h"
 
+#define PO8030_ADDR 0x6E
+
+// Shared registers
+#define REG_DEVICE_ID_H 0x00
+#define REG_DEVICE_ID_L 0x01
+#define REG_BANK 0x3
+#define BANK_A 0x0
+#define BANK_B 0x1
+#define BANK_C 0x2
+#define BANK_D 0x3
+// Bank A registers
+#define PO8030_REG_FRAMEWIDTH_H 0x04
+#define PO8030_REG_FRAMEWIDTH_L 0x05
+#define PO8030_REG_FRAMEHEIGHT_H 0x06
+#define PO8030_REG_FRAMEHEIGHT_L 0x07
+#define PO8030_REG_WINDOWX1_H 0x08
+#define PO8030_REG_WINDOWX1_L 0x09
+#define PO8030_REG_WINDOWY1_H 0x0A
+#define PO8030_REG_WINDOWY1_L 0x0B
+#define PO8030_REG_WINDOWX2_H 0x0C
+#define PO8030_REG_WINDOWX2_L 0x0D
+#define PO8030_REG_WINDOWY2_H 0x0E
+#define PO8030_REG_WINDOWY2_L 0x0F
+#define PO8030_REG_VSYNCSTARTROW_H 0x10
+#define PO8030_REG_VSYNCSTARTROW_L 0x11
+#define PO8030_REG_VSYNCSTOPROW_H 0x12
+#define PO8030_REG_VSYNCSTOPROW_L 0x13
+#define PO8030_REG_INTTIME_H 0x17
+#define PO8030_REG_INTTIME_M 0x18
+#define PO8030_REG_INTTIME_L 0x19
+#define PO8030_REG_WB_RGAIN 0x23
+#define PO8030_REG_WB_GGAIN 0x24
+#define PO8030_REG_WB_BGAIN 0x25
+#define PO8030_REG_AUTO_FWX1_H 0x35
+#define PO8030_REG_AUTO_FWX1_L 0x36
+#define PO8030_REG_AUTO_FWX2_H 0x37
+#define PO8030_REG_AUTO_FWX2_L 0x38
+#define PO8030_REG_AUTO_FWY1_H 0x39
+#define PO8030_REG_AUTO_FWY1_L 0x3A
+#define PO8030_REG_AUTO_FWY2_H 0x3B
+#define PO8030_REG_AUTO_FWY2_L 0x3C
+#define PO8030_REG_AUTO_CWX1_H 0x3D
+#define PO8030_REG_AUTO_CWX1_L 0x3E
+#define PO8030_REG_AUTO_CWX2_H 0x3F
+#define PO8030_REG_AUTO_CWX2_L 0x40
+#define PO8030_REG_AUTO_CWY1_H 0x41
+#define PO8030_REG_AUTO_CWY1_L 0x42
+#define PO8030_REG_AUTO_CWY2_H 0x43
+#define PO8030_REG_AUTO_CWY2_L 0x44
+#define PO8030_REG_PAD_CONTROL 0x5B
+#define PO8030_REG_SOFTRESET 0x69
+#define PO8030_REG_CLKDIV 0x6A
+#define PO8030_REG_BAYER_CONTROL_01 0x6C // Vertical/horizontal mirror.
+// Bank B registers
+#define PO8030_REG_ISP_FUNC_2 0x06 // Embossing, sketch, proximity.
+#define PO8030_REG_FORMAT 0x4E
+#define PO8030_REG_SKETCH_OFFSET 0x8F
+#define PO8030_REG_SCALE_X 0x93
+#define PO8030_REG_SCALE_Y 0x94
+#define PO8030_REG_SCALE_TH_H 0x95
+#define PO8030_REG_SCALE_TH_L 0x96
+#define PO8030_REG_CONTRAST 0x9D
+#define PO8030_REG_BRIGHTNESS 0x9E
+#define PO8030_REG_SYNC_CONTROL0 0xB7
+// Bank C registers
+#define PO8030_REG_AUTO_CONTROL_1 0x04 // AutoWhiteBalance, AutoExposure.
+#define PO8030_REG_EXPOSURE_T 0x12
+#define PO8030_REG_EXPOSURE_H 0x13
+#define PO8030_REG_EXPOSURE_M 0x14
+#define PO8030_REG_EXPOSURE_L 0x15
+#define PO8030_REG_SATURATION 0x2C
+
 static struct po8030_configuration po8030_conf;
 
-/**********************************************************************/
 static format_t currFormat = FORMAT_YCBYCR;
 static subsampling_t currSubsamplingX = SUBSAMPLING_X1;
 static subsampling_t currSubsamplingY = SUBSAMPLING_X1;
-// Utility functions used with the shell.
-void po8030_save_current_format(format_t fmt) {
-	currFormat = fmt;
-}
 
-format_t po8030_get_saved_format(void) {
-	return currFormat;
-}
-
-void po8030_save_current_subsampling(subsampling_t x, subsampling_t y) {
-	currSubsamplingX = x;
-	currSubsamplingY = y;
-}
-
-subsampling_t po8030_get_saved_subsampling_x(void) {
-	return currSubsamplingX;
-}
-
-subsampling_t po8030_get_saved_subsampling_y(void) {
-	return currSubsamplingY;
-}
-/**********************************************************************/
-
-void po8030_start(void) {
-    /* timer init */
-    static const PWMConfig pwmcfg_cam = {
-        .frequency = 42000000,
-        .period = 0x02,
-        .cr2 = 0,
-        .callback = NULL,
-        .channels = {
-            // Channel 1 is used as master clock for the camera.
-            {.mode = PWM_OUTPUT_ACTIVE_HIGH, .callback = NULL},
-            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
-            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
-            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
-        },
-    };
-    pwmStart(&PWMD5, &pwmcfg_cam);
-    pwmEnableChannel(&PWMD5, 0, 1); // Enable channel 1 to clock the camera.
-}
-
+/***************************INTERNAL FUNCTIONS************************************/
+ /**
+ * @brief   Reads the id of the camera
+ *
+ * @param[out] id     pointer to store the value
+ * 
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ *
+ */
 int8_t po8030_read_id(uint16_t *id) {
     uint8_t regValue[2] = {0};
     int8_t err = 0;
@@ -67,10 +108,30 @@ int8_t po8030_read_id(uint16_t *id) {
     return MSG_OK;
 }
 
+ /**
+ * @brief   Sets the bank of the camera.
+ *
+ * @param[in] id     bank
+ * 
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ *
+ */
 int8_t po8030_set_bank(uint8_t bank) {
     return write_reg(PO8030_ADDR, REG_BANK, bank);
 }
 
+ /**
+ * @brief   Sets the format of the camera
+ *
+ * @param[in] fmt     format chosen. See format_t
+ * 
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ *
+ */
 int8_t po8030_set_format(format_t fmt) {
     int8_t err = 0;
 
@@ -109,6 +170,14 @@ int8_t po8030_set_format(format_t fmt) {
     return MSG_OK;
 }
 
+ /**
+ * @brief   Sets the camera to work in VGA
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ *
+ */
 int8_t po8030_set_vga(void) {
     int8_t err = 0;
 
@@ -210,6 +279,14 @@ int8_t po8030_set_vga(void) {
     return MSG_OK;
 }
 
+ /**
+ * @brief   Sets the camera to work in QVGA
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ *
+ */
 int8_t po8030_set_qvga(void) {
     int8_t err = 0;
 
@@ -311,6 +388,14 @@ int8_t po8030_set_qvga(void) {
     return MSG_OK;
 }
 
+ /**
+ * @brief   Sets the camera to work in QQVGA
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+ *
+ */
 int8_t po8030_set_qqvga(void) {
     int8_t err = 0;
 
@@ -412,6 +497,16 @@ int8_t po8030_set_qqvga(void) {
     return MSG_OK;
 }
 
+ /**
+ * @brief   Sets the size of the image wanted
+ * 
+ * @param imgsize       size wanted. See image_size_t
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ *
+ */
 int8_t po8030_set_size(image_size_t imgsize) {
     if(imgsize == SIZE_VGA) {
         return po8030_set_vga();
@@ -424,8 +519,18 @@ int8_t po8030_set_size(image_size_t imgsize) {
 	}
 }
 
+ /**
+ * @brief   Scales buffer size depending on both format and size
+ * 
+ * @param fmt           format of the image. See format_t
+ * @param imgsize       size of the image. See image_size_t
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
+ *
+ */
 int8_t po8030_set_scale_buffer_size(format_t fmt, image_size_t imgsize) {
-    // Scale buffer size depends on both format and size
     int8_t err = 0;
 
     if((err = po8030_set_bank(BANK_B)) != MSG_OK) {
@@ -495,6 +600,31 @@ int8_t po8030_set_scale_buffer_size(format_t fmt, image_size_t imgsize) {
     return MSG_OK;
 }
 
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
+
+void po8030_start(void) {
+    /* timer init */
+    static const PWMConfig pwmcfg_cam = {
+        .frequency = 42000000,  //42MHz
+        .period = 0x02,         //PWM period = 42MHz/2 => 21MHz
+        .cr2 = 0,
+        .callback = NULL,
+        .channels = {
+            // Channel 1 is used as master clock for the camera.
+            {.mode = PWM_OUTPUT_ACTIVE_HIGH, .callback = NULL},
+            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
+            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
+            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
+        },
+    };
+    pwmStart(&PWMD5, &pwmcfg_cam);
+    // Enables channel 1 to clock the camera.
+    pwmEnableChannel(&PWMD5, 0, 1); //1 is half the period set => duty cycle = 50%
+}
+
 int8_t po8030_config(format_t fmt, image_size_t imgsize) {
 
     int8_t err = 0;
@@ -521,7 +651,9 @@ int8_t po8030_config(format_t fmt, image_size_t imgsize) {
     return MSG_OK;
 }
 
-int8_t po8030_advanced_config(format_t fmt, unsigned int x1, unsigned int y1, unsigned int width, unsigned int height, subsampling_t subsampling_x, subsampling_t subsampling_y) {
+int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1, 
+                                unsigned int width, unsigned int height, 
+                                subsampling_t subsampling_x, subsampling_t subsampling_y) {
     int8_t err = 0;
 	unsigned int x2 = x1 + width - 1;
 	unsigned int y2 = y1 + height - 1;
@@ -738,92 +870,91 @@ int8_t po8030_advanced_config(format_t fmt, unsigned int x1, unsigned int y1, un
     return MSG_OK;
 }
 
-
-/*! Set brightness.
+/*! Sets brightness.
  * \param value Brightness => [7]:[6:0] = Sign:Magnitude: luminance = Y*contrast + brightness. Default=0, max=127, min=-128.
  */
 int8_t po8030_set_brightness(uint8_t value) {
-	int8_t err = 0;
+    int8_t err = 0;
     if((err = po8030_set_bank(BANK_B)) != MSG_OK) {
         return err;
     }
-	return write_reg(PO8030_ADDR, PO8030_REG_BRIGHTNESS, value);
+    return write_reg(PO8030_ADDR, PO8030_REG_BRIGHTNESS, value);
 }
 
-/*! Set contrast.
+/*! Sets contrast.
  * \param value Contrast => [7:0] = Magnitude: luminance = Y*contrast + brightness. Default=64, max=255, min=0.
  */
 int8_t po8030_set_contrast(uint8_t value) {
-	int8_t err = 0;
+    int8_t err = 0;
     if((err = po8030_set_bank(BANK_B)) != MSG_OK) {
         return err;
     }
-	return write_reg(PO8030_ADDR, PO8030_REG_CONTRAST, value);
+    return write_reg(PO8030_ADDR, PO8030_REG_CONTRAST, value);
 }
 
-/*! Set mirroring for both vertical and horizontal orientations.
+/*! Sets mirroring for both vertical and horizontal orientations.
  * \param vertical: 1 to enable vertical mirroring
  * \param horizontal: 1 to enable horizontal mirroring
  */
 int8_t po8030_set_mirror(uint8_t vertical, uint8_t horizontal) {
-	int8_t err = 0;
-	uint8_t value = 0;
-	
+    int8_t err = 0;
+    uint8_t value = 0;
+    
     if((err = po8030_set_bank(BANK_A)) != MSG_OK) {
         return err;
     }
-	
-	if(vertical == 1) {
-		value |= 0x80;
-	}
-	if(horizontal == 1) {
-		value |= 0x40;
-	}
-	
-	return write_reg(PO8030_ADDR, PO8030_REG_BAYER_CONTROL_01, value);
+    
+    if(vertical == 1) {
+        value |= 0x80;
+    }
+    if(horizontal == 1) {
+        value |= 0x40;
+    }
+    
+    return write_reg(PO8030_ADDR, PO8030_REG_BAYER_CONTROL_01, value);
 }
 
 /*! Enable/disable auto white balance.
  * \param awb: 1 to enable auto white balance.
  */
 int8_t po8030_set_awb(uint8_t awb) {
-	int8_t err = 0;
-	uint8_t value = 0;
-	
+    int8_t err = 0;
+    uint8_t value = 0;
+    
     if((err = po8030_set_bank(BANK_C)) != MSG_OK) {
         return err;
     }
-	
-	if((err = read_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, &value)) != MSG_OK) {
+    
+    if((err = read_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, &value)) != MSG_OK) {
         return err;
     }
-	
-	if(awb == 1) {
-		value &= ~0x04;
-	} else {
-		value |= 0x04;
-	}
-	
-	return write_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, value);
+    
+    if(awb == 1) {
+        value &= ~0x04;
+    } else {
+        value |= 0x04;
+    }
+    
+    return write_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, value);
 }
 
-/*! Set white balance red, green, blue gain. 
- *	These values are considered only when auto white balance is disabled, so this function also disables auto white balance.
+/*! Sets white balance red, green, blue gain. 
+ *  These values are considered only when auto white balance is disabled, so this function also disables auto white balance.
  * \param r: red gain: bit7=x2, bit6=x1, bit5=1/2, bit4=1/4, bit3=1/8, bit2=1/16, bit1=1/32, bit0=1/64. Default is 0x5E.
  * \param g: green gain: bit7=x2, bit6=x1, bit5=1/2, bit4=1/4, bit3=1/8, bit2=1/16, bit1=1/32, bit0=1/64. Default is 0x40.
  * \param b: blue gain: bit7=x2, bit6=x1, bit5=1/2, bit4=1/4, bit3=1/8, bit2=1/16, bit1=1/32, bit0=1/64. Default is 0x5D.
  */
 int8_t po8030_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
-	int8_t err = 0;
-	
-	if((err = po8030_set_awb(0)) != MSG_OK) {
+    int8_t err = 0;
+    
+    if((err = po8030_set_awb(0)) != MSG_OK) {
         return err;
     }
-	
+    
     if((err = po8030_set_bank(BANK_A)) != MSG_OK) {
         return err;
     }
-	
+    
     if((err = write_reg(PO8030_ADDR, PO8030_REG_WB_RGAIN, r)) != MSG_OK) {
         return err;
     }
@@ -832,51 +963,51 @@ int8_t po8030_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
     }
     if((err = write_reg(PO8030_ADDR, PO8030_REG_WB_BGAIN, b)) != MSG_OK) {
         return err;
-    }	
+    }   
 
-	return MSG_OK;
+    return MSG_OK;
 }
 
-/*! Enable/disable auto exposure.
+/*! Enables/disables auto exposure.
  * \param ae: 1 to enable auto exposure.
  */
 int8_t po8030_set_ae(uint8_t ae) {
-	int8_t err = 0;
-	uint8_t value = 0;
-	
+    int8_t err = 0;
+    uint8_t value = 0;
+    
     if((err = po8030_set_bank(BANK_C)) != MSG_OK) {
         return err;
     }
-	
-	if((err = read_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, &value)) != MSG_OK) {
+    
+    if((err = read_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, &value)) != MSG_OK) {
         return err;
     }
-	
-	if(ae == 1) {
-		value &= ~0x03;
-	} else {
-		value |= 0x03;
-	}
-	
-	return write_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, value);
+    
+    if(ae == 1) {
+        value &= ~0x03;
+    } else {
+        value |= 0x03;
+    }
+    
+    return write_reg(PO8030_ADDR, PO8030_REG_AUTO_CONTROL_1, value);
 }
 
-/*!	Set integration time. Total integration time is: (integral + fractional/256) line time. 
- *	These values are considered only when auto exposure is disabled, so this function also disables auto exposure.
+/*! Sets integration time. Total integration time is: (integral + fractional/256) line time. 
+ *  These values are considered only when auto exposure is disabled, so this function also disables auto exposure.
  * \param integral: unit is line time. Default is 0x0080 (128).
  * \param fractional: unit is 1/256 line time. Default is 0x00 (0).
  */
 int8_t po8030_set_exposure(uint16_t integral, uint8_t fractional) {
-	int8_t err = 0;
-	
-	if((err = po8030_set_ae(0)) != MSG_OK) {
+    int8_t err = 0;
+    
+    if((err = po8030_set_ae(0)) != MSG_OK) {
         return err;
     }
-	
+    
     if((err = po8030_set_bank(BANK_A)) != MSG_OK) {
         return err;
     }
-	
+    
     if((err = write_reg(PO8030_ADDR, PO8030_REG_INTTIME_H, (integral>>8))) != MSG_OK) {
         return err;
     }
@@ -886,19 +1017,42 @@ int8_t po8030_set_exposure(uint16_t integral, uint8_t fractional) {
     if((err = write_reg(PO8030_ADDR, PO8030_REG_INTTIME_L, fractional)) != MSG_OK) {
         return err;
     }
-	
-	return MSG_OK;
+    
+    return MSG_OK;
 }
 
-/*!	Return the current image size in bytes.
+/*! Returns the current image size in bytes.
  */
 uint32_t po8030_get_image_size(void) {
-	if(po8030_conf.curr_format == FORMAT_YYYY) {
-		return (uint32_t)po8030_conf.width * (uint32_t)po8030_conf.height;
-	} else {
-		return (uint32_t)po8030_conf.width * (uint32_t)po8030_conf.height * 2;
-	}
+    if(po8030_conf.curr_format == FORMAT_YYYY) {
+        return (uint32_t)po8030_conf.width * (uint32_t)po8030_conf.height;
+    } else {
+        return (uint32_t)po8030_conf.width * (uint32_t)po8030_conf.height * 2;
+    }
+}
+
+void po8030_save_current_format(format_t fmt) {
+    currFormat = fmt;
+}
+
+format_t po8030_get_saved_format(void) {
+    return currFormat;
+}
+
+void po8030_save_current_subsampling(subsampling_t x, subsampling_t y) {
+    currSubsamplingX = x;
+    currSubsamplingY = y;
+}
+
+subsampling_t po8030_get_saved_subsampling_x(void) {
+    return currSubsamplingX;
+}
+
+subsampling_t po8030_get_saved_subsampling_y(void) {
+    return currSubsamplingY;
 }
 
 
+
+/**************************END PUBLIC FUNCTIONS***********************************/
 

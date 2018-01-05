@@ -51,44 +51,17 @@ static uint8_t calibrationNumSamples = 0;
 static int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
 static proximity_msg_t prox_values;
 
-void calibrate_ir(void) {
-	calibrationState = 0;
-	calibrationInProgress = 1;
-	while(calibrationInProgress) {
-		chThdSleepMilliseconds(20);
-	}
-}
+/***************************INTERNAL FUNCTIONS************************************/
 
-int get_prox(unsigned int sensor_number) {
-	if (sensor_number > 7) {
-		return 0;
-	} else {
-		return prox_values.delta[sensor_number];
-	}
-}
-
-int get_calibrated_prox(unsigned int sensor_number) {
-	int temp;
-	if (sensor_number > 7) {
-		return 0;
-	} else {
-		temp = prox_values.delta[sensor_number] - prox_values.initValue[sensor_number];
-		if (temp>0) {
-			return temp;
-		} else {
-			return 0;
-		}
-	}
-}
-
-int get_ambient_light(unsigned int sensor_number) {
-	if (sensor_number > 7) {
-		return 0;
-	} else {
-		return prox_values.ambient[sensor_number];
-	}
-}
-
+ /**
+ * @brief   Calback called after an the ADC completes a measure.
+ * 			Averages an copies the measure.
+ * 
+ * @param adcp		ADC pointer (not used)
+ * @param samples	pointer to the buffer containing the samples
+ * @param n			size of the buffer
+ * 
+ */
 static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n)
 {
     (void) adcp;
@@ -112,9 +85,11 @@ static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n)
     pulseSeqState = 1; // Sync with the timer since the first time we get here the ADC and timer could be desync.
 }
 
+//configuration of the ADC
 static const ADCConversionGroup adcgrpcfg2 = {
     .circular = true,
-    .num_channels = PROXIMITY_NB_CHANNELS*2, // Both ambient and reflected measures are saved before raising the DMA interrupt (and call the adc callback).
+    // Both ambient and reflected measures are saved before raising the DMA interrupt (and call the adc callback).
+    .num_channels = PROXIMITY_NB_CHANNELS*2, 
     .end_cb = adc_cb,
     .error_cb = NULL,
 
@@ -177,6 +152,9 @@ static const ADCConversionGroup adcgrpcfg2 = {
 			ADC_SQR1_NUM_CH(PROXIMITY_NB_CHANNELS*2)
 };
 
+ /**
+ * @brief   Thread which updates the measures and publishes them
+ */
 static THD_FUNCTION(proximity_thd, arg)
 {
     (void) arg;
@@ -243,6 +221,13 @@ static THD_FUNCTION(proximity_thd, arg)
     }
 }
 
+ /**
+ * @brief   Calback called before each seuquence of ADC measurement to prepare the 
+ * 			power pulse of the proximity sensors
+ * 
+ * @param pwmp		PWM pointer (not used)
+ * 
+ */
 static void pwm_reset_cb(PWMDriver *pwmp) {
 	(void)pwmp;
 	switch(pulseSeqState) {
@@ -279,6 +264,13 @@ static void pwm_reset_cb(PWMDriver *pwmp) {
 	}
 }
 
+ /**
+ * @brief   Calback called after each seuquence of ADC measurement to turn off
+ * 			the power of the proximity sensors
+ * 
+ * @param pwmp		PWM pointer (not used)
+ * 
+ */
 static void pwm_ch1_cb(PWMDriver *pwmp) {
 	(void)pwmp;
 	// Clear all the pulse independently of the one that is actually active.
@@ -287,6 +279,11 @@ static void pwm_ch1_cb(PWMDriver *pwmp) {
 	palClearPad(GPIOE, GPIOE_PULSE_2);
 	palClearPad(GPIOE, GPIOE_PULSE_3);
 }
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
 
 void proximity_start(void)
 {
@@ -310,12 +307,13 @@ void proximity_start(void)
 	
     adcStart(&ADCD2, NULL);
     adcAcquireBus(&ADCD2);
-    adcStartConversion(&ADCD2, &adcgrpcfg2, adc2_proximity_samples, DMA_BUFFER_SIZE); // ADC waiting for the trigger from the timer.
+    // ADC waiting for the trigger from the timer.
+    adcStartConversion(&ADCD2, &adcgrpcfg2, adc2_proximity_samples, DMA_BUFFER_SIZE); 
 
     /* Init PWM */
     pwmStart(&PWMD2, &pwmcfg_proximity);
-
-    pwmEnableChannel(&PWMD2, 0, (pwmcnt_t) (PWM_CYCLE * TCRT1000_DC)); // Enable channel 1 to set duty cycle for TCRT1000 drivers.
+	// Enable channel 1 to set duty cycle for TCRT1000 drivers.
+    pwmEnableChannel(&PWMD2, 0, (pwmcnt_t) (PWM_CYCLE * TCRT1000_DC)); 
 	pwmEnableChannelNotification(&PWMD2, 0); // Channel 1 interrupt enable to handle pulse shutdown.
     pwmEnablePeriodicNotification(&PWMD2); // PWM general interrupt at the beginning of the period to handle pulse ignition.
     pwmEnableChannel(&PWMD2, 1, (pwmcnt_t) (PWM_CYCLE * ON_MEASUREMENT_POS)); // Enable channel 2 to trigger the measures.
@@ -325,4 +323,42 @@ void proximity_start(void)
 	
 }
 
+void calibrate_ir(void) {
+	calibrationState = 0;
+	calibrationInProgress = 1;
+	while(calibrationInProgress) {
+		chThdSleepMilliseconds(20);
+	}
+}
 
+int get_prox(unsigned int sensor_number) {
+	if (sensor_number > 7) {
+		return 0;
+	} else {
+		return prox_values.delta[sensor_number];
+	}
+}
+
+int get_calibrated_prox(unsigned int sensor_number) {
+	int temp;
+	if (sensor_number > 7) {
+		return 0;
+	} else {
+		temp = prox_values.delta[sensor_number] - prox_values.initValue[sensor_number];
+		if (temp>0) {
+			return temp;
+		} else {
+			return 0;
+		}
+	}
+}
+
+int get_ambient_light(unsigned int sensor_number) {
+	if (sensor_number > 7) {
+		return 0;
+	} else {
+		return prox_values.ambient[sensor_number];
+	}
+}
+
+/**************************END PUBLIC FUNCTIONS***********************************/

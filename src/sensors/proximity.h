@@ -24,11 +24,43 @@ typedef struct {
     unsigned int initValue[PROXIMITY_NB_CHANNELS];
 } proximity_msg_t;
 
-
+ /**
+ * @brief   Starts the proximity measurement module
+ * 			This module also broadcasts the measures through a proximity_msg_t message
+ * 			on the /proximity topic
+ */
 void proximity_start(void);
+
+ /**
+ * @brief   Runs the IR sensor calibration process
+ */
 void calibrate_ir(void);
+
+ /**
+ * @brief   Returns the last value measured by the chosen sensor
+ * 
+ * @param sensor_number		0-7
+ * 
+ * @return					Last value measured by the sensor
+ */
 int get_prox(unsigned int sensor_number);
+
+ /**
+ * @brief   Returns the calibration value for the chosen sensor
+ * 
+ * @param sensor_number		0-7
+ * 
+ * @return					Calibration value of the sensor
+ */
 int get_calibrated_prox(unsigned int sensor_number);
+
+ /**
+ * @brief   Returns the last ambiant light value measured by the chosen sensor
+ * 
+ * @param sensor_number		0-7
+ * 
+ * @return					Last ambiant light value measured by the sensor
+ */
 int get_ambient_light(unsigned int sensor_number);
 
 #ifdef __cplusplus

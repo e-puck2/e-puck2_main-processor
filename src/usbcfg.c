@@ -161,10 +161,10 @@ static const uint8_t vcom_string1[] = {
  * Device Description string.
  */
 static const uint8_t vcom_string2[] = {
-    USB_DESC_BYTE(28),                  /* bLength.                         */
+    USB_DESC_BYTE(36),                  /* bLength.                         */
     USB_DESC_BYTE(USB_DESCRIPTOR_STRING), /* bDescriptorType.                 */
-    'A', 0, 's', 0, 'e', 0, 'b', 0, 'a', 0, ' ', 0, 'S', 0, 'T', 0, 'M', 0, '3',
-    0, '2', 0, 'F', 0, '4', 0
+    'e', 0, '-', 0, 'p', 0, 'u', 0, 'c', 0, 'k', 0, '2', 0 , ' ', 0,
+    'S', 0, 'T', 0, 'M', 0, '3', 0, '2', 0, 'F', 0, '4', 0 , '0', 0, '7', 0 
 };
 
 /*

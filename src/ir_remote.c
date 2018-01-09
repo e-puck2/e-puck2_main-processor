@@ -1,3 +1,16 @@
+/*
+
+File    : ir_remote.c
+Author  : Eliot Ferragni
+Date    : 8 january 2018
+REV 1.0
+
+Functions to read RC5 protocol over IR
+
+Library taken from https://github.com/guyc/RC5
+and adapted to work here
+*/
+
 #include <ch.h>
 #include <hal.h>
 #include "ir_remote.h"
@@ -253,25 +266,25 @@ static THD_FUNCTION(remote_motion_thd, arg)
 				right_motor_set_speed(0);
 				break;
 
-			case 2: // Both mnotors forward.
+			case 2: // Both motors forward.
 			case 31:
 				left_motor_set_speed(DEFAULT_SPEED);
 				right_motor_set_speed(DEFAULT_SPEED);
 				break;
 
-			case 8: // Both mnotors backward.
+			case 8: // Both motors backward.
 			case 30:
 				left_motor_set_speed(-DEFAULT_SPEED);
 				right_motor_set_speed(-DEFAULT_SPEED);
 				break;
 
-			case 6: // Both mnotors right.
+			case 6: // Both motors right.
 			case 47:
 				left_motor_set_speed(DEFAULT_SPEED);
 				right_motor_set_speed(-DEFAULT_SPEED);
 				break;
 
-			case 4: // Both mnotors left.
+			case 4: // Both motors left.
 			case 46:
 				left_motor_set_speed(-DEFAULT_SPEED);
 				right_motor_set_speed(DEFAULT_SPEED);
@@ -279,17 +292,21 @@ static THD_FUNCTION(remote_motion_thd, arg)
 
 			case 3: // Left motor forward.
 				left_motor_set_speed(DEFAULT_SPEED);
+                right_motor_set_speed(0);
 				break;
 
 			case 1: // Right motor forward.
+                left_motor_set_speed(0);
 				right_motor_set_speed(DEFAULT_SPEED);
 				break;
 
 			case 9: // Left motor backward.
 				left_motor_set_speed(-DEFAULT_SPEED);
+                right_motor_set_speed(0);
 				break;
 
 			case 7: // Right motor backward.
+                left_motor_set_speed(0);
 				right_motor_set_speed(-DEFAULT_SPEED);
 				break;
 

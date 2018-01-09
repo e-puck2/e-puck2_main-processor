@@ -18,7 +18,6 @@
 #include <motor_led/advance_one_timer/e_motors.h>
 #include <uart/e_uart_char.h>
 #include <a_d/advance_ad_scan/e_ad_conv.h>
-#include <a_d/advance_ad_scan/e_acc.h>
 #include <a_d/advance_ad_scan/e_prox.h>
 #include <a_d/advance_ad_scan/e_micro.h>
 #include <motor_led/advance_one_timer/e_agenda.h>
@@ -26,7 +25,6 @@
 #include <camera/fast_2_timer/e_poxxxx.h>
 #include <codec/e_sound.h>
 #include <utility/utility.h>
-#include <acc_gyro/e_lsm330.h>
 #ifdef CLIFF_SENSORS
 #ifndef FLOOR_SENSORS
 #define FLOOR_SENSORS
@@ -66,7 +64,7 @@ int run_asercom(void) {
 #ifdef IR_RECEIVER
     char ir_move = 0, ir_address = 0, ir_last_move = 0;
 #endif
-    static TypeAccSpheric accelero;
+//    static TypeAccSpheric accelero;
     //static TypeAccRaw accelero_raw;
     int use_bt = 0;
     unsigned int battValue = 0;
@@ -116,13 +114,13 @@ int run_asercom(void) {
     }
 
      if (use_bt) {
-        e_acc_calibr();
+//        e_acc_calibr();
         uart1_send_static_text("\f\a"
                 "WELCOME to the SerCom protocol on e-Puck\r\n"
                 "the EPFL education robot type \"H\" for help\r\n");
     } else {
          if(isEpuckVersion1_3()==0) {
-             e_acc_calibr();
+//             e_acc_calibr();
          }
         uart2_send_static_text("\f\a"
                 "WELCOME to the SerCom protocol on e-Puck\r\n"
@@ -262,9 +260,9 @@ int run_asercom(void) {
                 switch ((int8_t)-c) {
                     case 'a': // Read acceleration sensors in a non filtered way, same as ASCII
                         if(use_bt) {
-                            accx = e_get_acc_filtered(0, 1);
-                            accy = e_get_acc_filtered(1, 1);
-                            accz = e_get_acc_filtered(2, 1);
+//                            accx = e_get_acc_filtered(0, 1);
+//                            accy = e_get_acc_filtered(1, 1);
+//                            accz = e_get_acc_filtered(2, 1);
                             //accx = e_get_acc(0);	//too much noisy
                             //accy = e_get_acc(1);
                             //accz = e_get_acc(2);
@@ -274,9 +272,9 @@ int run_asercom(void) {
                                 accy = 0;
                                 accz = 0;
                             } else {
-                                accx = e_get_acc_filtered(0, 1);
-                                accy = e_get_acc_filtered(1, 1);
-                                accz = e_get_acc_filtered(2, 1);
+//                                accx = e_get_acc_filtered(0, 1);
+//                                accy = e_get_acc_filtered(1, 1);
+//                                accz = e_get_acc_filtered(2, 1);
                             }
                         }
                         buffer[i++] = accx & 0xff;
@@ -289,42 +287,57 @@ int run_asercom(void) {
 
                     case 'A': // read acceleration sensors
                         if(use_bt) {
-                            accelero = e_read_acc_spheric();
+//                            accelero = e_read_acc_spheric();
                         } else {
                             if(isEpuckVersion1_3()) {
-                                accelero.acceleration = 0.0;
-                                accelero.inclination = 0.0;
-                                accelero.orientation = 0.0;
+//                                accelero.acceleration = 0.0;
+//                                accelero.inclination = 0.0;
+//                                accelero.orientation = 0.0;
                             } else {
-                                accelero = e_read_acc_spheric();
+//                                accelero = e_read_acc_spheric();
                             }
                         }
-                        ptr = (char *) &accelero.acceleration;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
+//                        ptr = (char *) &accelero.acceleration;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//
+//                        ptr = (char *) &accelero.orientation;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//
+//                        ptr = (char *) &accelero.inclination;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
+//                        ptr++;
+//                        buffer[i++] = (*ptr);
 
-                        ptr = (char *) &accelero.orientation;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
 
-                        ptr = (char *) &accelero.inclination;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
-                        ptr++;
-                        buffer[i++] = (*ptr);
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
+
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
+                        buffer[i++] = 0;
                         break;
 
                     case 'b': // battery state
@@ -368,7 +381,7 @@ int run_asercom(void) {
 
                     case 'g': // gyro rates
                         if(use_bt && isEpuckVersion1_3()) {
-                            getAllAxesGyro(&gyrox, &gyroy, &gyroz);
+//                            getAllAxesGyro(&gyrox, &gyroy, &gyroz);
                             buffer[i++] = gyrox & 0xFF;
                             buffer[i++] = gyrox >> 8;
                             buffer[i++] = gyroy & 0xFF;
@@ -504,7 +517,7 @@ int run_asercom(void) {
 
                     case 't': // temperature
                         if (use_bt && isEpuckVersion1_3()) {
-                            buffer[i++] = getTemperature();
+                            buffer[i++] = 0; //getTemperature();
                         } else {
                             buffer[i++] = 0;
                         }
@@ -618,12 +631,12 @@ int run_asercom(void) {
             switch (buffer[0]) {
                 case 'A': // read accelerometer
                     if(use_bt) {
-                        sprintf(buffer, "a,%d,%d,%d\r\n", e_get_acc_filtered(0, 1), e_get_acc_filtered(1, 1), e_get_acc_filtered(2, 1));
+                        sprintf(buffer, "a,%d,%d,%d\r\n", 0, 0, 0); //e_get_acc_filtered(0, 1), e_get_acc_filtered(1, 1), e_get_acc_filtered(2, 1));
                     } else {
                         if(isEpuckVersion1_3()) {
                             sprintf(buffer, "a,0,0,0\r\n");
                         } else {
-                            sprintf(buffer, "a,%d,%d,%d\r\n", e_get_acc_filtered(0, 1), e_get_acc_filtered(1, 1), e_get_acc_filtered(2, 1));
+                            sprintf(buffer, "a,%d,%d,%d\r\n", 0, 0, 0); // e_get_acc_filtered(0, 1), e_get_acc_filtered(1, 1), e_get_acc_filtered(2, 1));
                         }
                     }
                     if (use_bt) {
@@ -699,7 +712,7 @@ int run_asercom(void) {
 #endif
                 case 'g': // gyro rates
                     if (use_bt && isEpuckVersion1_3()) {
-                        sprintf(buffer, "g,%d,%d,%d\r\n", getXAxisGyro(), getYAxisGyro(), getZAxisGyro());
+                        sprintf(buffer, "g,%d,%d,%d\r\n", 0, 0, 0); //getXAxisGyro(), getYAxisGyro(), getZAxisGyro());
                     } else {
                         sprintf(buffer, "g,0,0,0\r\n");
                     }
@@ -995,7 +1008,7 @@ int run_asercom(void) {
 
                 case 't': // temperature
                     if (use_bt && isEpuckVersion1_3()) {
-                        sprintf(buffer, "t,%d\r\n", getTemperature());
+                        sprintf(buffer, "t,%d\r\n", 0); //getTemperature());
                     } else {
                         sprintf(buffer, "t,0\r\n");
                     }

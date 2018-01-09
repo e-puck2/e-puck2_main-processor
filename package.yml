@@ -22,7 +22,6 @@ source:
     - src/sensors/VL53L0X/Api/platform/src/vl53l0x_i2c_platform.c
     - src/sensors/VL53L0X/Api/platform/src/vl53l0x_platform.c
     - src/config_flash_storage.c
-    - src/communication.c
     - src/serial-datagram/serial_datagram.c
 
 target.arm:
@@ -34,11 +33,9 @@ target.arm:
     - src/audio/play_melody.c
     - src/audio/microphone.c
     - src/audio/mp45dt02_processing.c
-    - src/epuck1x/a_d/advance_ad_scan/e_acc.c
     - src/epuck1x/a_d/advance_ad_scan/e_ad_conv.c
     - src/epuck1x/a_d/advance_ad_scan/e_micro.c
     - src/epuck1x/a_d/advance_ad_scan/e_prox.c
-    - src/epuck1x/acc_gyro/e_lsm330.c
     - src/epuck1x/camera/fast_2_timer/e_common.c
     - src/epuck1x/codec/e_sound.c
     - src/epuck1x/I2C/e_I2C_protocol.c
@@ -53,8 +50,6 @@ target.arm:
     - src/epuck1x/Asercom2.c
     - src/epuck1x/DataEEPROM.c
     - src/sensors/battery_level.c
-    - src/sensors/imu.c
-    - src/sensors/mpu9250.c
     - src/sensors/proximity.c
     - src/cmd.c
     - src/exti.c

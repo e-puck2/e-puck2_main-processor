@@ -5,8 +5,20 @@
 #include <hal.h>
 
 
+//RC5 decoder state machine
+typedef struct{
+    unsigned char pin;
+    unsigned char state;
+    unsigned long time0;
+    unsigned long lastValue;
+    unsigned int bits;
+    unsigned int command;
+}RC5_t;
+
+
+
 /**
- * \brief Starts the Ir remote process.
+ * \brief Starts the IR remote process.
  */
 void ir_remote_start(void);
 

@@ -30,7 +30,7 @@ static const EXTConfig extcfg = {
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
-        {EXT_CH_MODE_FALLING_EDGE | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOD, gpio_exti_callback}, // IR remote control
+        {EXT_CH_MODE_BOTH_EDGES | EXT_CH_MODE_AUTOSTART | EXT_MODE_GPIOD, gpio_exti_callback}, // IR remote control
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},
         {EXT_CH_MODE_DISABLED, NULL},

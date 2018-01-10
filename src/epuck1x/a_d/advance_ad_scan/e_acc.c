@@ -82,11 +82,11 @@ int e_get_acc(unsigned int captor) {
     // - decrease the resulting value by 1/4 to get about the same value for 1g (in e-puck1.x 1g = about 800)
 	int32_t tempValue = 0;
 	if(captor == 0) { // X axis => change sign to be compatible with e-puck1.x.
-		tempValue = -(get_acc(captor) - get_acc_offset(captor));
+		tempValue = (get_acc(captor) - get_acc_offset(captor));
 	} else if(captor == 1) { // Y axis.
-		tempValue = get_acc(captor) - get_acc_offset(captor);
+		tempValue = -(get_acc(captor) - get_acc_offset(captor));
 	} else { // Z axis => remove gravity from offset.
-		tempValue = get_acc(captor) - (get_acc_offset(captor) - GRAVITY);
+		tempValue = -get_acc(captor) - (-get_acc_offset(captor) - GRAVITY);
 	}
 	tempValue = (tempValue>>4) - (tempValue>>6);
 	return (int)tempValue;
@@ -105,11 +105,11 @@ int e_get_acc_filtered(unsigned int captor, unsigned int filter_size)
 	// - add an offset of 2048 because it represents the value of 0g with e-puck1.x
 	int32_t tempValue = 0;
 	if(captor == 0) { // X axis => change sign to be compatible with e-puck1.x.
-		tempValue = -get_acc_filtered(captor, filter_size);
+		tempValue = get_acc_filtered(captor, filter_size);
 	} else if(captor == 1) { // Y axis.
-		tempValue = get_acc_filtered(captor, filter_size);
+		tempValue = -get_acc_filtered(captor, filter_size);
 	} else { // Z axis.
-		tempValue = get_acc_filtered(captor, filter_size);
+		tempValue = -get_acc_filtered(captor, filter_size);
 	}
 	tempValue = ((tempValue>>4) - (tempValue>>6)) + 2048;
 	return (int)tempValue;
@@ -139,9 +139,9 @@ TypeAccSpheric e_read_acc_spheric(void)
 {
 	TypeAccSpheric result;
 	int32_t acc_x, acc_y, acc_z;
-	acc_x = -(get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0)); // X axis => change sign to be compatible with e-puck1.x.
-	acc_y = get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1); // Y axis.
-	acc_z = get_acc_filtered(2, FILTER_SIZE) - (get_acc_offset(2) - GRAVITY); // Z axis => remove gravity from offset.
+	acc_x = (get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0)); // X axis => change sign to be compatible with e-puck1.x.
+	acc_y = -(get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1)); // Y axis.
+	acc_z = -get_acc_filtered(2, FILTER_SIZE) - (-get_acc_offset(2) - GRAVITY); // Z axis => remove gravity from offset.
 
 	// Calculate the absolute acceleration value.
 	result.acceleration = sqrtf((float)((acc_x * acc_x) + (acc_y * acc_y) + (acc_z * acc_z)));
@@ -149,7 +149,7 @@ TypeAccSpheric e_read_acc_spheric(void)
 	if (result.inclination<5 || result.inclination>160) {
 		result.orientation=0;
 	} else {
-		result.orientation = (atan2f((float)(acc_x), (float)(acc_y)) * CST_RADIAN) + 180.0;		// 180 is added to have 0 to 360° range
+		result.orientation = (atan2f((float)(acc_x), (float)(acc_y)) * CST_RADIAN) + 180.0;		// 180 is added to have 0 to 360ï¿½ range
 	}
 	return result;
 }
@@ -162,8 +162,8 @@ float e_read_inclination(void)
 	TypeAccSpheric result;
 	int16_t acc_x, acc_y, acc_z;
 	acc_x = get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0);	// generates positive
-	acc_y = get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1);	// and negative value
-	acc_z = get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2);	// to make the use easy
+	acc_y = -(get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1));	// and negative value
+	acc_z = -(get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2));	// to make the use easy
 
 	result.inclination =  90.0 - atan2f((float)(acc_z), sqrtf( (float)(((long)acc_x * (long)acc_x) + ((long)acc_y * (long)acc_y) ))) * CST_RADIAN;
 	return result.inclination;
@@ -176,15 +176,15 @@ float e_read_orientation(void)
 {
 	TypeAccSpheric result;
 	int16_t acc_x, acc_y, acc_z;
-	acc_x = get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0);	// generates positive
-	acc_y = get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1);	// and negative value
-	acc_z = get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2);	// to make the use easy
+	acc_x = (get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0));	// generates positive
+	acc_y = -(get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1));	// and negative value
+	acc_z = -(get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2));	// to make the use easy
 
 	result.inclination =  90.0 - atan2f((float)(acc_z), sqrtf( (float)(((long)acc_x * (long)acc_x) + ((long)acc_y * (long)acc_y) ))) * CST_RADIAN;
 	if (result.inclination<5 || result.inclination>160) {
 		result.orientation=0;
 	} else {
-		result.orientation = (atan2f((float)(acc_x), (float)(acc_y)) * CST_RADIAN) + 180.0;		// 180 is added to have 0 to 360° range
+		result.orientation = (atan2f((float)(acc_x), (float)(acc_y)) * CST_RADIAN) + 180.0;		// 180 is added to have 0 to 360ï¿½ range
 	}
 	return result.orientation;
 }
@@ -196,9 +196,9 @@ float e_read_acc(void)
 { 
 	TypeAccSpheric result;
 	int16_t acc_x, acc_y, acc_z;
-	acc_x = get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0);	// generates positive
-	acc_y = get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1);	// and negative value
-	acc_z = get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2);	// to make the use easy
+	acc_x = (get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0));	// generates positive
+	acc_y = -(get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1));	// and negative value
+	acc_z = -(get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2));	// to make the use easy
 
 	result.acceleration = sqrtf((float)(((long)acc_x * (long)acc_x) + ((long)acc_y * (long)acc_y) + ((long)acc_z * (long)acc_z)));
 	return result.acceleration;
@@ -211,9 +211,9 @@ float e_read_acc(void)
 TypeAccRaw e_read_acc_xyz(void)
 {
 	TypeAccRaw result;
-	result.acc_x = get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0);	// generates positive
-	result.acc_y = get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1);	// and negative value
-	result.acc_z = get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2);	// to make the use easy
+	result.acc_x = (get_acc_filtered(0, FILTER_SIZE) - get_acc_offset(0));	// generates positive
+	result.acc_y = -(get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1));	// and negative value
+	result.acc_z = -(get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2));	// to make the use easy
 	return result;
 }
 
@@ -230,7 +230,7 @@ int e_read_acc_x(void)
  */
 int e_read_acc_y(void)
 {
-	return (get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1));
+	return -(get_acc_filtered(1, FILTER_SIZE) - get_acc_offset(1));
 }
 
 /*! \brief calculate and return acceleration on the z axis
@@ -238,7 +238,7 @@ int e_read_acc_y(void)
  */
 int e_read_acc_z(void)
 {
-	return (get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2));
+	return -(get_acc_filtered(2, FILTER_SIZE) - get_acc_offset(2));
 }
 
 /*! \brief light the led according to the orientation angle */

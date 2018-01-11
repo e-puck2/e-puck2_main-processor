@@ -95,7 +95,7 @@ const unsigned char trans[] = {0x01,
 
 
  /**
- * @brief   Resets a RC5 the counter of a GPT
+ * @brief   Resets the counter of a GPT
  * 
  * @param gptp			Pointer to the GPT driver
  * 
@@ -358,7 +358,6 @@ static THD_FUNCTION(remote_cmd_recv_thd, arg)
 /****************************PUBLIC FUNCTIONS*************************************/
 
 void ir_remote_start(void) {
-	// irWaitCmd = 1;
 	gptStart(&GPTD11, &gpt11cfg);
 	gptStartContinuous(&GPTD11, 0xFFFF);
 

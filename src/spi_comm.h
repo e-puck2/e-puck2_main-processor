@@ -9,6 +9,8 @@
 #define SPI_DATA_PAYLOAD_SIZE 4092
 #define SPI_DELAY 1200
 
+#define SPI_PACKET_MAX_SIZE 4092
+
 void spi_comm_start(void);
 
 #endif /* SPI_COMM_H */

@@ -3,23 +3,26 @@
 #include <ch.h>
 #include <hal.h>
 #include "camera/dcmi_camera.h"
+#include "button.h"
+#include "leds.h"
 #include "spi_comm.h"
 
-uint8_t spiRxBuff[SPI_COMMAND_SIZE];
-uint8_t spiTxBuff[SPI_COMMAND_SIZE];
-uint8_t spiHeader[SPI_DATA_HEADER_SIZE];
+//uint8_t spiRxBuff[SPI_COMMAND_SIZE];
+//uint8_t spiTxBuff[SPI_COMMAND_SIZE];
+//uint8_t spiHeader[SPI_DATA_HEADER_SIZE];
+
+uint8_t spi_rx_buff[SPI_PACKET_MAX_SIZE];
+uint8_t spi_tx_buff[SPI_PACKET_MAX_SIZE];
 
 event_source_t ss_event;
 
 /*
- * SPI image exchanger thread.
+ * SPI communication thread.
  */
 static THD_WORKING_AREA(spi_thread_wa, 1024);
 static THD_FUNCTION(spi_thread, p) {
 	(void)p;
 	chRegSetThreadName("SPI thread");
-
-	chThdYield();
 
 //	uint32_t i = 0;
 //	//uint16_t transCount = 0; // image size / SPI_BUFF_LEN
@@ -64,9 +67,37 @@ static THD_FUNCTION(spi_thread, p) {
 //
 //	//dcmiStartOneShot(&DCMID);
 //	//chThdSleepMilliseconds(500);
-//
-//	while (true) {
-//
+
+	while (true) {
+
+//		memset(spi_tx_buff, 0x00, 12);
+		get_all_rgb_state(&spi_tx_buff[0]);
+//		spi_tx_buff[0] = 50;
+//		spi_tx_buff[4] = 50;
+//		spi_tx_buff[8] = 50;
+//		spi_tx_buff[9] = 1;
+//		spi_tx_buff[10] = 50;
+//		spi_tx_buff[11] = 50;
+		spiSelect(&SPID1);
+//		for(delay=0; delay<SPI_DELAY; delay++) {
+//			__NOP();
+//		}
+		spiExchange(&SPID1, 12, spi_tx_buff, spi_rx_buff);
+//		for(delay=0; delay<SPI_DELAY; delay++) {
+//			__NOP();
+//		}
+		spiUnselect(&SPID1);
+
+//		// A little pause is needed for the communication to work, 400 NOP loops last about 26 us.
+//		// Probably this pause can be avoided since we loose some time computing the checksum...
+//		for(delay=0; delay<SPI_DELAY; delay++) {
+//			__NOP();
+//		}
+
+		button_set_state(spi_rx_buff[0]);
+
+		chThdSleepMilliseconds(1);
+
 //		//evt = chEvtWaitAny(ALL_EVENTS);
 //
 //		//if (evt & EVENT_MASK(0)) {
@@ -217,9 +248,9 @@ static THD_FUNCTION(spi_thread, p) {
 //		//} // Event handling.
 //
 //		//break;
-//
-//	} // Infinite loop.
-//
+
+	} // Infinite loop.
+
 //	free(sample_buffer);
 
 }
@@ -227,19 +258,17 @@ static THD_FUNCTION(spi_thread, p) {
 void spi_comm_start(void) {
 	//	osalEventObjectInit(&ss_event);
 
-		/*
-		* SPI1 maximum speed is 42 MHz, ESP32 supports at most 10MHz, so use a prescaler of 1/8 (84 MHz / 8 = 10.5 MHz).
-		* SPI1 configuration (10.5 MHz, CPHA=0, CPOL=0, MSb first).
-		*/
-	//	static const SPIConfig hs_spicfg = {
-	//		NULL,
-	//		GPIOA,
-	//		15,
-	//		SPI_CR1_BR_1
-	//		//SPI_CR1_BR_1 | SPI_CR1_BR_0 // 5.25 MHz
-	//	};
-	//	spiStart(&SPID1, &hs_spicfg);       /* Setup transfer parameters. */
-		chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO, spi_thread, NULL);
-		//chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO + 1, spi_thread, NULL);
+	// SPI1 maximum speed is 42 MHz, ESP32 supports at most 10MHz, so use a prescaler of 1/8 (84 MHz / 8 = 10.5 MHz).
+	// SPI1 configuration (10.5 MHz, CPHA=0, CPOL=0, MSb first).
+	static const SPIConfig hs_spicfg = {
+		NULL,
+		GPIOA,
+		15,
+		SPI_CR1_BR_1
+		//SPI_CR1_BR_1 | SPI_CR1_BR_0 // 5.25 MHz
+	};
+	spiStart(&SPID1, &hs_spicfg);	// Setup transfer parameters.
+	chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO, spi_thread, NULL);
+	//chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO + 1, spi_thread, NULL);
 }
 

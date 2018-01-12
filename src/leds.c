@@ -1,55 +1,57 @@
 #include <hal.h>
 #include "leds.h"
+#include <string.h>
 
-/*! \brief turn on/off the specified LED
- *
- * The e-puck has 4 LEDs. With this function, you can
- * change the state of these LEDs.
- * \param led_number between 0 and 3
- * \param value 0 (off), 1 (on) otherwise change the state
- * \warning if led_number is other than 0-3, all leds are set
- * to the indicated value.
- */
-void set_led(unsigned int led_number, unsigned int value)
-{
-	switch(led_number)
-	{
+static uint8_t rgb_led[4][3];
+
+void set_led(unsigned int led_number, unsigned int value) {
+	switch(led_number) {
 		case 0: 
-			{
-			if(value>1)
+			if(value>1)  {
 				palTogglePad(GPIOD, GPIOD_LED1);
-			else
+			} else {
 				value?palClearPad(GPIOD, GPIOD_LED1):palSetPad(GPIOD, GPIOD_LED1);
-			break;
 			}
-		case 1: 
-			{
-			if(value>1)
+			break;
+		case 1:
+			if(value>1) {
 				palTogglePad(GPIOD, GPIOD_LED3);
-			else
+			} else {
 				value?palClearPad(GPIOD, GPIOD_LED3):palSetPad(GPIOD, GPIOD_LED3);
-			break;
 			}
-		case 2: 
-			{
-			if(value>1)
+			break;
+		case 2:
+			if(value>1) {
 				palTogglePad(GPIOD, GPIOD_LED5);
-			else
+			} else {
 				value?palClearPad(GPIOD, GPIOD_LED5):palSetPad(GPIOD, GPIOD_LED5);
-			break;
 			}
-		case 3: 
-			{
-			if(value>1)
+			break;
+		case 3:
+			if(value>1) {
 				palTogglePad(GPIOD, GPIOD_LED7);
-			else
+			} else {
 				value?palClearPad(GPIOD, GPIOD_LED7):palSetPad(GPIOD, GPIOD_LED7);
-			break;
 			}
+			break;
 		default:
 			for(int i=0; i<4; i++) {
 				set_led(i, value);
 			}
+	}
+}
+
+void set_rgb_led(unsigned int led_number, uint8_t red_val, uint8_t green_val, uint8_t blue_val) {
+	rgb_led[led_number][RED] = red_val;
+	rgb_led[led_number][GREEN] = green_val;
+	rgb_led[led_number][BLUE] = blue_val;
+}
+
+void toggle_rgb_led(unsigned int led_number, uint8_t led, uint8_t intensity) {
+	if(rgb_led[led_number][led] > 0) {
+		rgb_led[led_number][led] = 0;
+	} else {
+		rgb_led[led_number][led] = intensity;
 	}
 }
 
@@ -92,3 +94,8 @@ void clear_leds(void)
 		set_led(i, 0);
 	}
 }
+
+void get_all_rgb_state(uint8_t* values) {
+	memcpy(values, rgb_led, 12);
+}
+

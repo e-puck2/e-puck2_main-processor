@@ -7,9 +7,14 @@
  */
 #define LED_EFFECTS
 
+/*
+ * RGB intensity (percentage).
+ */
+#define RGB_INTENSITY 10
+
 /*! \brief turn on/off the specified LED
  *
- * The e-puck has 8 green LEDs. With this function, you can
+ * The e-puck has 8 red LEDs. With this function, you can
  * change the state of these LEDs.
  * \param led_number between 0 and 7
  * \param value 0 (off), 1 (on) otherwise change the state
@@ -20,33 +25,50 @@ void e_set_led(unsigned int led_number, unsigned int value)
 {
 	switch(led_number)
 	{
-		case 0: 
+		case 0:
 			set_led(0, value);
 			break;
-		case 1: 
-			// Send command to esp32 to set led state...which color? orange?
+		case 1: // Change only the red led of the RGB to have the same color as other "normal" leds.
+			if(value >= 2) {
+				toggle_rgb_led(0, RED, RGB_INTENSITY);
+			} else {
+				set_rgb_led(0, value*RGB_INTENSITY, 0, 0);
+			}
 			break;
-		case 2: 
+		case 2:
 			set_led(1, value);
 			break;
-		case 3: 
-			// Send command to esp32 to set led state...which color? orange?
+		case 3: // Change only the red led of the RGB to have the same color as other "normal" leds.
+			if(value >= 2) {
+				toggle_rgb_led(1, RED, RGB_INTENSITY);
+			} else {
+				set_rgb_led(1, value*RGB_INTENSITY, 0, 0);
+			}
 			break;
-		case 4: 
+		case 4:
 			set_led(2, value);
 			break;
-		case 5: 
-			// Send command to esp32 to set led state...which color? orange?
+		case 5: // Change only the red led of the RGB to have the same color as other "normal" leds.
+			if(value >= 2) {
+				toggle_rgb_led(2, RED, RGB_INTENSITY);
+			} else {
+				set_rgb_led(2, value*RGB_INTENSITY, 0, 0);
+			}
 			break;
-		case 6: 
+		case 6:
 			set_led(3, value);
 			break;
-		case 7: 
-			// Send command to esp32 to set led state...which color? orange?
+		case 7: // Change only the red led of the RGB to have the same color as other "normal" leds.
+			if(value >= 2) {
+				toggle_rgb_led(3, RED, RGB_INTENSITY);
+			} else {
+				set_rgb_led(3, value*RGB_INTENSITY, 0, 0);
+			}
 			break;
-		default: 
-			set_led(led_number, value);
-			// Send command to esp32 to set all leds state...which color? orange?
+		default:
+			for(int i=0; i<8; i++) {
+				e_set_led(i, value);
+			}
 			break;
 	}
 }

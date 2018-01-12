@@ -16,6 +16,7 @@ CSRC += ./src/audio/audio_thread.c
 CSRC += ./src/audio/microphone.c
 CSRC += ./src/audio/mp45dt02_processing.c
 CSRC += ./src/audio/play_melody.c
+CSRC += ./src/button.c
 CSRC += ./src/camera/dcmi_camera.c
 CSRC += ./src/camera/po8030.c
 CSRC += ./src/cmd.c

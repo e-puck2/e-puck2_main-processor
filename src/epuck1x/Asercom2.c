@@ -8,6 +8,8 @@
 #include "../main.h"
 #include "../sensors/VL53L0X/VL53L0X.h"
 #include "../audio/play_melody.h"
+#include "../button.h"
+#include "../leds.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -62,6 +64,7 @@ int run_asercom2(void) {
     static int i, j, n, speedr, speedl, positionr, positionl, LED_nbr, LED_action, accx, accy, accz, sound, gyrox, gyroy, gyroz;
     static int cam_mode, cam_width, cam_heigth, cam_zoom, cam_size, cam_x1, cam_y1;
     static char first = 0;
+    static char rgb_value[12];
     char *ptr;
     static int mod, reg, val;
 #ifdef IR_RECEIVER
@@ -262,9 +265,21 @@ int run_asercom2(void) {
             do {
                 switch ((int8_t)-c) {
 					case 0xA: // RGB setting => ESP32
+						for(j=0; j<12; j++) {
+							if (use_bt) {
+								while (e_getchar_uart1(&rgb_value[j]) == 0);
+							} else {
+								while (e_getchar_uart2(&rgb_value[j]) == 0);
+							}
+						}
+						set_rgb_led(0, rgb_value[0], rgb_value[1], rgb_value[2]);
+						set_rgb_led(1, rgb_value[3], rgb_value[4], rgb_value[5]);
+						set_rgb_led(2, rgb_value[6], rgb_value[7], rgb_value[8]);
+						set_rgb_led(3, rgb_value[9], rgb_value[10], rgb_value[11]);
 						break;
 
 					case 0xB: // Button state => ESP32
+						buffer[i++] = button_get_state();
 						break;
 
 					case 0xC: // Get 4 microphones

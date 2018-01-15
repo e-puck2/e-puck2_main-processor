@@ -68,6 +68,12 @@ VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device);
  */
 void VL53L0X_start(void);
 
+/**
+* @brief   Stop the distance measurement.
+*
+*/
+void VL53L0X_stop(void);
+
 uint16_t VL53L0X_get_dist_mm(void);
 
 #endif /* VL53L0X_H*/

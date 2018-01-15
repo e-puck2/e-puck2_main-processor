@@ -169,8 +169,9 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 10: // Gumstix extension.
-				//i2c_stop();
-				run_asercom();
+				imu_stop();
+				VL53L0X_stop();
+				i2c_stop();
 				stop_loop = 1;
 				break;
 

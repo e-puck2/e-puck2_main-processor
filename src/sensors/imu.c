@@ -21,6 +21,7 @@ static uint8_t gyroAxisSelected = 0;
 static uint8_t gyroFilterSize = 0;
 static uint8_t gyroCalibrationInProgress = 0;
 
+static thread_t *imuThd;
 
 /***************************INTERNAL FUNCTIONS************************************/
 
@@ -50,7 +51,7 @@ static THD_FUNCTION(imu_reader_thd, arg) {
      uint8_t gyroCalibrationNumSamples = 0;
      int32_t gyroCalibrationSum = 0;
 
-     while (true) {
+     while (chThdShouldTerminateX() == false) {
 
          /* Waits for a measurement to come. */
          chEvtWaitAny(EXTI_EVENT_IMU_INT);
@@ -125,7 +126,13 @@ void imu_start(void)
                   //| MPU60X0_LOW_PASS_FILTER_6);
 
     static THD_WORKING_AREA(imu_reader_thd_wa, 1024);
-    chThdCreateStatic(imu_reader_thd_wa, sizeof(imu_reader_thd_wa), NORMALPRIO, imu_reader_thd, NULL);
+    imuThd = chThdCreateStatic(imu_reader_thd_wa, sizeof(imu_reader_thd_wa), NORMALPRIO, imu_reader_thd, NULL);
+}
+
+void imu_stop(void) {
+    chThdTerminate(imuThd);
+    chThdWait(imuThd);
+    imuThd = NULL;
 }
 
 // Gets last axis value read from the sensor.

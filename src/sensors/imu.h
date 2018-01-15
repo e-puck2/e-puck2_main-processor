@@ -28,6 +28,12 @@ typedef struct {
  */
 void imu_start(void);
 
+/**
+* @brief   Stop the Inertial Motion Unit (IMU) publisher.
+*
+*/
+void imu_stop(void);
+
  /**
  * @brief   Returns the last accelerometer value measured
  *          for the axis given

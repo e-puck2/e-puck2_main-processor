@@ -14,6 +14,7 @@
 #include "usbcfg.h"
 
 uint16_t dist_mm = 0;
+static thread_t *distThd;
 
 //////////////////// PUBLIC FUNCTIONS /////////////////////////
 static THD_WORKING_AREA(waVL53L0XThd, 2048);
@@ -28,7 +29,7 @@ static THD_FUNCTION(VL53L0XThd, arg) {
 	VL53L0X_startMeasure(&device, VL53L0X_DEVICEMODE_CONTINUOUS_RANGING);
 
     /* Reader thread loop.*/
-    while (TRUE) {
+    while (chThdShouldTerminateX() == false) {
    		VL53L0X_getLastMeasure(&device);
    		dist_mm = device.Data.LastRangeMeasure.RangeMilliMeter;
 		chThdSleepMilliseconds(100);
@@ -203,11 +204,17 @@ VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device){
 }
 
 void VL53L0X_start(void){
-	chThdCreateStatic(waVL53L0XThd,
+	distThd = chThdCreateStatic(waVL53L0XThd,
                      sizeof(waVL53L0XThd),
                      NORMALPRIO + 10,
                      VL53L0XThd,
                      NULL);
+}
+
+void VL53L0X_stop(void) {
+    chThdTerminate(distThd);
+    chThdWait(distThd);
+    distThd = NULL;
 }
 
 uint16_t VL53L0X_get_dist_mm(void) {

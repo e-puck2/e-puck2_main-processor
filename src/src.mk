@@ -47,6 +47,7 @@ CSRC += ./src/main.c
 CSRC += ./src/memory_protection.c
 CSRC += ./src/motors.c
 CSRC += ./src/panic.c
+CSRC += ./src/sdio.c
 CSRC += ./src/selector.c
 CSRC += ./src/sensors/battery_level.c
 CSRC += ./src/sensors/imu.c

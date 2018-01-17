@@ -31,6 +31,7 @@
 #include "main.h"
 #include "memory_protection.h"
 #include "motors.h"
+#include "sdio.h"
 #include "selector.h"
 #include "spi_comm.h"
 #include "usbcfg.h"
@@ -63,15 +64,6 @@ static void serial_start(void)
 	};
 
 	sdStart(&SD3, &ser_cfg); // UART3.
-}
-
-static void sdc_start(void){
-	static uint8_t sd_scratchpad[512]; // Working area for SDC driver.
-	static const SDCConfig sdccfg = { //  SDIO configuration.
-	  sd_scratchpad,
-	  SDC_MODE_1BIT // Use 1-bit mode instead of 4-bit to avoid conflicts with the microphones.
-	};
-	sdcStart(&SDCD1, &sdccfg);
 }
 
 static THD_FUNCTION(selector_thd, arg)
@@ -125,8 +117,8 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
-			case 3: // Asercom protocol.
-				run_asercom();
+			case 3: // Asercom protocol v2 (BT).
+				run_asercom2();
 				stop_loop = 1;
 				break;
 
@@ -160,12 +152,14 @@ static THD_FUNCTION(selector_thd, arg)
 			    }
 				break;
 
-			case 8: // Asercom protocol v2.
+			case 8: // Asercom protocol v2 (USB).
 				run_asercom2();
 				stop_loop = 1;
 				break;
 
-			case 9:
+			case 9: // Asercom protocol.
+				run_asercom();
+				stop_loop = 1;
 				break;
 
 			case 10: // Gumstix extension.
@@ -224,7 +218,7 @@ int main(void)
 	VL53L0X_start();
 	serial_start();
 	mic_start();
-	sdc_start();
+	sdio_start();
 	play_melody_start();
 
 	// Initialise Aseba system, declaring parameters

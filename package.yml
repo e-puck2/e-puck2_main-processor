@@ -66,6 +66,7 @@ target.arm:
     - src/memory_protection.c
     - src/motors.c
     - src/panic.c
+    - src/sdio.c
     - src/selector.c
     - src/spi_comm.c
     - src/usbcfg.c

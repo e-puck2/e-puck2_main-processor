@@ -17,7 +17,7 @@
 #include "sensors/battery_level.h"
 #include "config_flash_storage.h"
 #include "leds.h"
-#include "main.h"
+#include <main.h>
 #include "motors.h"
 
 #define TEST_WA_SIZE        THD_WORKING_AREA_SIZE(256)

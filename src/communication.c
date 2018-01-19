@@ -6,7 +6,7 @@
 #include "communication.h"
 #include "msgbus/messagebus.h"
 #include "sensors/imu.h"
-#include "main.h"
+#include <main.h>
 
 /*
  * This module uses C MessagePack (CMP) to form messages and serial_datagram to 

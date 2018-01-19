@@ -5,12 +5,12 @@
 #define FLOOR_SENSORS	// define to enable floor sensors
 #define IR_RECEIVER
 
-#include "../main.h"
-#include "../sensors/VL53L0X/VL53L0X.h"
-#include "../audio/play_melody.h"
-#include "../button.h"
-#include "../leds.h"
-#include "../sdio.h"
+#include "main.h"
+#include "sensors/VL53L0X/VL53L0X.h"
+#include "audio/play_melody.h"
+#include "button.h"
+#include "leds.h"
+#include "sdio.h"
 
 #include <string.h>
 #include <ctype.h>

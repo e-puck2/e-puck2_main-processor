@@ -5,8 +5,8 @@
 #define FLOOR_SENSORS	// define to enable floor sensors
 #define IR_RECEIVER
 
-#include "../main.h"
-#include "../audio/play_melody.h"
+#include "main.h"
+#include "audio/play_melody.h"
 
 #include <string.h>
 #include <ctype.h>

@@ -3,6 +3,14 @@
 # NOTE: Can be overridden externally.
 #
 
+
+ifndef GLOBAL_PATH
+	GLOBAL_PATH = ./
+	CSRC += (GLOBAL_PATH)/src/main.c
+	# Define project name here
+	PROJECT = e-puck2_main-processor
+endif
+
 # Compiler options here.
 ifeq ($(USE_OPT),)
   USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
@@ -92,12 +100,9 @@ endif
 # Project, sources and paths
 #
 
-# Define project name here
-PROJECT = e-puck2_main-processor
-
 # Imported source files and paths
-CHIBIOS = ./ChibiOS/
-CHIBIOS_EXT = ./ChibiOS_ext/
+CHIBIOS = $(GLOBAL_PATH)/ChibiOS/
+CHIBIOS_EXT = $(GLOBAL_PATH)/ChibiOS_ext/
 # Startup files.
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/startup_stm32f4xx.mk
 # HAL-OSAL files.
@@ -112,16 +117,16 @@ include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 include $(CHIBIOS)/test/rt/test.mk
 
 
-include src/aseba_vm/aseba.mk
-include src/src.mk
+include $(GLOBAL_PATH)/src/aseba_vm/aseba.mk
+include $(GLOBAL_PATH)/src/src.mk
 
 # Define linker script file here
 LDSCRIPT= $(STARTUPLD)/STM32F407xG.ld
 
 ifeq ($(USE_ASEBA_BOOTLOADER),yes)
-	LDSCRIPT= stm32f407xG.ld
+	LDSCRIPT= $(GLOBAL_PATH)/stm32f407xG.ld
 else
-	LDSCRIPT= stm32f407xG_no_bootloader.ld
+	LDSCRIPT= $(GLOBAL_PATH)/stm32f407xG_no_bootloader.ld
 endif
 
 
@@ -172,7 +177,7 @@ INCDIR += $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
           $(CHIBIOS)/os/various \
           $(CHIBIOS)/os/hal/lib/streams \
           $(ASEBAINC) \
-		  src
+		  $(GLOBAL_PATH)/src
 
 #
 # Project, sources and paths
@@ -239,7 +244,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS = libPDMFilter_CM4F_GCC.a
+ULIBS = $(GLOBAL_PATH)/libPDMFilter_CM4F_GCC.a
 
 #
 # End of user defines

@@ -93,6 +93,10 @@ void dac_start(void)  {
     config.dier = 0U;
 	
     gptStart(&GPTD6, &config);
+
+    //because when we do nothing, the speaker produces noise due to noise on the alimentation
+    dac_stop();
+
 }
 
 void dac_play(uint16_t freq) {

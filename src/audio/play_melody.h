@@ -132,6 +132,11 @@ void play_melody_start(void);
 void play_melody(song_selection_t choice);
 
 /**
+ * @brief Stops the melody beeing played.
+ */
+void stop_current_melody(void);
+
+/**
  * @brief Plays a note during a given time. This function blocks the calling thread during its execution
  *
  * @param note 			Note to play (Hz)

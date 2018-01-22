@@ -1123,6 +1123,7 @@ int run_asercom2(void) {
                 			break;
                 		default:
                 			e_close_sound();
+                            stop_current_melody();
                 			first = 0;
                 			break;
                 	}

@@ -2,32 +2,32 @@
 #include "leds.h"
 #include <string.h>
 
-static uint8_t rgb_led[4][3];
+static uint8_t rgb_led[NUM_RGB_LED][NUM_COLOR_LED];
 
-void set_led(unsigned int led_number, unsigned int value) {
+void set_led(led_name_t led_number, unsigned int value) {
 	switch(led_number) {
-		case 0: 
+		case LED1: 
 			if(value>1)  {
 				palTogglePad(GPIOD, GPIOD_LED1);
 			} else {
 				value?palClearPad(GPIOD, GPIOD_LED1):palSetPad(GPIOD, GPIOD_LED1);
 			}
 			break;
-		case 1:
+		case LED3:
 			if(value>1) {
 				palTogglePad(GPIOD, GPIOD_LED3);
 			} else {
 				value?palClearPad(GPIOD, GPIOD_LED3):palSetPad(GPIOD, GPIOD_LED3);
 			}
 			break;
-		case 2:
+		case LED5:
 			if(value>1) {
 				palTogglePad(GPIOD, GPIOD_LED5);
 			} else {
 				value?palClearPad(GPIOD, GPIOD_LED5):palSetPad(GPIOD, GPIOD_LED5);
 			}
 			break;
-		case 3:
+		case LED7:
 			if(value>1) {
 				palTogglePad(GPIOD, GPIOD_LED7);
 			} else {
@@ -41,13 +41,13 @@ void set_led(unsigned int led_number, unsigned int value) {
 	}
 }
 
-void set_rgb_led(unsigned int led_number, uint8_t red_val, uint8_t green_val, uint8_t blue_val) {
-	rgb_led[led_number][RED] = red_val;
-	rgb_led[led_number][GREEN] = green_val;
-	rgb_led[led_number][BLUE] = blue_val;
+void set_rgb_led(rgb_led_name_t led_number, uint8_t red_val, uint8_t green_val, uint8_t blue_val) {
+	rgb_led[led_number][RED_LED] = red_val;
+	rgb_led[led_number][GREEN_LED] = green_val;
+	rgb_led[led_number][BLUE_LED] = blue_val;
 }
 
-void toggle_rgb_led(unsigned int led_number, uint8_t led, uint8_t intensity) {
+void toggle_rgb_led(rgb_led_name_t led_number, color_led_name_t led, uint8_t intensity) {
 	if(rgb_led[led_number][led] > 0) {
 		rgb_led[led_number][led] = 0;
 	} else {
@@ -96,6 +96,6 @@ void clear_leds(void)
 }
 
 void get_all_rgb_state(uint8_t* values) {
-	memcpy(values, rgb_led, 12);
+	memcpy(values, rgb_led, NUM_RGB_LED * NUM_COLOR_LED);
 }
 

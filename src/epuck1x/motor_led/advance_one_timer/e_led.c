@@ -30,7 +30,7 @@ void e_set_led(unsigned int led_number, unsigned int value)
 			break;
 		case 1: // Change only the red led of the RGB to have the same color as other "normal" leds.
 			if(value >= 2) {
-				toggle_rgb_led(0, RED, RGB_INTENSITY);
+				toggle_rgb_led(0, RED_LED, RGB_INTENSITY);
 			} else {
 				set_rgb_led(0, value*RGB_INTENSITY, 0, 0);
 			}
@@ -40,7 +40,7 @@ void e_set_led(unsigned int led_number, unsigned int value)
 			break;
 		case 3: // Change only the red led of the RGB to have the same color as other "normal" leds.
 			if(value >= 2) {
-				toggle_rgb_led(1, RED, RGB_INTENSITY);
+				toggle_rgb_led(1, RED_LED, RGB_INTENSITY);
 			} else {
 				set_rgb_led(1, value*RGB_INTENSITY, 0, 0);
 			}
@@ -50,7 +50,7 @@ void e_set_led(unsigned int led_number, unsigned int value)
 			break;
 		case 5: // Change only the red led of the RGB to have the same color as other "normal" leds.
 			if(value >= 2) {
-				toggle_rgb_led(2, RED, RGB_INTENSITY);
+				toggle_rgb_led(2, RED_LED, RGB_INTENSITY);
 			} else {
 				set_rgb_led(2, value*RGB_INTENSITY, 0, 0);
 			}
@@ -60,7 +60,7 @@ void e_set_led(unsigned int led_number, unsigned int value)
 			break;
 		case 7: // Change only the red led of the RGB to have the same color as other "normal" leds.
 			if(value >= 2) {
-				toggle_rgb_led(3, RED, RGB_INTENSITY);
+				toggle_rgb_led(3, RED_LED, RGB_INTENSITY);
 			} else {
 				set_rgb_led(3, value*RGB_INTENSITY, 0, 0);
 			}

@@ -13,7 +13,7 @@
 #include "chprintf.h"
 #include "usbcfg.h"
 
-uint16_t dist_mm = 0;
+static uint16_t dist_mm = 0;
 static thread_t *distThd;
 
 //////////////////// PUBLIC FUNCTIONS /////////////////////////

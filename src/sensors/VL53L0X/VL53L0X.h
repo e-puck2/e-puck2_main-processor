@@ -26,7 +26,7 @@
 VL53L0X_Error VL53L0X_init(VL53L0X_Dev_t* device);
 
 /**
- * @brief 			Configure the accuracy of the sesor (range).
+ * @brief 			Configure the accuracy of the sensor (range).
  * 
  * @param device 	Pointer to the structure of the sensor
  * @param accuracy 	Accuracy chosen
@@ -62,9 +62,8 @@ VL53L0X_Error VL53L0X_getLastMeasure(VL53L0X_Dev_t* device);
 VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device);
 
 /**
- * @brief Init a demo thread which uses the three proximity sensors to
- * continuoulsy measure the distance and varies the intensity of the leds to 
- * represent the measured distances.
+ * @brief Init a thread which uses the distance sensor to
+ * continuoulsy measure the distance.
  */
 void VL53L0X_start(void);
 
@@ -74,6 +73,11 @@ void VL53L0X_start(void);
 */
 void VL53L0X_stop(void);
 
+/**
+ * @brief 			Return the last distance measured in mm
+ * 
+ * @return 			Last distance measured in mm
+ */	
 uint16_t VL53L0X_get_dist_mm(void);
 
 #endif /* VL53L0X_H*/

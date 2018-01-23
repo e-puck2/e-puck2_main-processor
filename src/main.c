@@ -18,6 +18,7 @@
 #include "camera/po8030.h"
 #include "epuck1x/Asercom.h"
 #include "epuck1x/Asercom2.h"
+#include "epuck1x/a_d/advance_ad_scan/e_acc.h"
 #include "sensors/battery_level.h"
 #include "sensors/imu.h"
 #include "sensors/proximity.h"
@@ -76,12 +77,20 @@ static THD_FUNCTION(selector_thd, arg)
 
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
+    int16_t leftSpeed = 0, rightSpeed = 0;
 
     messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
     imu_msg_t imu_values;
 
     uint8_t toEsp32 = 'c', fromEsp32 = 0;
-    	int16_t len = 0;
+    int16_t len = 0;
+
+    uint8_t hw_test_state = 0;
+    uint16_t r = 0, g = 0, b = 0;
+    uint8_t rgb_state = 0, rgb_counter = 0;
+    uint16_t melody_state = 0, melody_counter = 0;
+
+    TypeAccSpheric accelero;
 
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
@@ -169,13 +178,187 @@ static THD_FUNCTION(selector_thd, arg)
 				stop_loop = 1;
 				break;
 
-			case 11:
+			case 11: // Simple obstacle avoidance + some animation.
+				messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
+				leftSpeed = 2000 - prox_values.delta[0]*4 - prox_values.delta[1]*2;
+				rightSpeed = 2000 - prox_values.delta[7]*4 - prox_values.delta[6]*2;
+				right_motor_set_speed(rightSpeed);
+				left_motor_set_speed(leftSpeed);
+
+	            switch(rgb_state) {
+					case 0: // Red.
+						set_rgb_led(0, 10, 0, 0);
+						set_rgb_led(1, 10, 0, 0);
+						set_rgb_led(2, 10, 0, 0);
+						set_rgb_led(3, 10, 0, 0);
+						break;
+					case 1: // Green.
+						set_rgb_led(0, 0, 10, 0);
+						set_rgb_led(1, 0, 10, 0);
+						set_rgb_led(2, 0, 10, 0);
+						set_rgb_led(3, 0, 10, 0);
+						break;
+					case 2: // Blue.
+						set_rgb_led(0, 0, 0, 10);
+						set_rgb_led(1, 0, 0, 10);
+						set_rgb_led(2, 0, 0, 10);
+						set_rgb_led(3, 0, 0, 10);
+						break;
+	            }
+				rgb_counter++;
+				if(rgb_counter == 100) {
+					rgb_counter = 0;
+					rgb_state = (rgb_state+1)%3;
+					set_body_led(2);
+					set_front_led(2);
+				}
+
+				melody_counter++;
+				if(melody_counter == 2000) {
+					melody_counter = 0;
+					melody_state = (melody_state+1)%NB_SONGS;
+					play_melody(melody_state);
+				}
+
+				chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
 				break;
 
-			case 12:
+			case 12: // Hardware test.
+				switch(hw_test_state) {
+					case 0: // Init hardware.
+						// Calibrate proximity.
+						calibrate_ir();
+
+						// Test audio.
+						play_melody(MARIO);
+
+						// Test motors at low speed.
+						left_motor_set_speed(100);
+						right_motor_set_speed(100);
+
+						// Init camera.
+						capture_mode = CAPTURE_ONE_SHOT;
+						double_buffering = 0;
+						po8030_save_current_format(FORMAT_RGB565);
+						po8030_save_current_subsampling(SUBSAMPLING_X4, SUBSAMPLING_X4);
+						po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 160, SUBSAMPLING_X4, SUBSAMPLING_X4);
+						sample_buffer = (uint8_t*)malloc(po8030_get_image_size());
+						dcmi_prepare(&DCMID, &dcmicfg, po8030_get_image_size(), (uint32_t*)sample_buffer, NULL);
+
+						// Calibrate IMU.
+						calibrate_acc();
+						calibrate_gyro();
+
+						// Test all leds.
+						set_body_led(1);
+						set_front_led(1);
+						set_led(4,1);
+						set_rgb_led(0, 10, 0, 0);
+						set_rgb_led(1, 10, 0, 0);
+						set_rgb_led(2, 10, 0, 0);
+						set_rgb_led(3, 10, 0, 0);
+
+						hw_test_state = 1;
+						break;
+
+					case 1: // Test.
+						chThdSleepUntilWindowed(time, time + MS2ST(50)); // Refresh @ 20 Hz.
+
+			            switch(rgb_state) {
+							case 0: // Red.
+								set_rgb_led(0, 10, 0, 0);
+								set_rgb_led(1, 10, 0, 0);
+								set_rgb_led(2, 10, 0, 0);
+								set_rgb_led(3, 10, 0, 0);
+								break;
+							case 1: // Green.
+								set_rgb_led(0, 0, 10, 0);
+								set_rgb_led(1, 0, 10, 0);
+								set_rgb_led(2, 0, 10, 0);
+								set_rgb_led(3, 0, 10, 0);
+								break;
+							case 2: // Blue.
+								set_rgb_led(0, 0, 0, 10);
+								set_rgb_led(1, 0, 0, 10);
+								set_rgb_led(2, 0, 0, 10);
+								set_rgb_led(3, 0, 0, 10);
+								break;
+			            }
+						rgb_counter++;
+						if(rgb_counter == 20) {
+							rgb_counter = 0;
+							rgb_state = (rgb_state+1)%3;
+						}
+
+						if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
+							continue;
+						}
+
+						messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
+						messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+
+						// Read IMU.
+						chprintf((BaseSequentialStream *)&SDU1, "IMU\r\n");
+				    	chprintf((BaseSequentialStream *)&SDU1, "%Ax=%-7d Ay=%-7d Az=%-7d Gx=%-7d Gy=%-7d Gz=%-7d\r\n\n", imu_values.acc_raw[0], imu_values.acc_raw[1], imu_values.acc_raw[2], imu_values.gyro_raw[0], imu_values.gyro_raw[1], imu_values.gyro_raw[2]);
+
+						// Read selector position.
+				    	chprintf((BaseSequentialStream *)&SDU1, "SELECTOR\r\n");
+				    	chprintf((BaseSequentialStream *)&SDU1, "%d\r\n\n", get_selector());
+
+						// Read IR receiver.
+				    	chprintf((BaseSequentialStream *)&SDU1, "IR RECEIVER\r\n");
+				    	chprintf((BaseSequentialStream *)&SDU1, "check : 0x%x, address : 0x%x, data : 0x%x\r\n\n", ir_remote_get_toggle(), ir_remote_get_address(), ir_remote_get_data());
+
+						// Read proximity sensors.
+				    	chprintf((BaseSequentialStream *)&SDU1, "PROXIMITY\r\n");
+				    	chprintf((BaseSequentialStream *)&SDU1, "%4d,%4d,%4d,%4d,%4d,%4d,%4d,%4d\r\n\n", prox_values.delta[0], prox_values.delta[1], prox_values.delta[2], prox_values.delta[3], prox_values.delta[4], prox_values.delta[5], prox_values.delta[6], prox_values.delta[7]);
+				    	chprintf((BaseSequentialStream *)&SDU1, "AMBIENT\r\n");
+				    	chprintf((BaseSequentialStream *)&SDU1, "%4d,%4d,%4d,%4d,%4d,%4d,%4d,%4d\r\n\n", prox_values.ambient[0], prox_values.ambient[1], prox_values.ambient[2], prox_values.ambient[3], prox_values.ambient[4], prox_values.ambient[5], prox_values.ambient[6], prox_values.ambient[7]);
+
+						// Read microphones.
+				    	chprintf((BaseSequentialStream *)&SDU1, "MICROPHONES\r\n");
+				    	chprintf((BaseSequentialStream *)&SDU1, "%4d,%4d,%4d,%4d\r\n\n", mic_get_volume(0), mic_get_volume(1), mic_get_volume(2), mic_get_volume(3));
+
+				    	// Read distance sensor.
+				    	chprintf((BaseSequentialStream *)&SDU1, "DISTANCE SENSOR\r\n");
+				    	chprintf((BaseSequentialStream *)&SDU1, "%d\r\n\n", VL53L0X_get_dist_mm());
+
+						// Read camera.
+				    	dcmi_start_one_shot(&DCMID);
+						while(!image_is_ready());
+						r = (int)sample_buffer[0]&0xF8;
+			            g = (int)(sample_buffer[0]&0x07)<<5 | (sample_buffer[1]&0xE0)>>3;
+			            b = (int)(sample_buffer[1]&0x1F)<<3;
+			            chprintf((BaseSequentialStream *)&SDU1, "CAMERA\r\n");
+			            chprintf((BaseSequentialStream *)&SDU1, "R=%3d, G=%3d, B=%3d\r\n\n", r, g, b);
+						break;
+				}
 				break;
 
-			case 13:
+			case 13: // Reflect the orientation on the LEDs around the robot.
+				accelero = e_read_acc_spheric();
+				clear_leds();
+				set_rgb_led(0, 0, 0, 0);
+				set_rgb_led(1, 0, 0, 0);
+				set_rgb_led(2, 0, 0, 0);
+				set_rgb_led(3, 0, 0, 0);
+				if(accelero.orientation > 337 || accelero.orientation <= 22) {
+					set_led(0, 1);
+				} else if(accelero.orientation > 22 && accelero.orientation <= 67) {
+					set_rgb_led(3, 10, 0, 0);
+				} else if(accelero.orientation > 67 && accelero.orientation <= 112) {
+					set_led(3, 1);
+				} else if(accelero.orientation > 112 && accelero.orientation <= 157) {
+					set_rgb_led(2, 10, 0, 0);
+				} else if(accelero.orientation > 157 && accelero.orientation <= 202) {
+					set_led(2, 1);
+				} else if(accelero.orientation > 202 && accelero.orientation <= 247) {
+					set_rgb_led(1, 10, 0, 0);
+				} else if(accelero.orientation > 247 && accelero.orientation <= 292) {
+					set_led(1, 1);
+				} else if(accelero.orientation > 292 && accelero.orientation <= 337) {
+					set_rgb_led(0, 10, 0, 0);
+				}
 				break;
 
 			case 14:

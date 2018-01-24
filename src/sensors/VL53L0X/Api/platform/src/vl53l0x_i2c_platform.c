@@ -1,13 +1,13 @@
 #include "../inc/vl53l0x_i2c_platform.h"
 #include "../../core/inc/vl53l0x_def.h"
 #include "hal.h"
+#include "i2c_bus.h"
 
 //#define I2C_DEBUG
 
 int32_t VL53L0X_write_multi(uint8_t address, uint8_t index, uint8_t *pdata, uint32_t count) {
 
-  systime_t timeout = MS2ST(50); // 4 ms
-  VL53L0X_Error status = VL53L0X_ERROR_NONE;
+  systime_t timeout = MS2ST(50); // 50 ms
   msg_t rdymsg = MSG_OK;
 
   uint8_t txbuff[32];
@@ -22,44 +22,39 @@ int32_t VL53L0X_write_multi(uint8_t address, uint8_t index, uint8_t *pdata, uint
   }
   i2cAcquireBus(&I2CD1);
   rdymsg = i2cMasterTransmitTimeout(&I2CD1, address>>1, txbuff, nbDatas, rxbuff, 0, timeout);
-  i2cReleaseBus(&I2CD1);
-
-  switch(rdymsg){
-    case MSG_OK :
-      status = VL53L0X_ERROR_NONE;
-      break;
-
-    default:
-      status = VL53L0X_ERROR_CONTROL_INTERFACE;
-      break;
+  
+  if (rdymsg != MSG_OK){
+    i2cReleaseBus(&I2CD1);
+    if(I2CD1.state == I2C_LOCKED){
+      i2c_stop();
+      i2c_start();
+    }
+    return VL53L0X_ERROR_CONTROL_INTERFACE;
   }
-
-  return status;
+  i2cReleaseBus(&I2CD1);
+  return VL53L0X_ERROR_NONE;
 }
 
 int32_t VL53L0X_read_multi(uint8_t address, uint8_t index, uint8_t *pdata, uint32_t count) {
 
-  systime_t timeout = MS2ST(50); // 4 ms
-  VL53L0X_Error status = VL53L0X_ERROR_NONE;
+  systime_t timeout = MS2ST(50); // 50 ms
   msg_t rdymsg = MSG_OK;
 
   uint8_t txbuff[1] = {index};
 
   i2cAcquireBus(&I2CD1);
   rdymsg = i2cMasterTransmitTimeout(&I2CD1, address>>1, txbuff, 1, pdata, count, timeout);
-  i2cReleaseBus(&I2CD1);
 
-  switch(rdymsg){
-    case MSG_OK :
-      status = VL53L0X_ERROR_NONE;
-      break;
-
-    default:
-      status = VL53L0X_ERROR_CONTROL_INTERFACE;
-      break;
+  if (rdymsg != MSG_OK){
+    i2cReleaseBus(&I2CD1);
+    if(I2CD1.state == I2C_LOCKED){
+      i2c_stop();
+      i2c_start();
+    }
+    return VL53L0X_ERROR_CONTROL_INTERFACE;
   }
-
-  return status;
+  i2cReleaseBus(&I2CD1);
+  return VL53L0X_ERROR_NONE;
 }
 
 int32_t VL53L0X_write_byte(uint8_t address, uint8_t index, uint8_t data) {

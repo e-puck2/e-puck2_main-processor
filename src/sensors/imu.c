@@ -22,6 +22,7 @@ static uint8_t gyroFilterSize = 0;
 static uint8_t gyroCalibrationInProgress = 0;
 
 static thread_t *imuThd;
+static bool imu_configured = false;
 
 /***************************INTERNAL FUNCTIONS************************************/
 
@@ -51,10 +52,12 @@ static THD_FUNCTION(imu_reader_thd, arg) {
      uint8_t gyroCalibrationNumSamples = 0;
      int32_t gyroCalibrationSum = 0;
 
-     while (chThdShouldTerminateX() == false) {
+     while ((chThdShouldTerminateX() == false) && (imu_configured == true)) {
 
          /* Waits for a measurement to come. */
          chEvtWaitAny(EXTI_EVENT_IMU_INT);
+         //Clears the flag. Otherwise the event is always true
+    	 chEvtGetAndClearFlags(&imu_int);
 
 //         /* Reads the incoming measurement. */
     	 mpu9250_read(imu_values.gyro, imu_values.acceleration, &imu_values.temperature, imu_values.gyro_raw, imu_values.acc_raw, &imu_values.status);
@@ -120,10 +123,15 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
 void imu_start(void)
 {
-    mpu9250_setup(MPU9250_ACC_FULL_RANGE_2G
-                  | MPU9250_GYRO_FULL_RANGE_250DPS
-                  | MPU9250_SAMPLE_RATE_DIV(100));
-                  //| MPU60X0_LOW_PASS_FILTER_6);
+	int8_t status = MSG_OK;
+
+    status = mpu9250_setup(MPU9250_ACC_FULL_RANGE_2G
+		                  | MPU9250_GYRO_FULL_RANGE_250DPS
+		                  | MPU9250_SAMPLE_RATE_DIV(100));
+		                  //| MPU60X0_LOW_PASS_FILTER_6)
+    if(status == MSG_OK){
+    	imu_configured = true;
+    }
 
     static THD_WORKING_AREA(imu_reader_thd_wa, 1024);
     imuThd = chThdCreateStatic(imu_reader_thd_wa, sizeof(imu_reader_thd_wa), NORMALPRIO, imu_reader_thd, NULL);

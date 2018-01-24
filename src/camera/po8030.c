@@ -82,6 +82,8 @@ static format_t currFormat = FORMAT_YCBYCR;
 static subsampling_t currSubsamplingX = SUBSAMPLING_X1;
 static subsampling_t currSubsamplingY = SUBSAMPLING_X1;
 
+static bool cam_configured = false;
+
 /***************************INTERNAL FUNCTIONS************************************/
  /**
  * @brief   Reads the id of the camera
@@ -654,7 +656,7 @@ int8_t po8030_config(format_t fmt, image_size_t imgsize) {
 int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1, 
                                 unsigned int width, unsigned int height, 
                                 subsampling_t subsampling_x, subsampling_t subsampling_y) {
-    int8_t err = 0;
+    int8_t err = MSG_OK;
 	unsigned int x2 = x1 + width - 1;
 	unsigned int y2 = y1 + height - 1;
 	unsigned int auto_cw_x1 = 0, auto_cw_x2 = 0;
@@ -867,6 +869,10 @@ int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1,
 	po8030_conf.curr_subsampling_x = subsampling_x;
 	po8030_conf.curr_subsampling_y = subsampling_y;
 	
+    if(err == MSG_OK){
+        cam_configured = true;
+    }
+
     return MSG_OK;
 }
 

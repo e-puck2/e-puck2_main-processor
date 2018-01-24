@@ -15,18 +15,30 @@
 
 static uint16_t dist_mm = 0;
 static thread_t *distThd;
+static bool VL53L0X_configured = false;
 
 //////////////////// PUBLIC FUNCTIONS /////////////////////////
 static THD_WORKING_AREA(waVL53L0XThd, 2048);
 static THD_FUNCTION(VL53L0XThd, arg) {
 
+	VL53L0X_Error status = VL53L0X_ERROR_NONE;
+
 	(void)arg;
 	VL53L0X_Dev_t device;
 
 	device.I2cDevAddr = VL53L0X_ADDR;
-	VL53L0X_init(&device);
-	VL53L0X_configAccuracy(&device, VL53L0X_LONG_RANGE);
-	VL53L0X_startMeasure(&device, VL53L0X_DEVICEMODE_CONTINUOUS_RANGING);
+	
+	status = VL53L0X_init(&device);
+
+	if(status == VL53L0X_ERROR_NONE){
+		VL53L0X_configAccuracy(&device, VL53L0X_LONG_RANGE);
+	}
+	if(status == VL53L0X_ERROR_NONE){
+		VL53L0X_startMeasure(&device, VL53L0X_DEVICEMODE_CONTINUOUS_RANGING);
+	}
+	if(status == VL53L0X_ERROR_NONE){
+		VL53L0X_configured = true;
+	}
 
     /* Reader thread loop.*/
     while (chThdShouldTerminateX() == false) {

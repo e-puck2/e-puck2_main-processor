@@ -59,6 +59,8 @@ int  e_getchar_uart2(char *car) {
 		//return chnReadTimeout(&SDU1, car, 1, MS2ST(10));
 		return chSequentialStreamRead(&SDU1, (uint8_t*)car, 1);
 	}
+	//otherwise there is no wait state, this means the other threads can not be processed
+	chThdSleepMilliseconds(10);
 	return 0;
 }
 

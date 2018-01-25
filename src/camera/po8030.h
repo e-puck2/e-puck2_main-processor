@@ -192,49 +192,6 @@ int8_t po8030_set_exposure(uint16_t integral, uint8_t fractional);
  */
 uint32_t po8030_get_image_size(void);
 
- /**
- * @brief   Copies the format given to the internal format variable.
- *          Doesn't change the camera's settings, only the internal variables
- *
- *@param fmt           Format of the image. See format_t 
- *
- */
-void po8030_save_current_format(format_t fmt);
-
-/**
- * @brief   Returns the internal format variable.
- *
- *@return              Format of the image. See format_t 
- *
- */
-format_t po8030_get_saved_format(void);
-
- /**
- * @brief   Copies the subsamplings given given to the internal subsamplings variables.
- *          Doesn't change the camera's settings, only the internal variables
- *
- * subsampling_x        subsampling in the x axis. See subsampling_t
- * subsampling_y        subsampling in the y axis. See subsampling_t
- *
- */
-void po8030_save_current_subsampling(subsampling_t x, subsampling_t y);
-
-/**
- * @brief   Returns the internal subsampling_x variable.
- *
- *@return              Subsampling_x. See subsampling_t 
- *
- */
-subsampling_t po8030_get_saved_subsampling_x(void);
-
-/**
- * @brief   Returns the internal subsampling_y variable.
- *
- *@return              Subsampling_y. See subsampling_t 
- *
- */
-subsampling_t po8030_get_saved_subsampling_y(void);
-
 /**
  * @brief   I2C related function. Returns the last I2C error
  *

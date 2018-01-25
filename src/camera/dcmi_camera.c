@@ -1,5 +1,6 @@
 #include <ch.h>
 #include <hal.h>
+#include <stdlib.h>
 #include "dcmi_camera.h"
 
 void frameEndCb(DCMIDriver* dcmip);
@@ -13,18 +14,24 @@ const DCMIConfig dcmicfg = {
     DCMI_CR_PCKPOL
 };
 
-uint8_t capture_mode = CAPTURE_ONE_SHOT;
-uint8_t *sample_buffer = NULL;
-uint8_t *sample_buffer2 = NULL;
-uint8_t double_buffering = 0;
-uint8_t image_ready = 0;
-uint8_t dcmiErrorFlag = 0;
+static capture_mode_t capture_mode = CAPTURE_ONE_SHOT;
+static uint8_t *image_buff1 = NULL;
+static uint8_t *image_buff2 = NULL;
+static uint8_t double_buffering = 0;
+static uint8_t image_ready = 0;
+static uint8_t dcmiErrorFlag = 0;
+static uint8_t dcmi_prepared = 0;
 
+/***************************INTERNAL FUNCTIONS************************************/
+
+// This is called when a complete image is received from the DCMI peripheral.
 void frameEndCb(DCMIDriver* dcmip) {
     (void) dcmip;
     //palTogglePad(GPIOD, 13) ; // Orange.
 }
 
+// This is called at each DMA transfer completion.
+// In our case it is called at each frame end since "half-transfer" interrupt is disabled.
 void dmaTransferEndCb(DCMIDriver* dcmip) {
    (void) dcmip;
     //palTogglePad(GPIOD, 15); // Blue.
@@ -39,31 +46,185 @@ void dcmiErrorCb(DCMIDriver* dcmip, dcmierror_t err) {
 	//chSysHalt("DCMI error");
 }
 
-void dcmi_start(void) {
-	dcmiInit();
-}
-
-void dcmi_prepare(DCMIDriver *dcmip, const DCMIConfig *config, uint32_t transactionSize, void* rxbuf0, void* rxbuf1) {
-	dcmiPrepare(dcmip, config, transactionSize, rxbuf0, rxbuf1);
-}
-
-void dcmi_unprepare(DCMIDriver *dcmip) {
-	dcmiUnprepare(dcmip);
-}
-
+/**
+* @brief   Captures a single frame from the DCMI.
+* @details This asynchronous function starts a single shot receive operation.
+*
+* @param[in] dcmip     pointer to the @p DCMIDriver object
+*
+*/
 void dcmi_start_one_shot(DCMIDriver *dcmip) {
 	image_ready = 0;
 	dcmiStartOneShot(dcmip);
 }
 
+/**
+* @brief   Begins reception of frames from the DCMI.
+* @details This asynchronous function starts a continuous receive operation.
+*
+* @param[in] dcmip     pointer to the @p DCMIDriver object
+*
+*/
 void dcmi_start_stream(DCMIDriver *dcmip) {
 	dcmiStartStream(dcmip);
 }
 
+/**
+* @brief   Stops reception of frames from the DCMI.
+*
+* @param[in] dcmip     pointer to the @p DCMIDriver object
+*
+*
+* @return              The operation status.
+* @retval MSG_OK       if the function succeeded.
+* @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+*
+*/
 msg_t dcmi_stop_stream(DCMIDriver *dcmip) {
 	return dcmiStopStream(dcmip);
+}
+
+/*************************END INTERNAL FUNCTIONS**********************************/
+
+
+/****************************PUBLIC FUNCTIONS*************************************/
+
+int8_t dcmi_start(void) {
+	dcmiInit();
+    if(image_buff1 != NULL) {
+        free(image_buff1);
+        image_buff1 = NULL;
+    }
+    image_buff1 = (uint8_t*)malloc(MAX_BUFF_SIZE);
+    if(image_buff1 == NULL) {
+        return -1;
+    }
+    return 0;
+}
+
+int8_t dcmi_prepare(void) {
+	if(dcmi_prepared == 1) {
+		dcmiUnprepare(&DCMID);
+	}
+	// Check if image size fit in the available memory.
+	uint32_t image_size = po8030_get_image_size();
+	if(double_buffering == 0) {
+		if(image_size > MAX_BUFF_SIZE) {
+			return -1;
+		}
+	} else {
+		if(image_size > MAX_BUFF_SIZE/2) {
+			return -1;
+		}
+	}
+	// Prepare the DCMI and enable the DMA.
+	dcmiPrepare(&DCMID, &dcmicfg, image_size, (uint32_t*)image_buff1, (uint32_t*)image_buff2);
+	dcmi_prepared = 1;
+
+	return 0;
+}
+
+void dcmi_unprepare(void) {
+	if(dcmi_prepared == 1) {
+		dcmiUnprepare(&DCMID);
+	}
+	dcmi_prepared = 0;
 }
 
 uint8_t image_is_ready(void) {
 	return image_ready;
 }
+
+uint8_t dcmi_double_buffering_enabled(void) {
+	return double_buffering;
+}
+
+int8_t dcmi_enable_double_buffering(void) {
+	double_buffering = 1;
+
+	// Free the first buffer memory that was allocated with the max available memory.
+    if(image_buff1 != NULL) {
+        free(image_buff1);
+        image_buff1 = NULL;
+    }
+    // Allocate half of the available memory for the first buffer.
+    image_buff1 = (uint8_t*)malloc(MAX_BUFF_SIZE/2);
+    if(image_buff1 == NULL) {
+        return -1;
+    }
+    // Free the second buffer in case it was already allocated.
+    if(image_buff2 != NULL) {
+        free(image_buff2);
+        image_buff2 = NULL;
+    }
+    // Allocate half of the available memory for the second buffer.
+    image_buff2 = (uint8_t*)malloc(MAX_BUFF_SIZE/2);
+    if(image_buff2 == NULL) {
+    	return -1;
+    }
+    return 0;
+}
+
+int8_t dcmi_disable_double_buffering(void) {
+	double_buffering = 0;
+
+	// Free the second buffer.
+    if(image_buff2 != NULL) {
+        free(image_buff2);
+        image_buff2 = NULL;
+    }
+	// Free the first buffer.
+    if(image_buff1 != NULL) {
+        free(image_buff1);
+        image_buff1 = NULL;
+    }
+    // Allocate all of the available memory for the first buffer.
+    image_buff1 = (uint8_t*)malloc(MAX_BUFF_SIZE);
+    if(image_buff1 == NULL) {
+        return -1;
+    }
+    return 0;
+}
+
+void dcmi_set_capture_mode(capture_mode_t mode) {
+	capture_mode = mode;
+}
+
+uint8_t* dcmi_get_last_image_ptr(void) {
+	if(double_buffering == 0) {
+		return image_buff1;
+	} else {
+		if((&DCMID)->dmastp->stream->CR & STM32_DMA_CR_CT) {
+			return image_buff1;
+		} else {
+			return image_buff2;
+		}
+	}
+}
+
+uint8_t* dcmi_get_first_buffer_ptr(void) {
+	return image_buff1;
+}
+
+uint8_t* dcmi_get_second_buffer_ptr(void) {
+	return image_buff2;
+}
+
+void dcmi_capture_start(void) {
+	if(capture_mode == CAPTURE_ONE_SHOT) {
+		dcmi_start_one_shot(&DCMID);
+	} else {
+		dcmi_start_stream(&DCMID);
+	}
+}
+
+msg_t dcmi_capture_stop(void) {
+	if(capture_mode == CAPTURE_ONE_SHOT) {
+		return MSG_OK;
+	} else {
+		return dcmi_stop_stream(&DCMID);
+	}
+}
+
+/**************************END PUBLIC FUNCTIONS***********************************/
+

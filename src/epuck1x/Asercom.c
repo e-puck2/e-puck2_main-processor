@@ -43,7 +43,7 @@
 #include "DataEEPROM.h"
 
 #include "memory.h"
-char buffer[3300];
+char buffer[4056+3]; // 52x39 + 3(header)
 int e_mic_scan[3][MIC_SAMP_NB];
 unsigned int e_last_mic_scan_id;
 int selector;
@@ -582,7 +582,7 @@ int run_asercom(void) {
                     if (wait_cam) {
                         wait_cam = 0;
                         while (!e_poxxxx_is_img_ready());
-                        memcpy(&buffer[i-cam_size], sample_buffer, cam_size);
+                        memcpy(&buffer[i-cam_size], dcmi_get_last_image_ptr(), cam_size);
                     }
                 }
 

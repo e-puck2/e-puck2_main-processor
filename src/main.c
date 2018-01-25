@@ -86,6 +86,7 @@ static THD_FUNCTION(selector_thd, arg)
     int16_t len = 0;
 
     uint8_t hw_test_state = 0;
+    uint8_t *img_buff_ptr;
     uint16_t r = 0, g = 0, b = 0;
     uint8_t rgb_state = 0, rgb_counter = 0;
     uint16_t melody_state = 0, melody_counter = 0;
@@ -237,13 +238,10 @@ static THD_FUNCTION(selector_thd, arg)
 						right_motor_set_speed(100);
 
 						// Init camera.
-						capture_mode = CAPTURE_ONE_SHOT;
-						double_buffering = 0;
-						po8030_save_current_format(FORMAT_RGB565);
-						po8030_save_current_subsampling(SUBSAMPLING_X4, SUBSAMPLING_X4);
 						po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 160, SUBSAMPLING_X4, SUBSAMPLING_X4);
-						sample_buffer = (uint8_t*)malloc(po8030_get_image_size());
-						dcmi_prepare(&DCMID, &dcmicfg, po8030_get_image_size(), (uint32_t*)sample_buffer, NULL);
+						dcmi_disable_double_buffering();
+						dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
+						dcmi_prepare();
 
 						// Calibrate IMU.
 						calibrate_acc();
@@ -324,11 +322,12 @@ static THD_FUNCTION(selector_thd, arg)
 				    	chprintf((BaseSequentialStream *)&SDU1, "%d\r\n\n", VL53L0X_get_dist_mm());
 
 						// Read camera.
-				    	dcmi_start_one_shot(&DCMID);
+				    	dcmi_capture_start();
 						while(!image_is_ready());
-						r = (int)sample_buffer[0]&0xF8;
-			            g = (int)(sample_buffer[0]&0x07)<<5 | (sample_buffer[1]&0xE0)>>3;
-			            b = (int)(sample_buffer[1]&0x1F)<<3;
+						img_buff_ptr = dcmi_get_last_image_ptr();
+						r = (int)img_buff_ptr[0]&0xF8;
+			            g = (int)(img_buff_ptr[0]&0x07)<<5 | (img_buff_ptr[1]&0xE0)>>3;
+			            b = (int)(img_buff_ptr[1]&0x1F)<<3;
 			            chprintf((BaseSequentialStream *)&SDU1, "CAMERA\r\n");
 			            chprintf((BaseSequentialStream *)&SDU1, "R=%3d, G=%3d, B=%3d\r\n\n", r, g, b);
 						break;
@@ -388,7 +387,7 @@ int main(void)
 	set_front_led(0);
 	usb_start();
 	i2c_start();
-	dcmi_start();
+	int8_t erro = dcmi_start();
 	po8030_start();
 	motors_init();
 	proximity_start();

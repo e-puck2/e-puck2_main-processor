@@ -7,13 +7,58 @@ int e_poxxxx_config_cam(unsigned int sensor_x1,unsigned int sensor_y1,
 				unsigned int sensor_width,unsigned int sensor_height,
 				unsigned int zoom_fact_width,unsigned int zoom_fact_height,  
 				int color_mode) {
-	(void)sensor_x1;
-	(void)sensor_y1;
-	(void)sensor_width;
-	(void)sensor_height;
-	(void)zoom_fact_width;
-	(void)zoom_fact_height;
-	(void)color_mode;
+
+	format_t fmt;
+	subsampling_t subx, suby;
+
+	sensor_width = sensor_width/zoom_fact_width;
+	sensor_height = sensor_height/zoom_fact_height;
+
+	if(color_mode == GREY_SCALE_MODE) {
+		fmt = FORMAT_YYYY;
+	} else if(color_mode == RGB_565_MODE) {
+		fmt = FORMAT_RGB565;
+	} else {
+		fmt = FORMAT_YCBYCR;
+	}
+
+	switch(zoom_fact_width) {
+		case 1:
+			subx = SUBSAMPLING_X1;
+			break;
+		case 2:
+			subx = SUBSAMPLING_X2;
+			break;
+		case 4:
+			subx = SUBSAMPLING_X4;
+			break;
+		default:
+			subx = SUBSAMPLING_X4;
+			zoom_fact_width = 4;
+			break;
+	}
+
+	switch(zoom_fact_height) {
+		case 1:
+			suby = SUBSAMPLING_X1;
+			break;
+		case 2:
+			suby = SUBSAMPLING_X2;
+			break;
+		case 4:
+			suby = SUBSAMPLING_X4;
+			break;
+		default:
+			suby = SUBSAMPLING_X4;
+			zoom_fact_height = 4;
+			break;
+	}
+
+	po8030_advanced_config(fmt, sensor_x1, sensor_y1, sensor_width*zoom_fact_width, sensor_height*zoom_fact_height, subx, suby);
+	dcmi_disable_double_buffering();
+	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
+	dcmi_prepare();
+
 	return 0;
 }
 
@@ -32,15 +77,8 @@ void e_poxxxx_write_cam_registers(void) {
  * Initalize the camera, return the version in hexa, 0x3030 or 0x6030
  */
 int e_poxxxx_init_cam(void) {
-	capture_mode = CAPTURE_ONE_SHOT;
-	double_buffering = 0;
-	po8030_save_current_format(FORMAT_RGB565);
-	po8030_save_current_subsampling(SUBSAMPLING_X4, SUBSAMPLING_X4);
-	po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 160, SUBSAMPLING_X4, SUBSAMPLING_X4);
-	sample_buffer = (uint8_t*)malloc(po8030_get_image_size());
-	dcmi_prepare(&DCMID, &dcmicfg, po8030_get_image_size(), (uint32_t*)sample_buffer, NULL);
-
-	return 0x8030;
+	// The camera is already initialized.
+	return 0x8030; // Only one camera mounted on e-puck2 so return its id.
 }
 
 /**
@@ -92,7 +130,7 @@ unsigned int getCameraVersion(void) {
  */
 void e_poxxxx_launch_capture(char * buf) {
 	(void)buf;
-	dcmi_start_one_shot(&DCMID);
+	dcmi_capture_start();
 }
 
 /*! Check if the current capture is finished

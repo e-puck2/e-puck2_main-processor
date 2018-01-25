@@ -47,7 +47,7 @@
 #include "DataEEPROM.h"
 
 #include "memory.h"
-extern char buffer[3300]; //extern char buffer[BUFFER_SIZE];
+extern char buffer[4056+3]; //extern char buffer[BUFFER_SIZE];
 //extern int e_mic_scan[3][MIC_SAMP_NB];
 //extern unsigned int e_last_mic_scan_id;
 extern int selector; //extern int selector;
@@ -76,6 +76,7 @@ int run_asercom2(void) {
     int use_bt = 0;
     unsigned int battValue = 0;
     uint8_t gumstix_connected = 0;
+    uint16_t cam_start_index = 0;
 
     //e_init_port();    // configure port pins
     //e_start_agendas_processing();
@@ -136,7 +137,7 @@ int run_asercom2(void) {
         uart1_send_static_text("\f\a"
                 "WELCOME to the SerCom protocol on e-Puck\r\n"
                 "the EPFL education robot type \"H\" for help\r\n");
-    } else { // Communicatw with the pc (usb).
+    } else { // Communicate with the pc (usb).
     	e_acc_calibr();
         uart2_send_static_text("\f\a"
                 "WELCOME to the SerCom protocol on e-Puck\r\n"
@@ -208,7 +209,7 @@ int run_asercom2(void) {
 #else 
                 ;
 #endif
-        } else { // Communicatw with the pc (usb).
+        } else { // Communicate with the pc (usb).
             while (e_getchar_uart2(&c) == 0)
 #ifdef IR_RECEIVER
             {
@@ -282,7 +283,7 @@ int run_asercom2(void) {
 
 							} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
 								while (e_getchar_uart1(&rgb_value[j]) == 0);
-							} else { // Communicatw with the pc (usb).
+							} else { // Communicate with the pc (usb).
 								while (e_getchar_uart2(&rgb_value[j]) == 0);
 							}
 						}
@@ -405,7 +406,7 @@ int run_asercom2(void) {
                     	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                             while (e_getchar_uart1(&c1) == 0);
                             while (e_getchar_uart1(&c2) == 0);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                             while (e_getchar_uart2(&c1) == 0);
                             while (e_getchar_uart2(&c2) == 0);
                         }
@@ -415,7 +416,7 @@ int run_asercom2(void) {
                         } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                             while (e_getchar_uart1(&c1) == 0);
                             while (e_getchar_uart1(&c2) == 0);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                             while (e_getchar_uart2(&c1) == 0);
                             while (e_getchar_uart2(&c2) == 0);
                         }
@@ -456,6 +457,7 @@ int run_asercom2(void) {
                             buffer[i++] = (char) cam_mode & 0xff; //send image parameter
                             buffer[i++] = (char) cam_width & 0xff;
                             buffer[i++] = (char) cam_heigth & 0xff;
+                            cam_start_index = i;
                             i += cam_size;
                         }
                         break;
@@ -465,7 +467,7 @@ int run_asercom2(void) {
                     	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                             while (e_getchar_uart1(&c1) == 0);
                             while (e_getchar_uart1(&c2) == 0);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                             while (e_getchar_uart2(&c1) == 0);
                             while (e_getchar_uart2(&c2) == 0);
                         }
@@ -527,7 +529,7 @@ int run_asercom2(void) {
                     	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                             while (e_getchar_uart1(&c1) == 0);
                             while (e_getchar_uart1(&c2) == 0);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                             while (e_getchar_uart2(&c1) == 0);
                             while (e_getchar_uart2(&c2) == 0);
                         }
@@ -537,7 +539,7 @@ int run_asercom2(void) {
                     	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                             while (e_getchar_uart1(&c1) == 0);
                             while (e_getchar_uart1(&c2) == 0);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                             while (e_getchar_uart2(&c1) == 0);
                             while (e_getchar_uart2(&c2) == 0);
                         }
@@ -581,7 +583,7 @@ int run_asercom2(void) {
 //
 //                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
 //                            e_send_uart1_char(ptr, 600); //send sound buffer
-//                        } else { // Communicatw with the pc (usb).
+//                        } else { // Communicate with the pc (usb).
 //                            e_send_uart2_char(ptr, 600); //send sound buffer
 //                        }
 //                        n = e_last_mic_scan_id; //send last scan
@@ -635,7 +637,7 @@ int run_asercom2(void) {
 
                 } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     while (e_getchar_uart1(&c) == 0); // get next command
-                } else { // Communicatw with the pc (usb).
+                } else { // Communicate with the pc (usb).
                     while (e_getchar_uart2(&c) == 0); // get next command
                 }
             } while (c);
@@ -644,7 +646,7 @@ int run_asercom2(void) {
                     if (wait_cam) {
                         wait_cam = 0;
                         while (!e_poxxxx_is_img_ready());
-                        memcpy(&buffer[i-cam_size], sample_buffer, cam_size);
+                        memcpy(&buffer[cam_start_index], dcmi_get_last_image_ptr(), cam_size);
                     }
                 }
 
@@ -653,7 +655,7 @@ int run_asercom2(void) {
                 } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     e_send_uart1_char(buffer, i); // send answer
                     while (e_uart1_sending());
-                } else { // Communicatw with the pc (usb).
+                } else { // Communicate with the pc (usb).
                     e_send_uart2_char(buffer, i); // send answer
                     while (e_uart2_sending());
                 }
@@ -664,7 +666,7 @@ int run_asercom2(void) {
 
         	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                 while (c == '\n' || c == '\r') e_getchar_uart1(&c);
-            } else { // Communicatw with the pc (usb).
+            } else { // Communicate with the pc (usb).
                 while (c == '\n' || c == '\r') e_getchar_uart2(&c);
             }
             buffer[0] = c;
@@ -674,7 +676,7 @@ int run_asercom2(void) {
             } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                 do if (e_getchar_uart1(&c)) buffer[i++] = c;
                     while (c != '\n' && c != '\r');
-            } else { // Communicatw with the pc (usb).
+            } else { // Communicate with the pc (usb).
                 do if (e_getchar_uart2(&c)) buffer[i++] = c;
                     while (c != '\n' && c != '\r');
             }
@@ -694,7 +696,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_text(buffer);
                     }
                     break;
@@ -704,7 +706,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_text(buffer);
                     }
                     break;
@@ -715,7 +717,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_static_text("b\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_static_text("b\r\n");
                     }
                     break;
@@ -726,7 +728,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_text(buffer);
                     }
                     break;
@@ -738,7 +740,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_static_text("d\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_static_text("d\r\n");
                     }
                     break;
@@ -748,7 +750,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_text(buffer);
                     }
                     break;
@@ -759,7 +761,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_static_text("f\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_static_text("f\r\n");
                     }
                     break;
@@ -770,7 +772,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_text(buffer);
                     }
                     break;
@@ -785,7 +787,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_text(buffer);
                     }
                     break;
@@ -870,7 +872,7 @@ int run_asercom2(void) {
                         uart1_send_static_text("\"V\"               Version of SerCom\r\n");
                         uart1_send_static_text("\"W\"               Write I2C (mod,reg,val)\r\n");
                         uart1_send_static_text("\"Y\"               Read I2C val=(mod,reg)\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                         uart2_send_static_text("\n");
                         if (isEpuckVersion1_3() == 0) {
                             uart2_send_static_text("\"A\"       Accelerometer\r\n");
@@ -914,7 +916,7 @@ int run_asercom2(void) {
                         sprintf(buffer, "i,%d,%d,%d,%d,%d\r\n", cam_mode, cam_width, cam_heigth, cam_zoom, cam_size);
                         if(use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_text(buffer);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                         	uart2_send_text(buffer);
                         }
                     }
@@ -945,7 +947,7 @@ int run_asercom2(void) {
                         e_poxxxx_write_cam_registers();
                         if(use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_static_text("j\r\n");
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                         	uart2_send_static_text("j\r\n");
                         }
                     }
@@ -955,7 +957,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("k, Starting calibration - Remove any object in sensors range\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("k, Starting calibration - Remove any object in sensors range\r\n");
                     }
                     int long t;
@@ -970,7 +972,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("k, Calibration finished\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("k, Calibration finished\r\n");
                     }
                     break;
@@ -981,7 +983,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("l\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("l\r\n");
                     }
                     break;
@@ -1024,7 +1026,7 @@ int run_asercom2(void) {
 #endif
                         if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_text(buffer);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                         	uart2_send_text(buffer);
                         }
                     }
@@ -1033,7 +1035,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("m,0,0,0\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("m,0,0,0\r\n");
                     }
 #endif
@@ -1046,7 +1048,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_text(buffer);
                     }
                     break;
@@ -1058,7 +1060,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_text(buffer);
                     }
                     break;
@@ -1070,7 +1072,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("p\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("p\r\n");
                     }
                     break;
@@ -1080,7 +1082,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_text(buffer);
                     }
                     break;
@@ -1100,7 +1102,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("s\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("s\r\n");
                     }
                     break;
@@ -1131,7 +1133,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("t\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("t\r\n");
                     }
                     break;
@@ -1146,7 +1148,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_text(buffer);
                     }
                     break;
@@ -1157,7 +1159,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_text(buffer);
                     }
                     break;
@@ -1166,7 +1168,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("v,Version 2.0 January 2018 GCtronic\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("v,Version 2.0 January 2018 GCtronic\r\n");
                     }
                     sprintf(buffer, "HW version: %X\r\n", HWversion);
@@ -1174,7 +1176,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_text(buffer);
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_text(buffer);
                     }
                     break;
@@ -1186,7 +1188,7 @@ int run_asercom2(void) {
                         e_i2cp_disable();
                         if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_static_text("w\r\n");
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                         	uart2_send_static_text("w\r\n");
                         }
                     }
@@ -1197,7 +1199,7 @@ int run_asercom2(void) {
                         sprintf(buffer, "y,%d,%d\r\n", mod, reg);
                         if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_text(buffer);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                         	uart2_send_text(buffer);
                         }
                         e_i2cp_enable();
@@ -1207,7 +1209,7 @@ int run_asercom2(void) {
                         uart1_send_text(buffer);
                         if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_text(buffer);
-                        } else { // Communicatw with the pc (usb).
+                        } else { // Communicate with the pc (usb).
                         	uart2_send_text(buffer);
                         }
                     }
@@ -1222,7 +1224,7 @@ int run_asercom2(void) {
                                 sprintf(buffer, "%d: %d\r\n", j, val);
                                 if (use_bt) { // Communicate with ESP32 (uart) => BT.
                                 	uart1_send_text(buffer);
-                                } else { // Communicatw with the pc (usb).
+                                } else { // Communicate with the pc (usb).
                                 	uart2_send_text(buffer);
                                 }
                             }
@@ -1234,7 +1236,7 @@ int run_asercom2(void) {
 
                     } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
                     	uart1_send_static_text("z,Command not found\r\n");
-                    } else { // Communicatw with the pc (usb).
+                    } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("z,Command not found\r\n");
                     }
                     break;

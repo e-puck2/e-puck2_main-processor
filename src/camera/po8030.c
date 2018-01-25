@@ -77,11 +77,6 @@
 #define PO8030_REG_SATURATION 0x2C
 
 static struct po8030_configuration po8030_conf;
-
-static format_t currFormat = FORMAT_YCBYCR;
-static subsampling_t currSubsamplingX = SUBSAMPLING_X1;
-static subsampling_t currSubsamplingY = SUBSAMPLING_X1;
-
 static bool cam_configured = false;
 
 /***************************INTERNAL FUNCTIONS************************************/
@@ -625,6 +620,9 @@ void po8030_start(void) {
     pwmStart(&PWMD5, &pwmcfg_cam);
     // Enables channel 1 to clock the camera.
     pwmEnableChannel(&PWMD5, 0, 1); //1 is half the period set => duty cycle = 50%
+
+    // Default camera configuration.
+	po8030_advanced_config(FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);
 }
 
 int8_t po8030_config(format_t fmt, image_size_t imgsize) {
@@ -1035,27 +1033,6 @@ uint32_t po8030_get_image_size(void) {
     } else {
         return (uint32_t)po8030_conf.width * (uint32_t)po8030_conf.height * 2;
     }
-}
-
-void po8030_save_current_format(format_t fmt) {
-    currFormat = fmt;
-}
-
-format_t po8030_get_saved_format(void) {
-    return currFormat;
-}
-
-void po8030_save_current_subsampling(subsampling_t x, subsampling_t y) {
-    currSubsamplingX = x;
-    currSubsamplingY = y;
-}
-
-subsampling_t po8030_get_saved_subsampling_x(void) {
-    return currSubsamplingX;
-}
-
-subsampling_t po8030_get_saved_subsampling_y(void) {
-    return currSubsamplingY;
 }
 
 

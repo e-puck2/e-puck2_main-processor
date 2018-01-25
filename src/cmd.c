@@ -33,6 +33,13 @@ static uint8_t buf[MMCSD_BLOCK_SIZE * SDC_BURST_SIZE + 4];
 /* Additional buffer for sdcErase() test */
 static uint8_t buf2[MMCSD_BLOCK_SIZE * SDC_BURST_SIZE ];
 
+/*
+ * Camera related variables.
+ */
+static format_t cmd_fmt;
+static subsampling_t cmd_subx, cmd_suby;
+static uint16_t cmd_x1, cmd_y1, cmd_width, cmd_height;
+
 static void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[])
 {
     size_t n, size;
@@ -379,87 +386,63 @@ static void cmd_cam_set_contrast(BaseSequentialStream *chp, int argc, char *argv
     }
 }
 
-static void cmd_cam_set_adv_conf_fmt(BaseSequentialStream *chp, int argc, char *argv[])
+static void cmd_cam_set_conf1(BaseSequentialStream *chp, int argc, char *argv[])
 {
     uint16_t f;
-    format_t fmt;
+    uint8_t sx, sy;
 
-    if (argc != 1) {
+    if (argc != 3) {
         chprintf(chp,
-                 "Usage: cam_adv_conf_fmt format\r\nformat: 0=color, 1=grey\r\n");
+                 "Usage: cam_conf1 format subsampling_x subsampling_y\r\nformat: 0=color, 1=grey\r\nsubsampling: 1, 2, 4\r\n");
     } else {
         f = (uint8_t) atoi(argv[0]);
+        sx = (uint8_t) atoi(argv[1]);
+        sy = (uint8_t) atoi(argv[2]);
 
         if(f==0) {
-            fmt = FORMAT_YCBYCR;
+            cmd_fmt = FORMAT_YCBYCR;
             chprintf(chp, "Registered color format\r\n");
         } else {
-            fmt = FORMAT_YYYY;
+            cmd_fmt = FORMAT_YYYY;
             chprintf(chp, "Registered greyscale format\r\n");
         }
 
-        po8030_save_current_format(fmt);
-    }
-}
-
-static void cmd_cam_set_adv_conf_sub(BaseSequentialStream *chp, int argc, char *argv[])
-{
-    uint8_t sx, sy;
-    subsampling_t subx, suby;
-
-    if (argc != 2) {
-        chprintf(chp,
-                 "Usage: cam_adv_conf_sub subsampling_x subsampling_y\r\nsubsampling: 1, 2, 4\r\n");
-    } else {
-        sx = (uint8_t) atoi(argv[0]);
-        sy = (uint8_t) atoi(argv[1]);
-
         if(sx == 1) {
-            subx = SUBSAMPLING_X1;
+            cmd_subx = SUBSAMPLING_X1;
             chprintf(chp, "Registered x subsampling x1\r\n");
         } else if(sx == 2) {
-            subx = SUBSAMPLING_X2;
+        	cmd_subx = SUBSAMPLING_X2;
             chprintf(chp, "Registered x subsampling x2\r\n");
         } else {
-            subx = SUBSAMPLING_X4;
+        	cmd_subx = SUBSAMPLING_X4;
             chprintf(chp, "Registered x subsampling x4\r\n");
         }
-
         if(sy == 1) {
-            suby = SUBSAMPLING_X1;
+        	cmd_suby = SUBSAMPLING_X1;
             chprintf(chp, "Registered y subsampling x1\r\n");
         } else if(sy == 2) {
-            suby = SUBSAMPLING_X2;
+        	cmd_suby = SUBSAMPLING_X2;
             chprintf(chp, "Registered y subsampling x2\r\n");
         } else {
-            suby = SUBSAMPLING_X4;
+        	cmd_suby = SUBSAMPLING_X4;
             chprintf(chp, "Registered y subsampling x4\r\n");
         }
-
-        po8030_save_current_subsampling(subx, suby);
     }
 }
 
-static void cmd_cam_set_adv_conf_win(BaseSequentialStream *chp, int argc, char *argv[])
+static void cmd_cam_set_conf2(BaseSequentialStream *chp, int argc, char *argv[])
 {
     int8_t err;
-    uint16_t x1, y1, width, height;
-    subsampling_t subx, suby;
-    format_t fmt;
 
     if (argc != 4) {
-        chprintf(chp,
-                 "Usage: cam_adv_conf x1 y1 width height\r\n");
+        chprintf(chp,"Usage: cam_conf2 x1 y1 width height\r\n");
     } else {
-        x1 = (uint16_t) atoi(argv[0]);
-        y1 = (uint16_t) atoi(argv[1]);
-        width = (uint16_t) atoi(argv[2]);
-        height = (uint16_t) atoi(argv[3]);
-        fmt = po8030_get_saved_format();
-        subx = po8030_get_saved_subsampling_x();
-        suby = po8030_get_saved_subsampling_y();
-				
-        err = po8030_advanced_config(fmt, x1, y1, width, height, subx, suby);
+    	cmd_x1 = (uint16_t) atoi(argv[0]);
+    	cmd_y1 = (uint16_t) atoi(argv[1]);
+    	cmd_width = (uint16_t) atoi(argv[2]);
+    	cmd_height = (uint16_t) atoi(argv[3]);
+
+        err = po8030_advanced_config(cmd_fmt, cmd_x1, cmd_y1, cmd_width, cmd_height, cmd_subx, cmd_suby);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot set configuration (%d)\r\n", err);
         } else {
@@ -575,57 +558,28 @@ static void cmd_cam_set_exposure(BaseSequentialStream *chp, int argc, char *argv
 
 static void cmd_cam_dcmi_prepare(BaseSequentialStream *chp, int argc, char **argv)
 {
-    uint32_t image_size = 0;
+	uint8_t capture_mode = 0;
 
     if (argc != 1) {
-        chprintf(chp,
-                 "Usage: cam_dcmi_prepare capture_mode\r\ncapture_mode: 0=oneshot, 1=continuous\r\n");
+        chprintf(chp, "Usage: cam_dcmi_prepare capture_mode\r\ncapture_mode: 0=oneshot, 1=continuous\r\n");
     } else {
         capture_mode = (uint8_t) atoi(argv[0]);
-        image_size = po8030_get_image_size();
 
-        if(image_size > MAX_BUFF_SIZE) {
-            chprintf(chp, "Cannot prepare dcmi, image size too big.\r\n");
-            return;
-        }
-
-        if(image_size > (MAX_BUFF_SIZE/2)) {
-            double_buffering = 0;
-        } else {
-            double_buffering = 1;
-        }
-
-        if(sample_buffer != NULL) {
-            chprintf(chp, "Cannot prepare dcmi, buffer1 already allocated.\r\n");
-            return;
-        }
-        sample_buffer = (uint8_t*)malloc(image_size);
-        if(sample_buffer == NULL) {
-            chprintf(chp, "Could not allocate buffer1\r\n");
-            return;
-        }
+        dcmi_set_capture_mode(capture_mode);
 
         if(capture_mode == CAPTURE_ONE_SHOT) {
-            dcmi_prepare(&DCMID, &dcmicfg, image_size, (uint32_t*)sample_buffer, NULL);
-            chprintf(chp, "DCMI prepared with single-buffering\r\n");
+        	dcmi_disable_double_buffering();
         } else {
-            if(double_buffering == 0) {
-                dcmi_prepare(&DCMID, &dcmicfg, image_size, (uint32_t*)sample_buffer, NULL);
-                chprintf(chp, "DCMI prepared with single-buffering\r\n");
-            } else {
-                if(sample_buffer2 != NULL) {
-                    chprintf(chp, "Cannot prepare dcmi, buffer2 already allocated.\r\n");
-                    return;
-                }
-                sample_buffer2 = (uint8_t*)malloc(image_size);
-                if(sample_buffer2 == NULL) {
-                    chprintf(chp, "Could not allocate buffer2\r\n");
-                    return;
-                }
-                dcmi_prepare(&DCMID, &dcmicfg, image_size, (uint32_t*)sample_buffer, (uint32_t*)sample_buffer2);
-                chprintf(chp, "DCMI prepared with double-buffering\r\n");
-            }
+        	dcmi_enable_double_buffering();
         }
+
+        if(dcmi_prepare() == 0) {
+        	chprintf(chp, "DCMI prepared.\r\n");
+        } else {
+        	chprintf(chp, "Cannot prepare dcmi, image size too big.\r\n");
+        	return;
+        }
+
     }
 }
 
@@ -634,17 +588,7 @@ static void cmd_cam_dcmi_unprepare(BaseSequentialStream *chp, int argc, char **a
     (void) argc;
     (void) argv;
 
-    dcmi_unprepare(&DCMID);
-
-    if(sample_buffer != NULL) {
-        free(sample_buffer);
-        sample_buffer = NULL;
-    }
-
-    if(sample_buffer2 != NULL) {
-        free(sample_buffer2);
-        sample_buffer2 = NULL;
-    }
+    dcmi_unprepare();
 
     chprintf(chp, "DCMI released correctly\r\n");
 
@@ -655,41 +599,33 @@ static void cmd_cam_capture(BaseSequentialStream *chp, int argc, char **argv)
 	(void) chp;
     (void) argc;
     (void) argv;
-
-	if(capture_mode == CAPTURE_ONE_SHOT) {
-		dcmi_start_one_shot(&DCMID);
-	} else {
-		dcmi_start_stream(&DCMID);
-	}
-
+    dcmi_capture_start();
 }
 
 static void cmd_cam_send(BaseSequentialStream *chp, int argc, char **argv)
 {
     (void) argc;
     (void) argv;
+    uint8_t* img_buff_ptr;
 
-	if(capture_mode == CAPTURE_ONE_SHOT) {
-		chprintf(chp, "The image will be sent within 5 seconds\r\n");
-		chThdSleepMilliseconds(5000);
-		chnWrite((BaseSequentialStream *)&SDU1, sample_buffer, po8030_get_image_size());
-	} else {
-		if(dcmi_stop_stream(&DCMID) == MSG_OK) {
-			if(double_buffering == 1) { // Send both images.
-				chprintf(chp, "The 2 images will be sent within 5 seconds\r\n");
-				chThdSleepMilliseconds(5000);
-				chnWrite((BaseSequentialStream *)&SDU1, sample_buffer, po8030_get_image_size());
-				chThdSleepMilliseconds(3000);
-				chnWrite((BaseSequentialStream *)&SDU1, sample_buffer2, po8030_get_image_size());
-			} else {
-				chprintf(chp, "The image will be sent within 5 seconds\r\n");
-				chThdSleepMilliseconds(5000);
-				chnWrite((BaseSequentialStream *)&SDU1, sample_buffer, po8030_get_image_size());
-			}
-		} else {
-			chprintf(chp, "DCMI stop stream error\r\n");
-		}
-	}
+    if(dcmi_capture_stop() != MSG_OK) {
+    	chprintf(chp, "DCMI stop stream error\r\n");
+    } else {
+    	if(dcmi_double_buffering_enabled()) { // Send both images.
+    		chprintf(chp, "The 2 images will be sent within 5 seconds\r\n");
+    		chThdSleepMilliseconds(5000);
+    		img_buff_ptr = dcmi_get_first_buffer_ptr();
+    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, po8030_get_image_size());
+    		chThdSleepMilliseconds(3000);
+    		img_buff_ptr = dcmi_get_second_buffer_ptr();
+    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, po8030_get_image_size());
+    	} else {
+    		chprintf(chp, "The image will be sent within 5 seconds\r\n");
+    		chThdSleepMilliseconds(5000);
+    		img_buff_ptr = dcmi_get_first_buffer_ptr();
+    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, po8030_get_image_size());
+    	}
+    }
 }
 
 static void cmd_set_led(BaseSequentialStream *chp, int argc, char **argv)
@@ -994,9 +930,8 @@ const ShellCommand shell_commands[] = {
     {"config_erase", cmd_config_erase},
     {"cam_brightness", cmd_cam_set_brightness},
     {"cam_contrast", cmd_cam_set_contrast},
-    {"cam_adv_conf_fmt", cmd_cam_set_adv_conf_fmt},
-    {"cam_adv_conf_sub", cmd_cam_set_adv_conf_sub},
-    {"cam_adv_conf_win", cmd_cam_set_adv_conf_win},
+    {"cam_conf1", cmd_cam_set_conf1},
+    {"cam_conf2", cmd_cam_set_conf2},
     {"cam_mirror", cmd_cam_set_mirror},
     {"cam_gain", cmd_cam_set_gain},
     {"cam_awb", cmd_cam_set_awb},

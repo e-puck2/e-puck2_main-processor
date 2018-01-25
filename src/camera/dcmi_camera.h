@@ -4,20 +4,23 @@
 #include <stdint.h>
 #include <hal.h>
 #include "dcmi.h"
+#include "po8030.h"
 
-#define MAX_BUFF_SIZE 76800 // Bytes.
-#define CAPTURE_ONE_SHOT 0
-#define CAPTURE_CONTINUOUS 1
-extern const DCMIConfig dcmicfg;
-extern uint8_t capture_mode;
-extern uint8_t *sample_buffer;
-extern uint8_t *sample_buffer2;
-extern uint8_t double_buffering;
+#define MAX_BUFF_SIZE 19200 //76800 // This means 2 color QQVGA images: (160x120x2)x2; or a single greyscale QVGA image: 320x240.
+
+typedef enum {
+	CAPTURE_ONE_SHOT = 0,
+	CAPTURE_CONTINUOUS = 1
+} capture_mode_t;
 
 /**
- * @brief 		DCMI Driver initialization.
+ * @brief 		DCMI Driver initialization and image memory allocation.
+ *
+ * @return		The operation status.
+ * @retval 0	if the function succeeded.
+ * @retval -1	if memory cannot be allocated.
  */
-void dcmi_start(void);
+int8_t dcmi_start(void);
 
 /**
  * @brief   Configures the DCMI peripheral.
@@ -29,54 +32,18 @@ void dcmi_start(void);
  * @note    The buffers are organized as uint8_t arrays for data sizes equal to
  *          8 bits else it is organized as uint16_t arrays.
  *
- * @param[in] dcmip				pointer to the @p DCMIDriver object
- * @param[in] config			pointer to the @p DCMIConfig object
- * @param[in] transactionSize	Size of each receive buffer, in DCMI words.
- * @param[out] rxbuf0			the pointer to the first receive buffer
- * @param[out] rxbuf1			the pointer to the second receive buffer
- *
+ * @return		The operation status.
+ * @retval 0	if the function succeeded.
+ * @retval -1	if the image size cannot fit in memory.
  */
-void dcmi_prepare(DCMIDriver *dcmip, const DCMIConfig *config, uint32_t transactionSize, void* rxbuf0, void* rxbuf1);
+int8_t dcmi_prepare(void);
 
 /**
  * @brief Deactivates the DCMI peripheral.
  * @details This function disables the DCMI and related interrupts; also the DMA is released.
  *
- * @param[in] dcmip      pointer to the @p DCMIDriver object
- *
  */
-void dcmi_unprepare(DCMIDriver *dcmip);
-
- /**
- * @brief   Captures a single frame from the DCMI.
- * @details This asynchronous function starts a single shot receive operation.
- *
- * @param[in] dcmip     pointer to the @p DCMIDriver object
- *
- */
-void dcmi_start_one_shot(DCMIDriver *dcmip);
-
- /**
- * @brief   Begins reception of frames from the DCMI.
- * @details This asynchronous function starts a continuous receive operation.
- *
- * @param[in] dcmip     pointer to the @p DCMIDriver object
- *
- */
-void dcmi_start_stream(DCMIDriver *dcmip);
-
- /**
- * @brief   Stops reception of frames from the DCMI.
- *
- * @param[in] dcmip     pointer to the @p DCMIDriver object
- *                      
- * 
- * @return              The operation status.
- * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
- *
- */
-msg_t dcmi_stop_stream(DCMIDriver *dcmip);
+void dcmi_unprepare(void);
 
 /**
  * @brief 		Returns if an image is ready
@@ -87,5 +54,85 @@ msg_t dcmi_stop_stream(DCMIDriver *dcmip);
  *
  */
 uint8_t image_is_ready(void);
+
+/**
+ * @brief 		Returns if double buffering is enabled.
+ *
+ *@return		double buffering state
+ *@retval 1		double buffering enabled
+ *@retval 0		double buffering disabled
+ *
+ */
+uint8_t dcmi_double_buffering_enabled(void);
+
+/**
+* @brief   Enable double buffering and allocate memory for both buffers.
+* @details This function splits the available memory in two and allocates MAX_BUFF_SIZE/2 bytes for each buffer; it need to be called before "dcmi_prepare".
+*
+* @return		The operation status.
+* @retval 0		if the function succeeded.
+* @retval -1	if memory cannot be allocated.
+*
+*/
+int8_t dcmi_enable_double_buffering(void);
+
+/**
+* @brief   Disable double buffering.
+* @details This function free the memory allocated for the second image buffer and allocates all the available memory (MAX_BUFF_SIZE bytes) for the first buffer; it need to be called after "dcmi_unprepare".
+*
+* @return		The operation status.
+* @retval 0		if the function succeeded.
+* @retval -1	if memory cannot be allocated.
+*/
+int8_t dcmi_disable_double_buffering(void);
+
+/**
+* @brief   Configures the capture mode (oneshot or continuous).
+*
+* @param mode	capture mode. See capture_mode_t
+*
+*/
+void dcmi_set_capture_mode(capture_mode_t mode);
+
+/**
+* @brief   Get the pointer to the last filled image buffer.
+*
+* @return	the buffer pointer.
+*
+*/
+uint8_t* dcmi_get_last_image_ptr(void);
+
+/**
+* @brief   Get the pointer to the first image buffer.
+*
+* @return	the buffer pointer.
+*
+*/
+uint8_t* dcmi_get_first_buffer_ptr(void);
+
+/**
+* @brief   Get the pointer to the second image buffer.
+*
+* @return	the buffer pointer.
+*
+*/
+uint8_t* dcmi_get_second_buffer_ptr(void);
+
+/**
+* @brief   Start capturing the images from the camera.
+*
+*/
+void dcmi_capture_start(void);
+
+/**
+* @brief   Stop capturing the images from the camera. It is only needed in "continuous mode".
+*
+* @return              The operation status.
+* @retval MSG_OK       if the function succeeded.
+* @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+*
+*/
+msg_t dcmi_capture_stop(void);
+
 
 #endif /* DCMI_CAMERA_H */

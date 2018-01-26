@@ -37,6 +37,7 @@
 #include "spi_comm.h"
 #include "usbcfg.h"
 #include "communication.h"
+#include "uc_usage.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
@@ -330,6 +331,10 @@ static THD_FUNCTION(selector_thd, arg)
 			            b = (int)(img_buff_ptr[1]&0x1F)<<3;
 			            chprintf((BaseSequentialStream *)&SDU1, "CAMERA\r\n");
 			            chprintf((BaseSequentialStream *)&SDU1, "R=%3d, G=%3d, B=%3d\r\n\n", r, g, b);
+
+			            printUcUsage((BaseSequentialStream *)&SDU1);
+
+			            chThdSleepMilliseconds(100);
 						break;
 				}
 				break;

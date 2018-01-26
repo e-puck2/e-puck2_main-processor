@@ -54,17 +54,18 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
      while (chThdShouldTerminateX() == false) {
 
-         /* Waits for a measurement to come. */
-         chEvtWaitAny(EXTI_EVENT_IMU_INT);
-         //Clears the flag. Otherwise the event is always true
-    	 chEvtGetAndClearFlags(&imu_int);
+      //    /* Waits for a measurement to come. */
+      //    chEvtWaitAny(EXTI_EVENT_IMU_INT);
+      //    //Clears the flag. Otherwise the event is always true
+    	 // chEvtGetAndClearFlags(&imu_int);
+
+     	chThdSleepMilliseconds(4); //reduced the sample rate to 250Hz
 
     	if(imu_configured == true){
 	 		/* Reads the incoming measurement. */
 			mpu9250_read(imu_values.gyro, imu_values.acceleration, &imu_values.temperature, imu_values.gyro_raw, imu_values.acc_raw, &imu_values.status);
-    	}else{
-			chThdSleepMilliseconds(1000);
     	}
+
 
          /* Publishes it on the bus. */
          messagebus_topic_publish(&imu_topic, &imu_values, sizeof(imu_values));

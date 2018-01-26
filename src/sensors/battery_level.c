@@ -68,6 +68,7 @@ static const ADCConversionGroup group = {
 static THD_FUNCTION(battery_thd, arg)
 {
     (void) arg;
+    chRegSetThreadName("Battery Thd");
 
     messagebus_topic_t battery_topic;
     MUTEX_DECL(battery_topic_lock);

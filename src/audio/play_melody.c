@@ -175,6 +175,8 @@ void play_note(uint16_t note, uint16_t duration_ms) {
 static THD_WORKING_AREA(waPlayMelodyThd, 128);
 static THD_FUNCTION(PlayMelodyThd, arg) {
 
+  chRegSetThreadName("PlayMelody Thd");
+
 	(void)arg;
 
 	static melody_t* song = NULL;

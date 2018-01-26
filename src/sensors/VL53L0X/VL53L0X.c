@@ -21,6 +21,7 @@ static bool VL53L0X_configured = false;
 static THD_WORKING_AREA(waVL53L0XThd, 2048);
 static THD_FUNCTION(VL53L0XThd, arg) {
 
+	chRegSetThreadName("VL53L0x Thd");
 	VL53L0X_Error status = VL53L0X_ERROR_NONE;
 
 	(void)arg;

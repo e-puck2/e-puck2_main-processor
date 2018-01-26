@@ -53,6 +53,7 @@ CSRC += $(GLOBAL_PATH)/src/sensors/proximity.c
 CSRC += $(GLOBAL_PATH)/src/spi_comm.c
 CSRC += $(GLOBAL_PATH)/src/sdio.c
 CSRC += $(GLOBAL_PATH)/src/usbcfg.c
+CSRC += $(GLOBAL_PATH)/src/uc_usage.c
 CSRC += $(GLOBAL_PATH)/src/chibios-syscalls/malloc_lock.c
 CSRC += $(GLOBAL_PATH)/src/chibios-syscalls/newlib_syscalls.c
 CSRC += $(GLOBAL_PATH)/src/msgbus/examples/chibios/port.c

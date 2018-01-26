@@ -6,7 +6,6 @@ static i2cflags_t errors = 0;
 static systime_t timeout = MS2ST(4); // 4 ms
 
 void i2c_start(void) {
-	i2cAcquireBus(&I2CD1);
     /*
      * I2C configuration structure for camera, IMU and distance sensor.
      * Set it to 400kHz fast mode
@@ -30,13 +29,10 @@ void i2c_start(void) {
     //give the control of the pin to the I2C machine
     palSetPadMode(GPIOB, GPIOB_SCL , PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
     i2cStart(&I2CD1, &i2c_cfg1);
-    i2cReleaseBus(&I2CD1);
 }
 
 void i2c_stop(void) {
-	i2cAcquireBus(&I2CD1);
 	i2cStop(&I2CD1);
-	i2cReleaseBus(&I2CD1);
 }
 
 i2cflags_t get_last_i2c_error(void) {
@@ -53,11 +49,11 @@ int8_t read_reg(uint8_t addr, uint8_t reg, uint8_t *value) {
 		msg_t status = i2cMasterTransmitTimeout(&I2CD1, addr, txbuf, 1, rxbuf, 1, timeout);
 		if (status != MSG_OK){
 			errors = i2cGetErrors(&I2CD1);
-			i2cReleaseBus(&I2CD1);
 			if(I2CD1.state == I2C_LOCKED){
 				i2c_stop();
 				i2c_start();
 			}
+			i2cReleaseBus(&I2CD1);
 			return status;
 		}
 	}
@@ -79,11 +75,11 @@ int8_t write_reg(uint8_t addr, uint8_t reg, uint8_t value) {
 		msg_t status = i2cMasterTransmitTimeout(&I2CD1, addr, txbuf, 2, rxbuf, 0, timeout);
 		if (status != MSG_OK){
 			errors = i2cGetErrors(&I2CD1);
-			i2cReleaseBus(&I2CD1);
 			if(I2CD1.state == I2C_LOCKED){
 				i2c_stop();
 				i2c_start();
 			}
+			i2cReleaseBus(&I2CD1);
 			return status;
 		}
 	}
@@ -99,11 +95,11 @@ int8_t read_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len) {
 		msg_t status = i2cMasterTransmitTimeout(&I2CD1, addr, &reg, 1, buf, len, timeout);
 		if (status != MSG_OK){
 			errors = i2cGetErrors(&I2CD1);
-			i2cReleaseBus(&I2CD1);
 			if(I2CD1.state == I2C_LOCKED){
 				i2c_stop();
 				i2c_start();
 			}
+			i2cReleaseBus(&I2CD1);
 			return status;
 		}
 	}

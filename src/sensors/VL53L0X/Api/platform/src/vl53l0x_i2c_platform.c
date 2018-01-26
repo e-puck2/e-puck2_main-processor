@@ -24,11 +24,11 @@ int32_t VL53L0X_write_multi(uint8_t address, uint8_t index, uint8_t *pdata, uint
   rdymsg = i2cMasterTransmitTimeout(&I2CD1, address>>1, txbuff, nbDatas, rxbuff, 0, timeout);
   
   if (rdymsg != MSG_OK){
-    i2cReleaseBus(&I2CD1);
     if(I2CD1.state == I2C_LOCKED){
       i2c_stop();
       i2c_start();
     }
+    i2cReleaseBus(&I2CD1);
     return VL53L0X_ERROR_CONTROL_INTERFACE;
   }
   i2cReleaseBus(&I2CD1);
@@ -46,11 +46,11 @@ int32_t VL53L0X_read_multi(uint8_t address, uint8_t index, uint8_t *pdata, uint3
   rdymsg = i2cMasterTransmitTimeout(&I2CD1, address>>1, txbuff, 1, pdata, count, timeout);
 
   if (rdymsg != MSG_OK){
-    i2cReleaseBus(&I2CD1);
     if(I2CD1.state == I2C_LOCKED){
       i2c_stop();
       i2c_start();
     }
+    i2cReleaseBus(&I2CD1);
     return VL53L0X_ERROR_CONTROL_INTERFACE;
   }
   i2cReleaseBus(&I2CD1);

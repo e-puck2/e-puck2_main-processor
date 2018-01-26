@@ -6,7 +6,7 @@
 // document; the MPU9250 and MPU9150 are virtually identical but the latter has
 // a different register map
 
-#define MPU9250_ADDRESS 0x68  // Device address when ADO = 0
+#define MPU9250_ADDRESS 0x69  // Device address when AD1 = 1
 #define AK8963_ADDRESS  0x0C   // Address of magnetometer
 
 //Magnetometer Registers

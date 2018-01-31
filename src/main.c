@@ -235,8 +235,8 @@ static THD_FUNCTION(selector_thd, arg)
 						play_melody(MARIO);
 
 						// Test motors at low speed.
-						left_motor_set_speed(100);
-						right_motor_set_speed(100);
+						left_motor_set_speed(300);
+						right_motor_set_speed(300);
 
 						// Init camera.
 						po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 160, SUBSAMPLING_X4, SUBSAMPLING_X4);

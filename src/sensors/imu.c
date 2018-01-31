@@ -51,15 +51,15 @@ static THD_FUNCTION(imu_reader_thd, arg) {
      int32_t accCalibrationSum = 0;
      uint8_t gyroCalibrationNumSamples = 0;
      int32_t gyroCalibrationSum = 0;
+     systime_t time;
 
      while (chThdShouldTerminateX() == false) {
+    	 time = chVTGetSystemTime();
 
       //    /* Waits for a measurement to come. */
       //    chEvtWaitAny(EXTI_EVENT_IMU_INT);
       //    //Clears the flag. Otherwise the event is always true
     	 // chEvtGetAndClearFlags(&imu_int);
-
-     	chThdSleepMilliseconds(4); //reduced the sample rate to 250Hz
 
     	if(imu_configured == true){
 	 		/* Reads the incoming measurement. */
@@ -117,6 +117,8 @@ static THD_FUNCTION(imu_reader_thd, arg) {
  					break;
          	}
          }
+
+         chThdSleepUntilWindowed(time, time + MS2ST(4)); //reduced the sample rate to 250Hz
 
      }
 }

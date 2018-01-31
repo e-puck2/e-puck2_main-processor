@@ -392,7 +392,7 @@ int main(void)
 	set_front_led(0);
 	usb_start();
 	i2c_start();
-	int8_t erro = dcmi_start();
+	dcmi_start();
 	po8030_start();
 	motors_init();
 	proximity_start();

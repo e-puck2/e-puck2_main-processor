@@ -43,7 +43,7 @@
 #include "DataEEPROM.h"
 
 #include "memory.h"
-char buffer[4056+3]; // 52x39 + 3(header)
+char buffer[BUFFER_SIZE]; // 52x39 + 3(header)
 int e_mic_scan[3][MIC_SAMP_NB];
 unsigned int e_last_mic_scan_id;
 int selector;

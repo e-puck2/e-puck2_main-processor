@@ -2,6 +2,7 @@
 #include <hal.h>
 #include <stdio.h>
 #include "battery_level.h"
+#include "leds.h"
 #include "main.h"
 
 // Battery level sampled every 2 seconds
@@ -75,6 +76,7 @@ static THD_FUNCTION(battery_thd, arg)
     CONDVAR_DECL(battery_topic_condvar);
     messagebus_topic_init(&battery_topic, &battery_topic_lock, &battery_topic_condvar, &battery_value, sizeof(battery_value));
     messagebus_advertise_topic(&bus, &battery_topic, "/battery_level");
+    uint8_t first_value = 1;
 
     while (true) {
         adcAcquireBus(&ADCD1);
@@ -86,15 +88,22 @@ static THD_FUNCTION(battery_thd, arg)
 
         /* Converts the measurement to volts and publish the measurement on the
          * bus. */
-        battery_value.raw_value = adc_value;
-        battery_value.voltage = adc_value / COEFF_ADC_TO_VOLT;
+        if(first_value) {
+        	first_value = 0;
+        	battery_value.raw_value = adc_value;
+        } else {
+        	battery_value.raw_value = (float)(battery_value.raw_value)*0.8 + (float)(adc_value)*0.2;
+        }
+        battery_value.voltage = battery_value.raw_value / COEFF_ADC_TO_VOLT;
         battery_value.percentage =  (battery_value.voltage - MIN_VOLTAGE) * 
                                     (MAX_PERCENTAGE - MIN_PERCENTAGE) / 
                                     (MAX_VOLTAGE - MIN_VOLTAGE) + MIN_PERCENTAGE;
         messagebus_topic_publish(&battery_topic, &battery_value, sizeof(battery_value));
 
+    	//battery_check();
+
         /* Sleep for some time. */
-        chThdSleepSeconds(2);
+        chThdSleepMilliseconds(500);
     }
 }
 
@@ -120,6 +129,20 @@ float get_battery_voltage(void) {
 
 float get_battery_percentage(void){
     return battery_value.percentage;
+}
+
+void battery_check(void) {
+	if(battery_value.raw_value < BATTERY_LEVEL_LOW) {
+		set_led(LED1, 1);
+	} else {
+		set_led(LED1, 0);
+	}
+
+	if(battery_value.raw_value < BATTERY_LEVEL_OFF) {
+		set_led(LED3, 1);
+	} else {
+		set_led(LED3, 0);
+	}
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

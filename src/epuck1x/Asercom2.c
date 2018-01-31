@@ -5,6 +5,9 @@
 #define FLOOR_SENSORS	// define to enable floor sensors
 #define IR_RECEIVER
 
+#define IMAGE_HEADER_SIZE 3 // mode, width, height
+#define IMAGE_MAX_SIZE (BUFFER_SIZE-IMAGE_HEADER_SIZE)
+
 #include "main.h"
 #include "sensors/VL53L0X/VL53L0X.h"
 #include "audio/play_melody.h"
@@ -47,7 +50,7 @@
 #include "DataEEPROM.h"
 
 #include "memory.h"
-extern char buffer[4056+3]; //extern char buffer[BUFFER_SIZE];
+extern char buffer[BUFFER_SIZE];
 //extern int e_mic_scan[3][MIC_SAMP_NB];
 //extern unsigned int e_last_mic_scan_id;
 extern int selector; //extern int selector;
@@ -930,7 +933,7 @@ int run_asercom2(void) {
                             cam_size = cam_width * cam_heigth;
                         else
                             cam_size = cam_width * cam_heigth * 2;
-                        if (cam_size > BUFFER_SIZE) { // if desired settings too demanding set to a reasonable default
+                        if (cam_size > IMAGE_MAX_SIZE) { // if desired settings too demanding set to a reasonable default
                             cam_mode = RGB_565_MODE;
                             cam_width = 40; // DEFAULT_WIDTH;
                             cam_heigth = 40; // DEFAULT_HEIGHT;

@@ -19,6 +19,9 @@
 #define MAX_PERCENTAGE			100
 #define MIN_PERCENTAGE			0
 
+#define BATTERY_LEVEL_LOW 2900	// ADC value when the battery is low.
+#define BATTERY_LEVEL_OFF 2600	// ADC value when the robot must be turned off.
+
 /** Message reprensenting a measurement of the battery level. */
 typedef struct {
     float voltage;
@@ -52,5 +55,11 @@ float get_battery_voltage(void);
  * @return		Battery level [percentage]
  */
 float get_battery_percentage(void);
+
+/**
+* @brief   Check whether the battery level is low and turn on some leds accordingly.
+*
+*/
+void battery_check(void);
 
 #endif

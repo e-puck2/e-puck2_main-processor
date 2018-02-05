@@ -63,7 +63,7 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
     	if(imu_configured == true){
 	 		/* Reads the incoming measurement. */
-			mpu9250_read(imu_values.gyro, imu_values.acceleration, &imu_values.temperature, imu_values.gyro_raw, imu_values.acc_raw, &imu_values.status);
+			mpu9250_read(imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature, imu_values.gyro_raw, imu_values.acc_raw, &imu_values.status);
     	}
 
 
@@ -73,7 +73,7 @@ static THD_FUNCTION(imu_reader_thd, arg) {
          if(accAxisFilteringInProgress) {
          	switch(accAxisFilteringState) {
  				case 0:
- 					imu_values.acc_raw_offset[accAxisSelected] = 0;
+ 					imu_values.acc_offset[accAxisSelected] = 0;
  					accCalibrationSum = 0;
  					accCalibrationNumSamples = 0;
  					accAxisFilteringState = 1;
@@ -83,10 +83,10 @@ static THD_FUNCTION(imu_reader_thd, arg) {
  					accCalibrationSum += imu_values.acc_raw[accAxisSelected];
  					accCalibrationNumSamples++;
  					if(accCalibrationNumSamples == accFilterSize) {
- 						imu_values.acc_raw_filtered[accAxisSelected] = accCalibrationSum/accFilterSize;
+ 						imu_values.acc_filtered[accAxisSelected] = accCalibrationSum/accFilterSize;
  						accAxisFilteringInProgress = 0;
  						if(accCalibrationInProgress == 1) {
- 							imu_values.acc_raw_offset[accAxisSelected] = imu_values.acc_raw_filtered[accAxisSelected];
+ 							imu_values.acc_offset[accAxisSelected] = imu_values.acc_filtered[accAxisSelected];
  							accCalibrationInProgress = 0;
  						}
  					}
@@ -97,7 +97,7 @@ static THD_FUNCTION(imu_reader_thd, arg) {
          if(gyroAxisFilteringInProgress) {
          	switch(gyroAxisFilteringState) {
  				case 0:
- 					imu_values.gyro_raw_offset[gyroAxisSelected] = 0;
+ 					imu_values.gyro_offset[gyroAxisSelected] = 0;
  					gyroCalibrationSum = 0;
  					gyroCalibrationNumSamples = 0;
  					gyroAxisFilteringState = 1;
@@ -107,10 +107,10 @@ static THD_FUNCTION(imu_reader_thd, arg) {
  					gyroCalibrationSum += imu_values.gyro_raw[gyroAxisSelected];
  					gyroCalibrationNumSamples++;
  					if(gyroCalibrationNumSamples == gyroFilterSize) {
- 						imu_values.gyro_raw_filtered[gyroAxisSelected] = gyroCalibrationSum/gyroFilterSize;
+ 						imu_values.gyro_filtered[gyroAxisSelected] = gyroCalibrationSum/gyroFilterSize;
  						gyroAxisFilteringInProgress = 0;
  						if(gyroCalibrationInProgress == 1) {
- 							imu_values.gyro_raw_offset[gyroAxisSelected] = imu_values.gyro_raw_filtered[gyroAxisSelected];
+ 							imu_values.gyro_offset[gyroAxisSelected] = imu_values.gyro_filtered[gyroAxisSelected];
  							gyroCalibrationInProgress = 0;
  						}
  					}
@@ -176,7 +176,7 @@ int16_t get_acc_filtered(uint8_t axis, uint8_t filter_size) {
 				chThdSleepMilliseconds(20);
 			}
 		}
-		return imu_values.acc_raw_filtered[axis];
+		return imu_values.acc_filtered[axis];
 	}
 	return 0;
 }
@@ -197,7 +197,14 @@ void calibrate_acc(void) {
 // Returns the calibration value of the axis.
 int16_t get_acc_offset(uint8_t axis) {
 	if(axis < 3) {
-		return imu_values.acc_raw_offset[axis];
+		return imu_values.acc_offset[axis];
+	}
+	return 0;
+}
+
+float get_acceleration(uint8_t axis) {
+	if(axis < 3) {
+		return imu_values.acceleration[axis];
 	}
 	return 0;
 }
@@ -226,14 +233,14 @@ int16_t get_gyro_filtered(uint8_t axis, uint8_t filter_size) {
 				chThdSleepMilliseconds(20);
 			}
 		}
-		return imu_values.gyro_raw_filtered[axis];
+		return imu_values.gyro_filtered[axis];
 	}
 	return 0;
 }
 
 int16_t get_gyro_offset(uint8_t axis) {
 	if(axis < 3) {
-		return imu_values.gyro_raw_offset[axis];
+		return imu_values.gyro_offset[axis];
 	}
 	return 0;
 }
@@ -250,6 +257,13 @@ void calibrate_gyro(void) {
 		gyroCalibrationInProgress = 0;
 	}
 	
+}
+
+float get_gyro_rate(uint8_t axis) {
+	if(axis < 3) {
+		return imu_values.gyro_rate[axis];
+	}
+	return 0;
 }
 
 float get_temperature(void) {

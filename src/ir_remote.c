@@ -15,6 +15,7 @@ and adapted to work here
 #include <hal.h>
 #include "ir_remote.h"
 #include "exti.h"
+#include "main.h"
 #include "motors.h"
 
 #include "shell.h"
@@ -23,10 +24,7 @@ and adapted to work here
 
 #define DEFAULT_SPEED 600
 
-static uint8_t address = 0;
-static uint8_t data_ir = 0;
-static uint8_t toggle = 2;
-static BSEMAPHORE_DECL(command_received, true);
+static ir_remote_msg_t ir_remote_values;
 
 // /***************************INTERNAL FUNCTIONS************************************/
 
@@ -244,48 +242,51 @@ static const GPTConfig gpt11cfg = {
 };
 
  /**
- * @brief  	Thread which interpretes the order received and executes it
+ * @brief  	Thread which interprets the order received and executes it
  */
 static THD_FUNCTION(remote_motion_thd, arg)
 {
     (void) arg;
     chRegSetThreadName(__FUNCTION__);
-    static uint8_t irCommand;
+    systime_t time;
+    messagebus_topic_t *ir_remote_topic = messagebus_find_topic_blocking(&bus, "/ir_remote");
+    ir_remote_msg_t remote_msg;
 
     while(1) {
 
-    	chBSemWait(&command_received);
+    	time = chVTGetSystemTime();
 
-		irCommand = ir_remote_get_data();
-		switch(irCommand) {
+    	messagebus_topic_wait(ir_remote_topic, &remote_msg, sizeof(remote_msg));
+
+		switch(remote_msg.data) {
 			// Sometimes there are two cases for the same command because two different
 			// remote controls are used; one of this do not contain "numbers".
 			case 5: // stop motors
-			case 51:
+			case 12:
 				left_motor_set_speed(0);
 				right_motor_set_speed(0);
 				break;
 
 			case 2: // Both motors forward.
-			case 31:
+			case 32:
 				left_motor_set_speed(DEFAULT_SPEED);
 				right_motor_set_speed(DEFAULT_SPEED);
 				break;
 
 			case 8: // Both motors backward.
-			case 30:
+			case 33:
 				left_motor_set_speed(-DEFAULT_SPEED);
 				right_motor_set_speed(-DEFAULT_SPEED);
 				break;
 
 			case 6: // Both motors right.
-			case 47:
+			case 16:
 				left_motor_set_speed(DEFAULT_SPEED);
 				right_motor_set_speed(-DEFAULT_SPEED);
 				break;
 
 			case 4: // Both motors left.
-			case 46:
+			case 17:
 				left_motor_set_speed(-DEFAULT_SPEED);
 				right_motor_set_speed(DEFAULT_SPEED);
 				break;
@@ -312,7 +313,7 @@ static THD_FUNCTION(remote_motion_thd, arg)
 
 		}
 
-		chThdSleepMilliseconds(200); // Receive commands at most @ 5 Hz.
+		chThdSleepUntilWindowed(time, time + MS2ST(200)); // Receive commands at most @ 5 Hz.
     }
 
 }
@@ -336,6 +337,13 @@ static THD_FUNCTION(remote_cmd_recv_thd, arg)
     RC5_t remote;
     RC5_reset(&remote);
 
+    // Declares the topic on the bus.
+    messagebus_topic_t ir_remote_topic;
+    MUTEX_DECL(ir_remote_topic_lock);
+    CONDVAR_DECL(ir_remote_topic_condvar);
+    messagebus_topic_init(&ir_remote_topic, &ir_remote_topic_lock, &ir_remote_topic_condvar, &ir_remote_values, sizeof(ir_remote_values));
+    messagebus_advertise_topic(&bus, &ir_remote_topic, "/ir_remote");
+
     while(1) {
     	/* Wait for a command to come. */
     	chEvtWaitAny(EXTI_EVENT_IR_REMOTE_INT);
@@ -343,11 +351,10 @@ static THD_FUNCTION(remote_cmd_recv_thd, arg)
     	chEvtGetAndClearFlags(&remote_int);
 
     	//do one step of the state machine. return true if an order is complete
-    	if (RC5_read(&remote, &toggle, &address, &data_ir))
+    	if (RC5_read(&remote, &ir_remote_values.toggle, &ir_remote_values.address, &ir_remote_values.data))
 		{
-			//chprintf((BaseSequentialStream *)&SDU1, "command = %d\n", (int)data_ir);
-			binary_semaphore_t *sem = &command_received;
-		    chBSemSignal(sem);
+        	messagebus_topic_publish(&ir_remote_topic, &ir_remote_values, sizeof(ir_remote_values));
+			//chprintf((BaseSequentialStream *)&SDU1, "command = %d\n", (int)ir_remote_values.data);
 		}
     }
 }
@@ -369,15 +376,15 @@ void ir_remote_start(void) {
 }
 
 uint8_t ir_remote_get_toggle(void) {
-	return toggle;
+	return ir_remote_values.toggle;
 }
 
 uint8_t ir_remote_get_address(void) {
-	return address;
+	return ir_remote_values.address;
 }
 
 uint8_t ir_remote_get_data(void) {
-	return data_ir;
+	return ir_remote_values.data;
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

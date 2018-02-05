@@ -63,4 +63,12 @@ void exti_start(void) {
 	extStart(&EXTD1, &extcfg);
 }
 
+void exti_disable_ir_remote(void) {
+	extChannelDisableI(&EXTD1, 3);
+}
+
+void exti_enable_ir_remote(void) {
+	extChannelEnableI(&EXTD1, 3);
+}
+
 /**************************END PUBLIC FUNCTIONS***********************************/

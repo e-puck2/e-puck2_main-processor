@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <hal.h>
 
+/** Message reprensenting a command received from the ir remote control. */
+typedef struct {
+	uint8_t toggle;
+	uint8_t address;
+	uint8_t data;
+} ir_remote_msg_t;
 
 //RC5 decoder state machine
 typedef struct{

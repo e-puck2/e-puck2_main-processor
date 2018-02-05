@@ -15,16 +15,16 @@
  * the cases when the frame itself contains the END identifier and escapes it.
  * 
  * Each MessagePack message can be freely composed. It can only contain a number/string/array
- * It is possible to identify what is sent by addind an ID to the datas.
+ * It is possible to identify what is sent by adding an ID to the datas.
  * 
  * Example : We send the order "ping" and the data of this order is "a message"
  * then the message will look like that {"ping":"a message"}
  * We could add several orders in the same frame. For example here the second order 
  * contains a bool as data : {"ping":"a message", "order2": true }
  * 
- * Now to contruct this message, we need to proceed sequentially.
- * When we want to indentify the datas with an ID, we need to add an information
- * called map at the begining of the message telling how many orders are present
+ * Now to construct this message, we need to proceed sequentially.
+ * When we want to identify the datas with an ID, we need to add an information
+ * called map at the beginning of the message telling how many orders are present
  * 
  * message containing :
  * 1) Only one float data :
@@ -33,7 +33,7 @@
  *    cmp_write_array(cmp, array_size)
  *    cmp_write_float(cmp, float)
  *    cmp_write_str(cmp, string, string_size)
- * 3) An order identified by an ID with an array containg a bool and an int as datas
+ * 3) An order identified by an ID with an array containing a bool and an int as datas
  *    cmp_write_map(cmp, 1)
  *    cmp_write_str(cmp, ID_string, ID_string_size)
  *    cmp_write_array(cmp, array_size)
@@ -68,7 +68,7 @@ static void _stream_values_sndfn(void *arg, const void *p, size_t len)
 }
 
 /*
- * Function to comtruct the message pack frame.
+ * Function to construct the message pack frame.
 */
 static int send_imu(cmp_ctx_t *cmp, imu_msg_t* imu_values)
 {
@@ -83,9 +83,9 @@ static int send_imu(cmp_ctx_t *cmp, imu_msg_t* imu_values)
     const char *gyro_id = "gyro";
     err = err || !cmp_write_str(cmp, gyro_id, strlen(gyro_id));
     err = err || !cmp_write_array(cmp, 3);
-    err = err || !cmp_write_float(cmp, imu_values->gyro[0]);
-    err = err || !cmp_write_float(cmp, imu_values->gyro[1]);
-    err = err || !cmp_write_float(cmp, imu_values->gyro[2]);
+    err = err || !cmp_write_float(cmp, imu_values->gyro_rate[0]);
+    err = err || !cmp_write_float(cmp, imu_values->gyro_rate[1]);
+    err = err || !cmp_write_float(cmp, imu_values->gyro_rate[2]);
     const char *acc_id = "acc";
     err = err || !cmp_write_str(cmp, acc_id, strlen(acc_id));
     err = err || !cmp_write_array(cmp, 3);
@@ -164,7 +164,7 @@ int ping_cb(cmp_ctx_t *cmp, void *arg)
 
 /*
  * Function used to dispatch the order. It look a the ID field of the message pack frame
- * and execute the callback correspondant to it
+ * and execute the callback correspondent to it
 */
 void datagram_dispatcher_cb(const void *dtgrm, size_t len, void *arg)
 {

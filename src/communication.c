@@ -6,6 +6,9 @@
 #include "communication.h"
 #include "msgbus/messagebus.h"
 #include "sensors/imu.h"
+#include "sensors/battery_level.h"
+#include "leds.h"
+#include "sensors/VL53L0X/VL53L0X.h"
 #include <main.h>
 
 /*
@@ -70,6 +73,36 @@ static void _stream_values_sndfn(void *arg, const void *p, size_t len)
 /*
  * Function to construct the message pack frame.
 */
+static int send_distance_sensor(cmp_ctx_t *cmp)
+{
+    
+    bool err = false;
+
+    err = err || !cmp_write_map(cmp, 1);
+    const char *dist_id = "dist";
+    err = err || !cmp_write_str(cmp, dist_id, strlen(dist_id));
+    err = err || !cmp_write_u16(cmp, VL53L0X_get_dist_mm());
+    return err;
+}
+
+/*
+ * Function to construct the message pack frame.
+*/
+static int send_battery_voltage(cmp_ctx_t *cmp)
+{
+    
+    bool err = false;
+
+    err = err || !cmp_write_map(cmp, 1);
+    const char *batt_id = "batt";
+    err = err || !cmp_write_str(cmp, batt_id, strlen(batt_id));
+    err = err || !cmp_write_float(cmp, get_battery_voltage());
+    return err;
+}
+
+/*
+ * Function to comtruct the message pack frame.
+*/
 static int send_imu(cmp_ctx_t *cmp, imu_msg_t* imu_values)
 {
     
@@ -122,6 +155,18 @@ static THD_FUNCTION(comm_tx_stream, arg)
             serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_values_sndfn, out);
             chMtxUnlock(&send_lock);
         }
+        cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
+        if (send_battery_voltage(&cmp) == 0) {
+            chMtxLock(&send_lock);
+            serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_values_sndfn, out);
+            chMtxUnlock(&send_lock);
+        }
+        cmp_mem_access_init(&cmp, &mem, dtgrm, sizeof(dtgrm));
+        if (send_distance_sensor(&cmp) == 0) {
+            chMtxLock(&send_lock);
+            serial_datagram_send(dtgrm, cmp_mem_access_get_pos(&mem), _stream_values_sndfn, out);
+            chMtxUnlock(&send_lock);
+        }
 
         chThdSleepMilliseconds(500);
     }
@@ -161,6 +206,43 @@ int ping_cb(cmp_ctx_t *cmp, void *arg)
 
     return 0;
 }
+
+/*
+ * Function to set a led
+*/
+int set_led_cb(cmp_ctx_t *cmp, void *arg)
+{
+    (void)arg;
+    uint32_t size;
+    uint8_t led;
+    uint8_t action;
+
+    if(cmp_read_array(cmp, &size) && size == 2 && cmp_read_uchar(cmp, &led) && cmp_read_uchar(cmp, &action)) {
+        set_led(led, action);
+    }
+    return 0;
+}
+
+/*
+ * Function to set a rgb led
+*/
+int set_rgb_led_cb(cmp_ctx_t *cmp, void *arg)
+{
+    (void)arg;
+    uint32_t size;
+    uint8_t led;
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+
+    if(cmp_read_array(cmp, &size) && size == 4  && cmp_read_uchar(cmp, &led)
+        && cmp_read_uchar(cmp, &red) && cmp_read_uchar(cmp, &green) && cmp_read_uchar(cmp, &blue)) {
+
+        set_rgb_led(led, red, green, blue);
+    }
+    return 0;
+}
+
 
 /*
  * Function used to dispatch the order. It look a the ID field of the message pack frame
@@ -208,6 +290,8 @@ static THD_FUNCTION(comm_rx, arg)
     //it will be dropped
     struct dispatcher_entry_s dispatcher_table[] = {
         {"ping", ping_cb, arg},
+        {"set_led", set_led_cb, arg},
+        {"set_rgb_led", set_rgb_led_cb, arg},
         {NULL, NULL, NULL}
     };
     static serial_datagram_rcv_handler_t rcv_handler;

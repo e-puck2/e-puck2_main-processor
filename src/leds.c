@@ -83,15 +83,11 @@ void set_front_led(unsigned int value)
 		value?palSetPad(GPIOD, GPIOD_LED_FRONT):palClearPad(GPIOD, GPIOD_LED_FRONT);
 }
 
-/*! \brief turn off the 8 LEDs
- *
- * The e-puck has 8 green LEDs. This function turn all off.
- * \warning this function doesn't turn off "body LED" and "front LED".
- */
 void clear_leds(void)
 {
 	for(int i=0; i<4; i++) {
 		set_led(i, 0);
+		set_rgb_led(i, 0, 0, 0);
 	}
 }
 

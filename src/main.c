@@ -92,8 +92,6 @@ static THD_FUNCTION(selector_thd, arg)
     uint8_t rgb_state = 0, rgb_counter = 0;
     uint16_t melody_state = 0, melody_counter = 0;
 
-    TypeAccSpheric accelero;
-
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
 
@@ -340,29 +338,8 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 13: // Reflect the orientation on the LEDs around the robot.
-				accelero = e_read_acc_spheric();
-				clear_leds();
-				set_rgb_led(0, 0, 0, 0);
-				set_rgb_led(1, 0, 0, 0);
-				set_rgb_led(2, 0, 0, 0);
-				set_rgb_led(3, 0, 0, 0);
-				if(accelero.orientation > 337 || accelero.orientation <= 22) {
-					set_led(0, 1);
-				} else if(accelero.orientation > 22 && accelero.orientation <= 67) {
-					set_rgb_led(3, 10, 0, 0);
-				} else if(accelero.orientation > 67 && accelero.orientation <= 112) {
-					set_led(3, 1);
-				} else if(accelero.orientation > 112 && accelero.orientation <= 157) {
-					set_rgb_led(2, 10, 0, 0);
-				} else if(accelero.orientation > 157 && accelero.orientation <= 202) {
-					set_led(2, 1);
-				} else if(accelero.orientation > 202 && accelero.orientation <= 247) {
-					set_rgb_led(1, 10, 0, 0);
-				} else if(accelero.orientation > 247 && accelero.orientation <= 292) {
-					set_led(1, 1);
-				} else if(accelero.orientation > 292 && accelero.orientation <= 337) {
-					set_rgb_led(0, 10, 0, 0);
-				}
+				e_display_angle();
+				chThdSleepMilliseconds(50);
 				break;
 
 			case 14:

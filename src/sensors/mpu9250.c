@@ -116,6 +116,7 @@ void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16
     	*status = buf[0];
     }
     if (acc) {
+    	// Change the sign of all axes to have -1g when the robot is still on the plane and the axis points upwards and is perpendicular to the surface.
     	acc_raw[0] = -read_word(&buf[1]);
     	acc_raw[1] = -read_word(&buf[3]);
     	acc_raw[2] = -read_word(&buf[5]);

@@ -81,7 +81,6 @@ void e_set_led(unsigned int led_number, unsigned int value)
 void e_led_clear(void)
 {
 	clear_leds();
-	// Send command to esp32 to turn off all leds
 }
 
 /*! \brief turn on/off the body LED

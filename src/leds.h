@@ -47,7 +47,13 @@ typedef enum {
  */
 void set_led(led_name_t led_number, unsigned int value);
 
+/*! \brief Turn off all the LEDs around the robot
+ *
+ * The e-puck2 has 4 red LEDs and 4 RGB LEDs placed on top of it. This function turn them all off.
+ * \warning this function doesn't turn off "body LED" and "front LED".
+ */
 void clear_leds(void);
+
 void set_body_led(unsigned int value); // value (0=off 1=on higher=inverse)
 void set_front_led(unsigned int value); //value (0=off 1=on higher=inverse)
 

@@ -15,7 +15,7 @@ and adapted to work here
 #include <hal.h>
 #include "ir_remote.h"
 #include "exti.h"
-#include "main.h"
+#include <main.h>
 #include "motors.h"
 
 #include "shell.h"

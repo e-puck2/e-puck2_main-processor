@@ -8,7 +8,7 @@
 #define IMAGE_HEADER_SIZE 3 // mode, width, height
 #define IMAGE_MAX_SIZE (BUFFER_SIZE-IMAGE_HEADER_SIZE)
 
-#include "main.h"
+#include <main.h>
 #include "sensors/VL53L0X/VL53L0X.h"
 #include "audio/play_melody.h"
 #include "button.h"

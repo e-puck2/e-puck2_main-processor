@@ -3,7 +3,7 @@
 #include "ch.h"
 #include "hal.h"
 #include "proximity.h"
-#include "main.h"
+#include <main.h>
 
 // The proximity sensors sampling is designed in order to sample two sensors at one time, the couples are chosen
 // in order to have as less interference as possible and divided as follow:

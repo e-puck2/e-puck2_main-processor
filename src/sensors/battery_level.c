@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include "battery_level.h"
 #include "leds.h"
-#include "main.h"
+#include <main.h>
 
 // Battery level sampled every 2 seconds
 // Each sampling total time takes about 46.9 us:

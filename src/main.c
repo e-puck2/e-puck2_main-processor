@@ -29,7 +29,7 @@
 #include "i2c_bus.h"
 #include "ir_remote.h"
 #include "leds.h"
-#include "main.h"
+#include <main.h>
 #include "memory_protection.h"
 #include "motors.h"
 #include "sdio.h"
@@ -346,6 +346,9 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 15:
+				chprintf((BaseSequentialStream *)&SD3, "battery=%d, %f V \r\n", get_battery_raw(), get_battery_voltage());
+				chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 10 Hz.
+				break;
 				break;
 		}
     }

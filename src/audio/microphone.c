@@ -9,18 +9,25 @@
  *
  *      FRONT
  *       ###
- *    #   2   #
- *  #           #
- * # 1         0 #
- * #             #
- *  #           #
  *    #   3   #
+ *  #           #
+ * # 1   TOP   0 #
+ * #     VIEW    #
+ *  #           #
+ *    #   2   #
  *       ###
  *
  */
+#define MIC_RIGHT 0
+#define MIC_LEFT 1
+#define MIC_BACK 2
+#define MIC_FRONT 3
+
 static uint16_t mic_volume[4];
 static int16_t mic_last[4];
+static bool mic_buffer_ready = false;
 
+// Return the last PCM sample of the given microphone from the last 10 ms of recorded audio data.
 int16_t mic_get_last(uint8_t mic) {
 	if(mic < 4) {
 		return mic_last[mic];
@@ -29,6 +36,7 @@ int16_t mic_get_last(uint8_t mic) {
 	}
 }
 
+// Return the last volume computed for the given microphone.
 uint16_t mic_get_volume(uint8_t mic) {
 	if(mic < 4) {
 		return mic_volume[mic];
@@ -37,41 +45,69 @@ uint16_t mic_get_volume(uint8_t mic) {
 	}
 }
 
-static void handlePCMdata(int16_t *data, uint16_t samples, uint8_t peripheral) {
-	(void)data;
-	(void)samples;
-	int16_t max_value[2]={INT16_MIN}, min_value[2]={INT16_MAX};
+// This function is called every 10 ms of recorded audio data.
+// It is called twice every 10 ms because the microphones are handled in pairs (left and right, front and back).
+// For each microphone there are 160 samples.
+// The function compute the volume for each microphone.
+static void handlePCMdata(int16_t *data, uint16_t num_samples) {
+	int16_t max_value[4]={INT16_MIN}, min_value[4]={INT16_MAX};
 
-	for(uint16_t i=0; i<MIC_BUFFER_LEN; i+=2) {
-		if(data[i] > max_value[0]) {
-			max_value[0] = data[i];
+	mic_buffer_ready = true;
+
+	for(uint16_t i=0; i<num_samples; i+=4) {
+		if(data[i] > max_value[MIC_RIGHT]) {
+			max_value[MIC_RIGHT] = data[i];
 		}
-		if(data[i] < min_value[0]) {
-			min_value[0] = data[i];
+		if(data[i] < min_value[MIC_RIGHT]) {
+			min_value[MIC_RIGHT] = data[i];
 		}
-		if(data[i+1] > max_value[1]) {
-			max_value[1] = data[i+1];
+		if(data[i+1] > max_value[MIC_LEFT]) {
+			max_value[MIC_LEFT] = data[i+1];
 		}
-		if(data[i+1] < min_value[1]) {
-			min_value[1] = data[i+1];
+		if(data[i+1] < min_value[MIC_LEFT]) {
+			min_value[MIC_LEFT] = data[i+1];
+		}
+		if(data[i+2] > max_value[MIC_BACK]) {
+			max_value[MIC_BACK] = data[i+2];
+		}
+		if(data[i+2] < min_value[MIC_BACK]) {
+			min_value[MIC_BACK] = data[i+2];
+		}
+		if(data[i+3] > max_value[MIC_FRONT]) {
+			max_value[MIC_FRONT] = data[i+3];
+		}
+		if(data[i+3] < min_value[MIC_FRONT]) {
+			min_value[MIC_FRONT] = data[i+3];
 		}
 	}
 
-	if(peripheral == I2S_PERIPHERAL) {
-		mic_volume[0] = max_value[0] - min_value[0];
-		mic_volume[1] = max_value[1] - min_value[1];
-		mic_last[0] = data[MIC_BUFFER_LEN-2];
-		mic_last[1] = data[MIC_BUFFER_LEN-1];
-	} else if(peripheral == SPI_PERIPHERAL) {
-		mic_volume[2] = max_value[0] - min_value[0];
-		mic_volume[3] = max_value[1] - min_value[1];
-		mic_last[2] = data[MIC_BUFFER_LEN-2];
-		mic_last[3] = data[MIC_BUFFER_LEN-1];
-	}
+	mic_volume[MIC_RIGHT] = max_value[MIC_RIGHT] - min_value[MIC_RIGHT];
+	mic_volume[MIC_LEFT] = max_value[MIC_LEFT] - min_value[MIC_LEFT];
+	mic_volume[MIC_BACK] = max_value[MIC_BACK] - min_value[MIC_BACK];
+	mic_volume[MIC_FRONT] = max_value[MIC_FRONT] - min_value[MIC_FRONT];
+	mic_last[MIC_RIGHT] = data[MIC_BUFFER_LEN-4];
+	mic_last[MIC_LEFT] = data[MIC_BUFFER_LEN-3];
+	mic_last[MIC_BACK] = data[MIC_BUFFER_LEN-2];
+	mic_last[MIC_FRONT] = data[MIC_BUFFER_LEN-1];
+
 	return;
 }
 
 void mic_start(void) {
+
+	if(I2SD2.state != I2S_STOP) {
+		return;
+	}
+
+
+    // ***************************
+	// I2S2 AND I2S3 CONFIGURATION
+    // ***************************
+    mp45dt02Config micConfig;
+    memset(&micConfig, 0, sizeof(micConfig));
+    micConfig.fullbufferCb = handlePCMdata; // Callback called when the buffer is filled with 10 ms of PCM data.
+    mp45dt02Init(&micConfig);
+
 
 	// *******************
 	// TIMER CONFIGURATION
@@ -117,15 +153,20 @@ void mic_start(void) {
     STM32_TIM9->CCER |= STM32_TIM_CCER_CC1E | STM32_TIM_CCER_CC2E;
     STM32_TIM9->CR1 |= STM32_TIM_CR1_CEN;
 
-    // ***************************
-	// I2S2 AND I2S3 CONFIGURATION
-    // ***************************
-    mp45dt02Config micConfig;
-    memset(&micConfig, 0, sizeof(micConfig));
-    micConfig.fullbufferCb = handlePCMdata; // Callback called when the buffer is filled with 1 ms of PCM data.
-    mp45dt02Init(&micConfig);
-
 }
 
+int16_t* mic_get_buffer_ptr(void) {
+	return mp45dt02BufferPtr();
+}
 
+bool mic_buffer_is_ready(void) {
+	return mic_buffer_ready;
+}
 
+void mic_buffer_ready_reset(void) {
+	mic_buffer_ready = false;
+}
+
+uint16_t mic_buffer_get_size(void) {
+	return MIC_BUFFER_LEN*2;
+}

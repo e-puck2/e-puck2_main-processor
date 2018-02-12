@@ -704,6 +704,20 @@ static void cmd_volume(BaseSequentialStream *chp, int argc, char *argv[])
     }
 }
 
+static void cmd_mic_data(BaseSequentialStream *chp, int argc, char *argv[])
+{
+	(void) chp;
+    (void) argc;
+    (void) argv;
+	int16_t* mic_data;
+	chprintf(chp, "The mic data will be recorded and sent in 5 seconds\r\n");
+	chThdSleepMilliseconds(5000);
+	mic_buffer_ready_reset();
+	while(!mic_buffer_is_ready());
+	mic_data = mic_get_buffer_ptr();
+	chnWrite((BaseSequentialStream *)&SDU1, (uint8_t*)mic_data, mic_buffer_get_size());
+}
+
 void cmd_sdc(BaseSequentialStream *chp, int argc, char *argv[]) {
   static const char *mode[] = {"SDV11", "SDV20", "MMC", NULL};
   systime_t start, end;
@@ -947,6 +961,7 @@ const ShellCommand shell_commands[] = {
 	{"audio_play", cmd_audio_play},
 	{"audio_stop", cmd_audio_stop},
 	{"volume", cmd_volume},
+	{"mic_data", cmd_mic_data},
 	{"sdc", cmd_sdc},
     {NULL, NULL}
 };

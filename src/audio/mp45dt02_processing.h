@@ -93,9 +93,9 @@
 #define MP45DT02_DECIMATED_BUFFER_SIZE      (I2S_AUDIOFREQ_16K / 1000) * MP45DT02_NUM_CHANNELS // Number of samples in 1 ms for each channel x number of channels
 											//(MP45DT02_I2S_SAMPLE_SIZE_BITS / MP45DT02_FIR_DECIMATION_FACTOR) * MP45DT02_NUM_CHANNEL
 
-#define MIC_BUFFER_LEN MP45DT02_DECIMATED_BUFFER_SIZE*10
+#define MIC_BUFFER_LEN MP45DT02_DECIMATED_BUFFER_SIZE * 10 * 2 // 10 ms of data for all 4 microphones
 
-typedef void (*mp45dt02FullBufferCb) (int16_t *data, uint16_t length, uint8_t peripheral);
+typedef void (*mp45dt02FullBufferCb) (int16_t *data, uint16_t length);
 
 typedef struct {
     /* Callback function to be notified when the processing buffer is full. */
@@ -104,6 +104,6 @@ typedef struct {
 
 void mp45dt02Init(mp45dt02Config *config);
 void mp45dt02Shutdown(void);
-
+int16_t* mp45dt02BufferPtr(void);
 
 #endif

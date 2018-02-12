@@ -41,12 +41,7 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
  */
 int e_get_micro(unsigned int micro_id)
 {
-	int16_t value = 0;
-	if(micro_id == 2) {
-		value = mic_get_last(3); // Front and back microphones are swapped in the e-puck2 with respect to e-puck1.x.
-	} else {
-		value = mic_get_last(micro_id);
-	}
+	int16_t value = mic_get_last(micro_id);
 	return (value>>4); // Adapt the values to be compatible with e-puck1.x (16 bits => 12 bits).
 }
 
@@ -75,14 +70,7 @@ int e_get_micro_average(unsigned int micro_id, unsigned int filter_size)
  */
 int e_get_micro_volume (unsigned int micro_id)
 {
-	int32_t value = 0;
-	if(micro_id == 2) {
-		value = mic_get_volume(3); // Front and back microphones are swapped in the e-puck2 with respect to e-puck1.x.
-	} else if(micro_id == 3) {
-		value = mic_get_volume(2); // Front and back microphones are swapped in the e-puck2 with respect to e-puck1.x.
-	} else {
-		value = mic_get_volume(micro_id);
-	}
+	int32_t value = mic_get_volume(micro_id);
 	return (value>>4); // Adapt the values to be compatible with e-puck1.x (16 bits => 12 bits).
 }
 

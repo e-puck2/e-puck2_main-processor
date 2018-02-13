@@ -63,7 +63,7 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
     	if(imu_configured == true){
 	 		/* Reads the incoming measurement. */
-			mpu9250_read(imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature, imu_values.gyro_raw, imu_values.acc_raw, &imu_values.status);
+			mpu9250_read(imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature, imu_values.magnetometer, imu_values.gyro_raw, imu_values.acc_raw, &imu_values.status);
     	}
 
 
@@ -136,6 +136,13 @@ void imu_start(void)
 		                  | MPU9250_GYRO_FULL_RANGE_250DPS
 		                  | MPU9250_SAMPLE_RATE_DIV(100));
 		                  //| MPU60X0_LOW_PASS_FILTER_6)
+
+    //not tested yet because the auxilliary I2C of the MPU-9250 is condamned due
+    //to PCB correction on the e-puck2-F4, so the magnetometer cannot be read...
+    // if(status == MSG_OK){
+    // 	status = mpu9250_magnetometer_setup();
+    // }
+
     if(status == MSG_OK){
     	imu_configured = true;
     }

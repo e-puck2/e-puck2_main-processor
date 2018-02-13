@@ -3,7 +3,8 @@
 #include "mpu9250.h"
 #include "../i2c_bus.h"
 
-#define STANDARD_GRAVITY 9.80665f
+#define STANDARD_GRAVITY    9.80665f
+#define RAW16BITS_TO_TESLA  0.1499f  
 #define DEG2RAD(deg) (deg / 180 * M_PI)
 
 static uint32_t imuConfig;
@@ -95,13 +96,77 @@ int8_t mpu9250_setup(int config) {
 	
 }
 
+int8_t mpu9250_magnetometer_setup(void){
+    int8_t err = 0;
+
+    // //enable bypass mode for I2C peripherals connected to the MPU9250.
+    // //(the magnetometer is connected to the auxilliary I2C)
+    // if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x02)) != MSG_OK) {
+    //     return err;
+    // }
+
+    // //set to continuous mode 1(8Hz) and 16bits resolution
+    // if((err = write_reg(AK8963_ADDRESS, AK8963_CNTL, 0x12)) != MSG_OK) {
+    //     return err;
+    // }
+
+    // //disable bypass mode for I2C peripherals connected to the MPU9250.
+    // //(the magnetometer is connected to the auxilliary I2C)
+    // if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x00)) != MSG_OK) {
+    //     return err;
+    // }
+
+    //configure I2C_slave0 to read the magnetometer registers
+
+    //configure the I2C Master
+    // No other masters on the bus, unless there are (in which case switch this high bit)
+    // Wait for external sensors to finish before data ready interrupt
+    // No FIFO for Slave3 (which is actually about Slave3 and not the I2C Master)
+    // Always issue a full stop, then a start when transitioning between slaves (instead of a restart)
+    // Access the bus at 400kHz (see table in register map for other values)
+    if((err = write_reg(MPU9250_ADDRESS, I2C_MST_CTRL, 0x5D)) != MSG_OK) {
+        return err;
+    }
+    chThdSleepMilliseconds(1);
+
+    //enable the I2C Master of the MPU
+    if((err = write_reg(MPU9250_ADDRESS, USER_CTRL, 0x20)) != MSG_OK) {
+        return err;
+    }
+    chThdSleepMilliseconds(1);
+
+    //configure the I2C slave adress in read mode
+    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_ADDR, 0x80 | AK8963_ADDRESS)) != MSG_OK) {
+        return err;
+    }
+    chThdSleepMilliseconds(1);
+
+    //configure the first register to read from the slave
+    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_XOUT_L)) != MSG_OK) {
+        return err;
+    }
+    chThdSleepMilliseconds(1);
+
+    // Enable slave 0 interface
+    // Swap byte to have the same endiannes as the MPU
+    // Send the reg adress to read or write (normal I2C behavior)
+    // Don't use even swap alignement
+    // Read 7 bytes
+    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0xC7)) != MSG_OK) {
+        return err;
+    }
+    chThdSleepMilliseconds(1);
+
+    return err;
+}
+
 bool mpu9250_ping(void) {
 	uint8_t id = 0;
 	mpu9250_read_id(&id);
 	return id == 0x68;
 }
 
-void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status) {
+void mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status) {
     static const float gyro_res[] = { DEG2RAD(1 / 131.f),
                                       DEG2RAD(1 / 65.5f),
                                       DEG2RAD(1 / 32.8f),
@@ -110,8 +175,10 @@ void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16
                                      STANDARD_GRAVITY / 8192.f,
                                      STANDARD_GRAVITY / 4096.f,
                                      STANDARD_GRAVITY / 2048.f }; // m/s^2 / LSB
-    uint8_t buf[1 + 6 + 2 + 6]; // interrupt status, accel, temp, gyro
+
+    uint8_t buf[1 + 6 + 2 + 6 + 6 + 1]; // interrupt status, accel, temp, gyro, magnetometer, status magnetometer
     read_reg_multi(MPU9250_ADDRESS, INT_STATUS, buf, sizeof(buf));
+
     if(status) {
     	*status = buf[0];
     }
@@ -134,6 +201,12 @@ void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16
         gyro[0] = (float)gyro_raw[0] * gyro_res[(imuConfig >> 2) & 0x3];
         gyro[1] = (float)gyro_raw[1] * gyro_res[(imuConfig >> 2) & 0x3];
         gyro[2] = (float)gyro_raw[2] * gyro_res[(imuConfig >> 2) & 0x3];
+    }
+
+    if(magnet){
+        magnet[0] = read_word(&buf[15]) * RAW16BITS_TO_TESLA;
+        magnet[1] = read_word(&buf[17]) * RAW16BITS_TO_TESLA;
+        magnet[2] = read_word(&buf[19]) * RAW16BITS_TO_TESLA;
     }
 }
 

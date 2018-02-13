@@ -36,6 +36,16 @@
 int8_t mpu9250_setup(int config);
 
  /**
+ * @brief   Setup of the magnetometer of mpu9250 to be read by the mpu9250
+ * 			better to call after mpu9250_setup()
+ * 
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
+ */
+int8_t mpu9250_magnetometer_setup(void);
+
+ /**
  * @brief   Perfoms a ping test
  * 
  * @return              1 if OK, 0 if not.
@@ -48,10 +58,11 @@ bool mpu9250_ping(void);
  * @param gyro		pointer to a buffer of at least a size of 3 elements to store the gyro measure [m/s^2]
  * @param acc		pointer to a buffer of at least a size of 3 elements to store the acc measure [rad/s]
  * @param temp		pointer to store the temperature measure
+ * @param magnet	pointer to a buffer of at least a size of 3 elements to store the magnetometer measure [uT]
  * @param gyro_raw	pointer to a buffer of at least a size of 3 elements to store the gyro raw measure
  * @param acc_raw	pointer to a buffer of at least a size of 3 elements to store the acc raw measure
  * @param status	pointer to store the interrupt status of the sensor
  */
-void mpu9250_read(float *gyro, float *acc, float *temp, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status);
+void mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status);
 
 #endif // MPU9250_H

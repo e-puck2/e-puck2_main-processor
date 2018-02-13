@@ -12,6 +12,7 @@ typedef struct {
     float acceleration[3]; // m/s^2
     float gyro_rate[3]; // rad/s
     float temperature;
+    float magnetometer[3]; //uT
     int16_t acc_raw[3];
     int16_t gyro_raw[3];
     int16_t acc_offset[3];

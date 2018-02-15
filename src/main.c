@@ -21,6 +21,7 @@
 #include "epuck1x/a_d/advance_ad_scan/e_acc.h"
 #include "sensors/battery_level.h"
 #include "sensors/imu.h"
+#include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
 #include "sensors/VL53L0X/VL53L0X.h"
 #include "cmd.h"
@@ -91,6 +92,8 @@ static THD_FUNCTION(selector_thd, arg)
     uint16_t r = 0, g = 0, b = 0;
     uint8_t rgb_state = 0, rgb_counter = 0;
     uint16_t melody_state = 0, melody_counter = 0;
+
+    uint8_t magneto_state = 0;
 
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
@@ -342,7 +345,22 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepMilliseconds(50);
 				break;
 
-			case 14:
+			case 14: // Read magnetometer sensors values.
+				switch(magneto_state) {
+					case 0:
+						mpu9250_magnetometer_setup();
+						magneto_state = 1;
+						break;
+
+					case 1:
+				    	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+				    	if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
+				    		continue;
+				    	}
+				    	chprintf((BaseSequentialStream *)&SDU1, "%Mx=%f My=%f Mz=%f\r\n", imu_values.magnetometer[0], imu_values.magnetometer[1], imu_values.magnetometer[2]);
+				    	chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
+						break;
+				}
 				break;
 
 			case 15:

@@ -99,22 +99,22 @@ int8_t mpu9250_setup(int config) {
 int8_t mpu9250_magnetometer_setup(void){
     int8_t err = 0;
 
-    // //enable bypass mode for I2C peripherals connected to the MPU9250.
-    // //(the magnetometer is connected to the auxilliary I2C)
-    // if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x02)) != MSG_OK) {
-    //     return err;
-    // }
+     //enable bypass mode for I2C peripherals connected to the MPU9250.
+     //(the magnetometer is connected to the auxilliary I2C)
+     if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x02)) != MSG_OK) {
+         return err;
+     }
 
-    // //set to continuous mode 1(8Hz) and 16bits resolution
-    // if((err = write_reg(AK8963_ADDRESS, AK8963_CNTL, 0x12)) != MSG_OK) {
-    //     return err;
-    // }
+     //set to continuous mode 1(8Hz) and 16bits resolution
+     if((err = write_reg(AK8963_ADDRESS, AK8963_CNTL, 0x12)) != MSG_OK) {
+         return err;
+     }
 
-    // //disable bypass mode for I2C peripherals connected to the MPU9250.
-    // //(the magnetometer is connected to the auxilliary I2C)
-    // if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x00)) != MSG_OK) {
-    //     return err;
-    // }
+     //disable bypass mode for I2C peripherals connected to the MPU9250.
+     //(the magnetometer is connected to the auxilliary I2C)
+     if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x00)) != MSG_OK) {
+         return err;
+     }
 
     //configure I2C_slave0 to read the magnetometer registers
 
@@ -148,11 +148,11 @@ int8_t mpu9250_magnetometer_setup(void){
     chThdSleepMilliseconds(1);
 
     // Enable slave 0 interface
-    // Swap byte to have the same endiannes as the MPU
+    // Do not swap bytes
     // Send the reg adress to read or write (normal I2C behavior)
     // Don't use even swap alignement
     // Read 7 bytes
-    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0xC7)) != MSG_OK) {
+    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x87)) != MSG_OK) {
         return err;
     }
     chThdSleepMilliseconds(1);
@@ -204,9 +204,9 @@ void mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *
     }
 
     if(magnet){
-        magnet[0] = read_word(&buf[15]) * RAW16BITS_TO_TESLA;
-        magnet[1] = read_word(&buf[17]) * RAW16BITS_TO_TESLA;
-        magnet[2] = read_word(&buf[19]) * RAW16BITS_TO_TESLA;
+        magnet[0] = ((int16_t)((int8_t)buf[16]) << 8 | buf[15]) * RAW16BITS_TO_TESLA;
+        magnet[1] = ((int16_t)((int8_t)buf[18]) << 8 | buf[17]) * RAW16BITS_TO_TESLA;
+        magnet[2] = ((int16_t)((int8_t)buf[20]) << 8 | buf[19]) * RAW16BITS_TO_TESLA;
     }
 }
 

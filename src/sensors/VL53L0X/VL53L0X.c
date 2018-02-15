@@ -43,8 +43,10 @@ static THD_FUNCTION(VL53L0XThd, arg) {
 
     /* Reader thread loop.*/
     while (chThdShouldTerminateX() == false) {
-   		VL53L0X_getLastMeasure(&device);
-   		dist_mm = device.Data.LastRangeMeasure.RangeMilliMeter;
+    	if(VL53L0X_configured){
+    		VL53L0X_getLastMeasure(&device);
+   			dist_mm = device.Data.LastRangeMeasure.RangeMilliMeter;
+    	}
 		chThdSleepMilliseconds(100);
     }
 }

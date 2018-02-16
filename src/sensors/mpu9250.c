@@ -8,8 +8,17 @@
 #define DEG2RAD(deg) (deg / 180 * M_PI)
 
 static uint32_t imuConfig;
+static uint8_t imu_addr = MPU9250_ADDRESS_AD1_0;
 
 /***************************INTERNAL FUNCTIONS************************************/
+
+void mpu9250_change_addr(void) {
+	if(imu_addr == MPU9250_ADDRESS_AD1_0) {
+		imu_addr = MPU9250_ADDRESS_AD1_1;
+	} else {
+		imu_addr = MPU9250_ADDRESS_AD1_0;
+	}
+}
 
  /**
  * @brief   reads the id of the sensor
@@ -22,8 +31,11 @@ static uint32_t imuConfig;
  */
 int8_t mpu9250_read_id(uint8_t *id) {
     int8_t err = 0;
-    if((err = read_reg(MPU9250_ADDRESS, WHO_AM_I_MPU9250, id)) != MSG_OK) {
-        return err;
+    if((err = read_reg(imu_addr, WHO_AM_I_MPU9250, id)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = read_reg(imu_addr, WHO_AM_I_MPU9250, id)) != MSG_OK) {
+    		return err;
+    	}
     }
     return MSG_OK;
 }
@@ -52,12 +64,20 @@ int8_t mpu9250_setup(int config) {
 	imuConfig = config;
 
     // Reset device.
-    if((err = write_reg(MPU9250_ADDRESS, PWR_MGMT_1, 0x80)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, PWR_MGMT_1, 0x80)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, PWR_MGMT_1, 0x80)) != MSG_OK) {
+    		return err;
+    	}
     }	
     chThdSleepMilliseconds(1);
     while(1) {
-		read_reg(MPU9250_ADDRESS, PWR_MGMT_1, &regValue);
+		if((err = read_reg(imu_addr, PWR_MGMT_1, &regValue)) != MSG_OK) {
+			mpu9250_change_addr();
+			if((err = read_reg(imu_addr, PWR_MGMT_1, &regValue)) != MSG_OK) {
+				return err;
+			}
+		}
 		if(!(regValue & 0x80)) {
 			break;
 		}
@@ -65,26 +85,38 @@ int8_t mpu9250_setup(int config) {
     }
 	
     // Gyro full scale.
-    if((err = write_reg(MPU9250_ADDRESS, GYRO_CONFIG, (config << 1) & 0x18)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, GYRO_CONFIG, (config << 1) & 0x18)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, GYRO_CONFIG, (config << 1) & 0x18)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
     // Accelerometer full scale.
-    if((err = write_reg(MPU9250_ADDRESS, ACCEL_CONFIG, (config << 3) & 0x18)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, ACCEL_CONFIG, (config << 3) & 0x18)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, ACCEL_CONFIG, (config << 3) & 0x18)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
     // Sample rate divisor.
-    if((err = write_reg(MPU9250_ADDRESS, SMPLRT_DIV, (config >> 8) & 0xff)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, SMPLRT_DIV, (config >> 8) & 0xff)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, SMPLRT_DIV, (config >> 8) & 0xff)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
     // Enable interrupts: data ready.
-    if((err = write_reg(MPU9250_ADDRESS, INT_ENABLE, INTERRUPT_DATA_RDY)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, INT_ENABLE, INTERRUPT_DATA_RDY)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, INT_ENABLE, INTERRUPT_DATA_RDY)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
@@ -101,8 +133,11 @@ int8_t mpu9250_magnetometer_setup(void){
 
      //enable bypass mode for I2C peripherals connected to the MPU9250.
      //(the magnetometer is connected to the auxilliary I2C)
-     if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x02)) != MSG_OK) {
-         return err;
+     if((err = write_reg(imu_addr, INT_PIN_CFG, 0x02)) != MSG_OK) {
+    	 mpu9250_change_addr();
+    	 if((err = write_reg(imu_addr, INT_PIN_CFG, 0x02)) != MSG_OK) {
+    		 return err;
+    	 }
      }
 
      //set to continuous mode 1(8Hz) and 16bits resolution
@@ -112,8 +147,11 @@ int8_t mpu9250_magnetometer_setup(void){
 
      //disable bypass mode for I2C peripherals connected to the MPU9250.
      //(the magnetometer is connected to the auxilliary I2C)
-     if((err = write_reg(MPU9250_ADDRESS, INT_PIN_CFG, 0x00)) != MSG_OK) {
-         return err;
+     if((err = write_reg(imu_addr, INT_PIN_CFG, 0x00)) != MSG_OK) {
+    	 mpu9250_change_addr();
+    	 if((err = write_reg(imu_addr, INT_PIN_CFG, 0x00)) != MSG_OK) {
+    		 return err;
+    	 }
      }
 
     //configure I2C_slave0 to read the magnetometer registers
@@ -124,26 +162,38 @@ int8_t mpu9250_magnetometer_setup(void){
     // No FIFO for Slave3 (which is actually about Slave3 and not the I2C Master)
     // Always issue a full stop, then a start when transitioning between slaves (instead of a restart)
     // Access the bus at 400kHz (see table in register map for other values)
-    if((err = write_reg(MPU9250_ADDRESS, I2C_MST_CTRL, 0x5D)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, I2C_MST_CTRL, 0x5D)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, I2C_MST_CTRL, 0x5D)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
     //enable the I2C Master of the MPU
-    if((err = write_reg(MPU9250_ADDRESS, USER_CTRL, 0x20)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, USER_CTRL, 0x20)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, USER_CTRL, 0x20)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
     //configure the I2C slave adress in read mode
-    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_ADDR, 0x80 | AK8963_ADDRESS)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, I2C_SLV0_ADDR, 0x80 | AK8963_ADDRESS)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, I2C_SLV0_ADDR, 0x80 | AK8963_ADDRESS)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
     //configure the first register to read from the slave
-    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_REG, AK8963_XOUT_L)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, I2C_SLV0_REG, AK8963_XOUT_L)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, I2C_SLV0_REG, AK8963_XOUT_L)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
@@ -152,8 +202,11 @@ int8_t mpu9250_magnetometer_setup(void){
     // Send the reg adress to read or write (normal I2C behavior)
     // Don't use even swap alignement
     // Read 7 bytes
-    if((err = write_reg(MPU9250_ADDRESS, I2C_SLV0_CTRL, 0x87)) != MSG_OK) {
-        return err;
+    if((err = write_reg(imu_addr, I2C_SLV0_CTRL, 0x87)) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = write_reg(imu_addr, I2C_SLV0_CTRL, 0x87)) != MSG_OK) {
+    		return err;
+    	}
     }
     chThdSleepMilliseconds(1);
 
@@ -166,7 +219,8 @@ bool mpu9250_ping(void) {
 	return id == 0x68;
 }
 
-void mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status) {
+int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status) {
+	int8_t err = 0;
     static const float gyro_res[] = { DEG2RAD(1 / 131.f),
                                       DEG2RAD(1 / 65.5f),
                                       DEG2RAD(1 / 32.8f),
@@ -177,7 +231,12 @@ void mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *
                                      STANDARD_GRAVITY / 2048.f }; // m/s^2 / LSB
 
     uint8_t buf[1 + 6 + 2 + 6 + 6 + 1]; // interrupt status, accel, temp, gyro, magnetometer, status magnetometer
-    read_reg_multi(MPU9250_ADDRESS, INT_STATUS, buf, sizeof(buf));
+    if((err = read_reg_multi(imu_addr, INT_STATUS, buf, sizeof(buf))) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = read_reg_multi(imu_addr, INT_STATUS, buf, sizeof(buf))) != MSG_OK) {
+    		return err;
+    	}
+    }
 
     if(status) {
     	*status = buf[0];
@@ -208,6 +267,8 @@ void mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *
         magnet[1] = ((int16_t)((int8_t)buf[18]) << 8 | buf[17]) * RAW16BITS_TO_TESLA;
         magnet[2] = ((int16_t)((int8_t)buf[20]) << 8 | buf[19]) * RAW16BITS_TO_TESLA;
     }
+
+    return MSG_OK;
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

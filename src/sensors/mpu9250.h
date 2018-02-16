@@ -63,6 +63,6 @@ bool mpu9250_ping(void);
  * @param acc_raw	pointer to a buffer of at least a size of 3 elements to store the acc raw measure
  * @param status	pointer to store the interrupt status of the sensor
  */
-void mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status);
+int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status);
 
 #endif // MPU9250_H

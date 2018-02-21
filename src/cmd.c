@@ -710,12 +710,14 @@ static void cmd_mic_data(BaseSequentialStream *chp, int argc, char *argv[])
     (void) argc;
     (void) argv;
 	int16_t* mic_data;
-	chprintf(chp, "The mic data will be recorded and sent in 5 seconds\r\n");
-	chThdSleepMilliseconds(5000);
+	uint16_t data_len = mic_buffer_get_size();
+	uint8_t header[4] = {0xAA, 0x55, data_len>>8, data_len&0xFF};
+
+	chnWrite((BaseSequentialStream *)&SDU1, (uint8_t*)header, 4);
 	mic_buffer_ready_reset();
 	while(!mic_buffer_is_ready());
 	mic_data = mic_get_buffer_ptr();
-	chnWrite((BaseSequentialStream *)&SDU1, (uint8_t*)mic_data, mic_buffer_get_size());
+	chnWrite((BaseSequentialStream *)&SDU1, (uint8_t*)mic_data, data_len);
 }
 
 void cmd_sdc(BaseSequentialStream *chp, int argc, char *argv[]) {

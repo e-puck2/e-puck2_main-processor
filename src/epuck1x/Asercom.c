@@ -44,8 +44,8 @@
 
 #include "memory.h"
 char buffer[BUFFER_SIZE]; // 52x39 + 3(header)
-int e_mic_scan[3][MIC_SAMP_NB];
-unsigned int e_last_mic_scan_id;
+//int e_mic_scan[3][MIC_SAMP_NB];
+extern unsigned int e_last_mic_scan_id;
 int selector;
 char c;
 int e_ambient_ir[10];						// ambient light measurement

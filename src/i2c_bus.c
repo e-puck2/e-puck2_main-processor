@@ -6,6 +6,11 @@ static i2cflags_t errors = 0;
 static systime_t timeout = MS2ST(4); // 4 ms
 
 void i2c_start(void) {
+
+	if(I2CD1.state != I2C_STOP) {
+		return;
+	}
+
     /*
      * I2C configuration structure for camera, IMU and distance sensor.
      * Set it to 400kHz fast mode

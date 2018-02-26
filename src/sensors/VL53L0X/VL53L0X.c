@@ -11,6 +11,7 @@
 #include "Api/core/inc/vl53l0x_api.h"
 #include "shell.h"
 #include "chprintf.h"
+#include "i2c_bus.h"
 #include "usbcfg.h"
 
 static uint16_t dist_mm = 0;
@@ -219,6 +220,13 @@ VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device){
 }
 
 void VL53L0X_start(void){
+
+	if(VL53L0X_configured) {
+		return;
+	}
+
+	i2c_start();
+
 	distThd = chThdCreateStatic(waVL53L0XThd,
                      sizeof(waVL53L0XThd),
                      NORMALPRIO + 10,
@@ -230,6 +238,7 @@ void VL53L0X_stop(void) {
     chThdTerminate(distThd);
     chThdWait(distThd);
     distThd = NULL;
+    VL53L0X_configured = false;
 }
 
 uint16_t VL53L0X_get_dist_mm(void) {

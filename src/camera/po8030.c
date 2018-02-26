@@ -603,6 +603,9 @@ int8_t po8030_set_scale_buffer_size(format_t fmt, image_size_t imgsize) {
 /****************************PUBLIC FUNCTIONS*************************************/
 
 void po8030_start(void) {
+
+	i2c_start();
+
     /* timer init */
     static const PWMConfig pwmcfg_cam = {
         .frequency = 42000000,  //42MHz

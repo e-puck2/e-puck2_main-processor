@@ -287,6 +287,10 @@ static void pwm_ch1_cb(PWMDriver *pwmp) {
 
 void proximity_start(void)
 {
+	if(ADCD2.state != ADC_STOP) {
+		return;
+	}
+
     static const PWMConfig pwmcfg_proximity = {
         /* timer clock frequency */
         .frequency = PWM_CLK_FREQ,

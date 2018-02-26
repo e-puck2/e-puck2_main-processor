@@ -365,8 +365,7 @@ static THD_FUNCTION(selector_thd, arg)
 
 			case 15:
 				chprintf((BaseSequentialStream *)&SD3, "battery=%d, %f V \r\n", get_battery_raw(), get_battery_voltage());
-				chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 10 Hz.
-				break;
+				chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 2 Hz.
 				break;
 		}
     }
@@ -389,7 +388,6 @@ int main(void)
 	set_body_led(0);
 	set_front_led(0);
 	usb_start();
-	i2c_start();
 	dcmi_start();
 	po8030_start();
 	motors_init();

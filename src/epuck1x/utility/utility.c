@@ -1,3 +1,4 @@
+#include "hal.h"
 #include "utility.h"
 #include "../sensors/battery_level.h"
 #include "../selector.h"
@@ -6,8 +7,10 @@
 //#define MIN_BATT_VALUE 2070 // corresponds to 3.4 volts
 //#define BATT_VALUES_RANGE (MAX_BATT_VALUE-MIN_BATT_VALUE)
 
+uint32_t tickAdcIsr = 0;
+
 void wait(long num) {
-	long i;
+	volatile long i;
 	for(i=0;i<num;i++);
 }
 
@@ -28,20 +31,17 @@ unsigned int getBatteryValuePercentage(void) {
 }
 
 void resetTime(void) {
-//    tickAdcIsr = 0;
+    tickAdcIsr = chSysGetRealtimeCounterX();
 }
 
-// Based on ADC ISR interrupt frequency of 1/16384 (about 61 us). Each time the ISR is entered the tick
-// is incremented, so we can compute the elapsed time from the last reset (knowing the ISR period)
+// Based on the Realtime counter.
 float getDiffTimeMs(void) {
-//    return ((float)tickAdcIsr)*ADC_ISR_PERIOD_MS;   // the function itself takes 20-40 us (negligable)
-	return 0.0;
+	return (float)(RTC2US(STM32_SYSCLK, chSysGetRealtimeCounterX()-tickAdcIsr))/1000.0;
 }
 
 float getDiffTimeMsAndReset(void) {
-//    float value = ((float)tickAdcIsr)*ADC_ISR_PERIOD_MS;   // the function itself takes 20-40 us (negligable)
-//    tickAdcIsr = 0;
-//    return value;
-    return 0.0;
+	float value = (float)(RTC2US(STM32_SYSCLK, chSysGetRealtimeCounterX()-tickAdcIsr))/1000.0;
+    tickAdcIsr = chSysGetRealtimeCounterX();
+    return value;
 }
 

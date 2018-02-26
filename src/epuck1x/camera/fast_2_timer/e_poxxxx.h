@@ -19,10 +19,6 @@
 extern "C" {
 #endif
 
-/*! If you set this at 0, you save about 168 bytes of memory
- * But you loose all advanced camera functions */
-#define POXXXX_FULL 1
-
 #define	ARRAY_WIDTH			640		
 #define	ARRAY_HEIGHT		480
 

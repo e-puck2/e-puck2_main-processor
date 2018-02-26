@@ -1,59 +1,3 @@
-/********************************************************************************
-
-			Accessing the proximity sensor data (advance)
-			Novembre 7 2005	Lucas Meier
-
-
-This file is part of the e-puck library license.
-See http://www.e-puck.org/index.php?option=com_content&task=view&id=18&Itemid=45
-
-(c) 2005-2007 Lucas Meier
-
-Robotics system laboratory http://lsro.epfl.ch
-Laboratory of intelligent systems http://lis.epfl.ch
-Swarm intelligent systems group http://swis.epfl.ch
-EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
-
-**********************************************************************************/
-
-/*! \file
- * \ingroup a_d
- * \brief Accessing proximity sensor of e-puck.
- *
- * The functions of this file are made to deal with the proximitiy
- * data. You can know the value of the ambient light detected by the
- * sensor. You can estimate the distance between the e-puck and an
- * obstacle by using e_get_prox function.
- *
- * A little exemple which turn the LED0 when an obstacle is detected
- * by the proximity sensor number 0. 
- * \code
- * #include <p30F6014A.h>
- * #include <motor_led/e_epuck_ports.h>
- * #include <motor_led/e_init_port.h>
- * #include <a_d/advance_ad_scan/e_prox.h>
- * #include <a_d/advance_ad_scan/e_ad_conv.h>
- * 
- * int main(void)
- * {
- * 	int proxy0;
- * 	e_init_port();
- * 	e_init_ad_scan();
- * 	while(1)
- * 	{
- * 		long i;
- * 		proxy0 = e_get_prox(0);
- * 		if(proxy0 < 1000)
- * 			LED0 = 0;
- * 		else
- * 			LED0 = 1;
- * 		for(i=0; i<100000; i++) { asm("nop"); }
- * 	}
- * }
- * \endcode
- * \author Code: Lucas Meier \n Doc: Jonathan Besuchet
- */
-
 #ifndef _PROX
 #define _PROX
 
@@ -61,9 +5,46 @@ EPFL Ecole polytechnique federale de Lausanne http://www.epfl.ch
 extern "C" {
 #endif
 
+/*! \brief To calibrate the IR proximity sensors.
+ * \warning Call this function one time before calling e_get_calibrated_prox
+ */
 void e_calibrate_ir(void);
-int e_get_prox(unsigned int sensor_number); // to get a prox value
+
+/*! \brief To get the analog proxy sensor value of a specific IR sensor
+ *
+ * To estimate the proximity of an obstacle, we do the following things:
+ * - measure the ambient light
+ * - turn on the IR led of the sensor
+ * - measure the reflected light + ambient light
+ * - calculate: reflected light = (reflected light + ambient light) - ambient light
+ * - turn off the IR led of the sensor
+ *
+ * The result value of this function is: reflected light. More this value is great,
+ * more the obstacle is near.
+ * \param sensor_number The proxy sensor's number that you want the value.
+ *                      Must be between 0 to 7.
+ * \return The analog value of the specified proxy sensor
+ */
+int e_get_prox(unsigned int sensor_number);
+
+/*! \brief To get the calibrated value of the IR sensor
+ *
+ * This function return the calibrated analog value of the IR sensor.
+ * \warning Before using this function you have to calibrate the IR proximity sensors (only one time)
+ * by calling e_calibrate_ir().
+ * \param sensor_number The proxy sensor's number that you want the calibrated value.
+ *                      Must be between 0 to 7.
+ * \return The analog value of the specified proxy sensor
+ */
 int e_get_calibrated_prox(unsigned int sensor_number);
+
+/*! \brief To get the analog ambient light value of a specific IR sensor
+ *
+ * This function return the analog value of the ambient light measurement.
+ * \param sensor_number The proxy sensor's number that you want the value.
+ *                      Must be between 0 to 7.
+ * \return The analog value of the specified proxy sensor
+ */
 int e_get_ambient_light(unsigned int sensor_number); // to get ambient light value
 
 #ifdef __cplusplus

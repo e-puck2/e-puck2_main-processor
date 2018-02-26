@@ -4,9 +4,15 @@
 #include "epuck1x/motor_led/advance_one_timer/e_led.h"
 #include <stdlib.h>
 
-
+/*****************************************************
+ * internal variables                                *
+ *****************************************************/
 static int angle_mem = 0;			//used in the display_angle function
 
+
+/*****************************************************
+ * user called function                               *
+ *****************************************************/
 
 int e_get_acc(unsigned int captor) {
 	// Values adapted to be compatible with e-puck1.x:

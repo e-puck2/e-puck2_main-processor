@@ -12,10 +12,6 @@ extern "C" {
 
 void initAccAndGyro(void);
 
-void getAllAxesAccRaw(unsigned char *arr);
-
-void getAllAxesAcc(signed int *x, signed int *y, signed int *z);
-
 // do not remove the offsets computed during calibration
 void getAllAxesGyroRaw(unsigned char *arr);
 
@@ -23,12 +19,6 @@ void getAllAxesGyro(signed int *x, signed int *y, signed int *z);
 
 // degrees (two's complement)
 signed char getTemperature(void);
-
-int getXAxisAcc(void);
-
-int getYAxisAcc(void);
-
-int getZAxisAcc(void);
 
 int getXAxisGyro(void);
 

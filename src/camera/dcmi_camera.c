@@ -194,7 +194,7 @@ uint8_t* dcmi_get_last_image_ptr(void) {
 	if(double_buffering == 0) {
 		return image_buff1;
 	} else {
-		if((&DCMID)->dmastp->stream->CR & STM32_DMA_CR_CT) {
+		if((&DCMID)->dmastp->stream->CR & STM32_DMA_CR_CT) { // Check which buffer is currently being filled.
 			return image_buff1;
 		} else {
 			return image_buff2;

@@ -3,6 +3,7 @@
 #include <main.h>
 #include "usbcfg.h"
 #include "chprintf.h"
+#include "i2c_bus.h"
 #include "imu.h"
 #include "sensors/mpu9250.h"
 #include "exti.h"
@@ -132,6 +133,12 @@ void imu_start(void)
 {
 	int8_t status = MSG_OK;
 
+	if(imu_configured) {
+		return;
+	}
+
+	i2c_start();
+
     status = mpu9250_setup(MPU9250_ACC_FULL_RANGE_2G
 		                  | MPU9250_GYRO_FULL_RANGE_250DPS
 		                  | MPU9250_SAMPLE_RATE_DIV(100));
@@ -155,6 +162,7 @@ void imu_stop(void) {
     chThdTerminate(imuThd);
     chThdWait(imuThd);
     imuThd = NULL;
+    imu_configured = false;
 }
 
 // Gets last axis value read from the sensor.

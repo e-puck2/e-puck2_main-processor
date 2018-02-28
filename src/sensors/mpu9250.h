@@ -5,6 +5,13 @@
 #include <stdint.h>
 #include "mpu9250_registers.h"
 
+typedef enum{
+    X_AXIS = 0,
+    Y_AXIS,
+    Z_AXIS,
+    NB_AXIS,
+}imu_axis_t;
+
 // mpu60X0_setup() config options
 #define MPU9250_ACC_FULL_RANGE_2G           (0 << 0)
 #define MPU9250_ACC_FULL_RANGE_4G           (1 << 0)
@@ -53,16 +60,19 @@ int8_t mpu9250_magnetometer_setup(void);
 bool mpu9250_ping(void);
 
  /**
- * @brief   Gets the last measures from the sensor
+ * @brief   Gets the last measurements from the sensor. acc and gyro values are corrected with the offsets
  * 
- * @param gyro		pointer to a buffer of at least a size of 3 elements to store the gyro measure [m/s^2]
- * @param acc		pointer to a buffer of at least a size of 3 elements to store the acc measure [rad/s]
- * @param temp		pointer to store the temperature measure
- * @param magnet	pointer to a buffer of at least a size of 3 elements to store the magnetometer measure [uT]
- * @param gyro_raw	pointer to a buffer of at least a size of 3 elements to store the gyro raw measure
- * @param acc_raw	pointer to a buffer of at least a size of 3 elements to store the acc raw measure
- * @param status	pointer to store the interrupt status of the sensor
+ * @param gyro			pointer to a buffer of at least a size of 3 elements to store the gyro measurement [m/s^2]
+ * @param acc			pointer to a buffer of at least a size of 3 elements to store the acc measurement [rad/s]
+ * @param temp			pointer to store the temperature measurement
+ * @param magnet		pointer to a buffer of at least a size of 3 elements to store the magnetometer measurement [uT]
+ * @param gyro_raw		pointer to a buffer of at least a size of 3 elements to store the gyro raw measurement
+ * @param acc_raw		pointer to a buffer of at least a size of 3 elements to store the acc raw measurement
+ * @param gyro_offset	pointer to a buffer of at least a size of 3 elements to access the gyro offsets
+ * @param acc_offset	pointer to a buffer of at least a size of 3 elements to access the acc offsets
+ * @param status		pointer to store the interrupt status of the sensor
  */
-int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status);
+int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, 
+					int16_t *acc_raw, int16_t *gyro_offset, int16_t *acc_offset, uint8_t *status);
 
 #endif // MPU9250_H

@@ -64,7 +64,9 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
     	if(imu_configured == true){
 	 		/* Reads the incoming measurement. */
-			mpu9250_read(imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature, imu_values.magnetometer, imu_values.gyro_raw, imu_values.acc_raw, &imu_values.status);
+			mpu9250_read(	imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature, 
+							imu_values.magnetometer, imu_values.gyro_raw, imu_values.acc_raw, 
+							imu_values.gyro_offset, imu_values.acc_offset, &imu_values.status);
     	}
 
 

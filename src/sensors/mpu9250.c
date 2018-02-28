@@ -3,9 +3,17 @@
 #include "mpu9250.h"
 #include "../i2c_bus.h"
 
-#define STANDARD_GRAVITY    9.80665f
-#define RAW16BITS_TO_TESLA  0.1499f  
+#define STANDARD_GRAVITY    9.80665f 
 #define DEG2RAD(deg) (deg / 180 * M_PI)
+
+#define RES_2G      2.0f
+#define RES_250DPS  250.0f
+#define RES_4800UT  4800.0f
+#define MAX_INT16   32768.0f
+
+#define RAW16BITS_TO_TESLA  (RES_4800UT/MAX_INT16)  //4800uT scale for int16 raw
+#define ACC_RAW2G           (RES_2G / MAX_INT16)   //2G scale for int16 raw value
+#define GYRO_RAW2DPS        (RES_250DPS / MAX_INT16)   //250DPS (degrees per second) scale for int16 raw value
 
 static uint32_t imuConfig;
 static uint8_t imu_addr = MPU9250_ADDRESS_AD1_0;
@@ -219,16 +227,8 @@ bool mpu9250_ping(void) {
 	return id == 0x68;
 }
 
-int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, uint8_t *status) {
+int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, int16_t *gyro_offset, int16_t *acc_offset, uint8_t *status) {
 	int8_t err = 0;
-    static const float gyro_res[] = { DEG2RAD(1 / 131.f),
-                                      DEG2RAD(1 / 65.5f),
-                                      DEG2RAD(1 / 32.8f),
-                                      DEG2RAD(1 / 16.4f) }; // rad/s/LSB
-    static const float acc_res[] = { STANDARD_GRAVITY / 16384.f,
-                                     STANDARD_GRAVITY / 8192.f,
-                                     STANDARD_GRAVITY / 4096.f,
-                                     STANDARD_GRAVITY / 2048.f }; // m/s^2 / LSB
 
     uint8_t buf[1 + 6 + 2 + 6 + 6 + 1]; // interrupt status, accel, temp, gyro, magnetometer, status magnetometer
     if((err = read_reg_multi(imu_addr, INT_STATUS, buf, sizeof(buf))) != MSG_OK) {
@@ -243,29 +243,31 @@ int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t
     }
     if (acc) {
     	// Change the sign of all axes to have -1g when the robot is still on the plane and the axis points upwards and is perpendicular to the surface.
-    	acc_raw[0] = -read_word(&buf[1]);
-    	acc_raw[1] = -read_word(&buf[3]);
-    	acc_raw[2] = -read_word(&buf[5]);
-        acc[0] = (float)acc_raw[0] * acc_res[imuConfig & 0x3];
-        acc[1] = (float)acc_raw[1] * acc_res[imuConfig & 0x3];
-        acc[2] = (float)acc_raw[2] * acc_res[imuConfig & 0x3];
+    	acc_raw[X_AXIS] = -read_word(&buf[1]);
+    	acc_raw[Y_AXIS] = -read_word(&buf[3]);
+    	acc_raw[Z_AXIS] = -read_word(&buf[5]);
+        acc[X_AXIS] = (acc_raw[X_AXIS] - acc_offset[X_AXIS]) * STANDARD_GRAVITY * ACC_RAW2G;
+        acc[Y_AXIS] = (acc_raw[Y_AXIS] - acc_offset[Y_AXIS]) * STANDARD_GRAVITY * ACC_RAW2G;
+        //specific case for the z axis because it should not be zero but -1g
+        //deletes the standard gravity to have only the offset
+        acc[Z_AXIS] = (acc_raw[Z_AXIS] - acc_offset[Z_AXIS] - (MAX_INT16 / RES_2G)) * STANDARD_GRAVITY * ACC_RAW2G;
     }
     if (temp) {
         *temp = (float)((read_word(&buf[7]) - 21.0f) / 333.87f) + 21.0f; // Degrees.
     }
     if (gyro) {
-    	gyro_raw[0] = read_word(&buf[9]);
-    	gyro_raw[1] = read_word(&buf[11]);
-    	gyro_raw[2] = read_word(&buf[13]);
-        gyro[0] = (float)gyro_raw[0] * gyro_res[(imuConfig >> 2) & 0x3];
-        gyro[1] = (float)gyro_raw[1] * gyro_res[(imuConfig >> 2) & 0x3];
-        gyro[2] = (float)gyro_raw[2] * gyro_res[(imuConfig >> 2) & 0x3];
+    	gyro_raw[X_AXIS] = read_word(&buf[9]);
+    	gyro_raw[Y_AXIS] = read_word(&buf[11]);
+    	gyro_raw[Z_AXIS] = read_word(&buf[13]);
+        gyro[X_AXIS] = (gyro_raw[X_AXIS] - gyro_offset[X_AXIS]) * DEG2RAD(GYRO_RAW2DPS);
+        gyro[Y_AXIS] = (gyro_raw[Y_AXIS] - gyro_offset[Y_AXIS]) * DEG2RAD(GYRO_RAW2DPS);
+        gyro[Z_AXIS] = (gyro_raw[Z_AXIS] - gyro_offset[Z_AXIS]) * DEG2RAD(GYRO_RAW2DPS);
     }
 
     if(magnet){
-        magnet[0] = ((int16_t)((int8_t)buf[16]) << 8 | buf[15]) * RAW16BITS_TO_TESLA;
-        magnet[1] = ((int16_t)((int8_t)buf[18]) << 8 | buf[17]) * RAW16BITS_TO_TESLA;
-        magnet[2] = ((int16_t)((int8_t)buf[20]) << 8 | buf[19]) * RAW16BITS_TO_TESLA;
+        magnet[X_AXIS] = ((int16_t)((int8_t)buf[16]) << 8 | buf[15]) * RAW16BITS_TO_TESLA;
+        magnet[Y_AXIS] = ((int16_t)((int8_t)buf[18]) << 8 | buf[17]) * RAW16BITS_TO_TESLA;
+        magnet[Z_AXIS] = ((int16_t)((int8_t)buf[20]) << 8 | buf[19]) * RAW16BITS_TO_TESLA;
     }
 
     return MSG_OK;

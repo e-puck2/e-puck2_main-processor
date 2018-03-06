@@ -28,6 +28,7 @@ static uint8_t dcmi_prepared = 0;
 void frameEndCb(DCMIDriver* dcmip) {
     (void) dcmip;
     //palTogglePad(GPIOD, 13) ; // Orange.
+    image_ready = 1;
 }
 
 // This is called at each DMA transfer completion.
@@ -36,7 +37,7 @@ void dmaTransferEndCb(DCMIDriver* dcmip) {
    (void) dcmip;
     //palTogglePad(GPIOD, 15); // Blue.
 	//osalEventBroadcastFlagsI(&ss_event, 0);
-   image_ready = 1;
+   // image_ready = 1;
 }
 
 void dcmiErrorCb(DCMIDriver* dcmip, dcmierror_t err) {

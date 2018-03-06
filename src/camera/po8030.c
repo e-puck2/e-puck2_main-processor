@@ -665,11 +665,11 @@ int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1,
 	unsigned int scale_th;
 	float scale_th_f;
 	
-	if(x1==0 || x1>PO8030_MAX_WIDTH) {
+	if(x1>PO8030_MAX_WIDTH) {
 		return -2;
 	}
 	
-	if(y1==0 || y1>PO8030_MAX_HEIGHT) {
+	if(y1>PO8030_MAX_HEIGHT) {
 		return -3;
 	}
 	

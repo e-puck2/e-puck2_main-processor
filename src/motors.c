@@ -200,7 +200,8 @@ void motor_set_speed(struct stepper_motor_s *m, int speed)
     uint16_t interval;
     if (speed == 0) {
         m->direction = HALT;
-        interval = 0xffff;
+        //Resolves a problem when the motors take about 650ms to restart
+        interval = 1000;    //so the motors get updated at 100Hz when not used
         m->disable_power_save();
     } else {
         if (speed > 0) {

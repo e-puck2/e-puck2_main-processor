@@ -648,7 +648,7 @@ int run_asercom2(void) {
                 if (gumstix_connected == 0) {
                     if (wait_cam) {
                         wait_cam = 0;
-                        while (!e_poxxxx_is_img_ready());
+                        e_poxxxx_wait_img_ready();
                         memcpy(&buffer[cam_start_index], dcmi_get_last_image_ptr(), cam_size);
                     }
                 }

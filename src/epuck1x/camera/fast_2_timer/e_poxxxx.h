@@ -38,7 +38,7 @@ void e_poxxxx_write_cam_registers(void);
 
 void e_poxxxx_launch_capture(char * buf);
 
-int  e_poxxxx_is_img_ready(void);
+void  e_poxxxx_wait_img_ready(void);
 
 void e_poxxxx_set_mirror(int vertical, int horizontal);
 void e_poxxxx_set_awb_ae(int awb, int ae);

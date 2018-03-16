@@ -325,7 +325,7 @@ static THD_FUNCTION(selector_thd, arg)
 
 						// Read camera.
 				    	dcmi_capture_start();
-						while(!image_is_ready());
+						wait_image_ready();
 						img_buff_ptr = dcmi_get_last_image_ptr();
 						r = (int)img_buff_ptr[0]&0xF8;
 			            g = (int)(img_buff_ptr[0]&0x07)<<5 | (img_buff_ptr[1]&0xE0)>>3;

@@ -18,9 +18,13 @@ static capture_mode_t capture_mode = CAPTURE_ONE_SHOT;
 static uint8_t *image_buff1 = NULL;
 static uint8_t *image_buff2 = NULL;
 static uint8_t double_buffering = 0;
-static uint8_t image_ready = 0;
 static uint8_t dcmiErrorFlag = 0;
 static uint8_t dcmi_prepared = 0;
+
+
+//conditional variable
+static MUTEX_DECL(dcmi_lock);
+static CONDVAR_DECL(dcmi_condvar);
 
 /***************************INTERNAL FUNCTIONS************************************/
 
@@ -28,7 +32,10 @@ static uint8_t dcmi_prepared = 0;
 void frameEndCb(DCMIDriver* dcmip) {
     (void) dcmip;
     //palTogglePad(GPIOD, 13) ; // Orange.
-    image_ready = 1;
+    //signals an image has been captured
+    chSysLockFromISR();
+	chCondBroadcastI(&dcmi_condvar);
+	chSysUnlockFromISR();
 }
 
 // This is called at each DMA transfer completion.
@@ -37,7 +44,6 @@ void dmaTransferEndCb(DCMIDriver* dcmip) {
    (void) dcmip;
     //palTogglePad(GPIOD, 15); // Blue.
 	//osalEventBroadcastFlagsI(&ss_event, 0);
-   // image_ready = 1;
 }
 
 void dcmiErrorCb(DCMIDriver* dcmip, dcmierror_t err) {
@@ -55,7 +61,6 @@ void dcmiErrorCb(DCMIDriver* dcmip, dcmierror_t err) {
 *
 */
 void dcmi_start_one_shot(DCMIDriver *dcmip) {
-	image_ready = 0;
 	dcmiStartOneShot(dcmip);
 }
 
@@ -132,8 +137,11 @@ void dcmi_unprepare(void) {
 	dcmi_prepared = 0;
 }
 
-uint8_t image_is_ready(void) {
-	return image_ready;
+void wait_image_ready(void) {
+	//waits until an image has been captured
+    chMtxLock(&dcmi_lock);
+    chCondWait(&dcmi_condvar);
+    chMtxUnlock(&dcmi_lock);
 }
 
 uint8_t dcmi_double_buffering_enabled(void) {

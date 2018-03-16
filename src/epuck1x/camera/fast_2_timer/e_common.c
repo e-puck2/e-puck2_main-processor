@@ -133,10 +133,9 @@ void e_poxxxx_launch_capture(char * buf) {
 	dcmi_capture_start();
 }
 
-/*! Check if the current capture is finished
- * \return Zero if the current capture is in progress, non-zero if the capture is done.
+/*! Waits until the current capture is finished
  * \sa e_poxxxx_launch_capture
  */
-int e_poxxxx_is_img_ready(void) {
-	return image_is_ready();
+void e_poxxxx_wait_img_ready(void) {
+	wait_image_ready();
 }

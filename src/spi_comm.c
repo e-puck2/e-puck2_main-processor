@@ -96,7 +96,17 @@ static THD_FUNCTION(spi_thread, p) {
 
 		button_set_state(spi_rx_buff[0]);
 
-		chThdSleepMilliseconds(1);
+		//because of DMA problem between SPI1 and DCMI, we need to wait the end of 
+		//the DCMI transfer before beginning this one
+		// !!!!  not sure it will work when thransfer size of SPI will be greater !!!!
+		if(DCMID.state == DCMI_ACTIVE_STREAM || DCMID.state == DCMI_ACTIVE_ONESHOT){
+			//between 26Hz and 12Hz depending ont the capture time of the camera
+			wait_image_ready();
+		}
+		else{
+			//100Hz
+			chThdSleepMilliseconds(20);
+		}
 
 //		//evt = chEvtWaitAny(ALL_EVENTS);
 //
@@ -268,7 +278,7 @@ void spi_comm_start(void) {
 		//SPI_CR1_BR_1 | SPI_CR1_BR_0 // 5.25 MHz
 	};
 	spiStart(&SPID1, &hs_spicfg);	// Setup transfer parameters.
-	chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO, spi_thread, NULL);
+	chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO+1, spi_thread, NULL);
 	//chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO + 1, spi_thread, NULL);
 }
 

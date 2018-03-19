@@ -93,7 +93,7 @@ static void handlePCMdata(int16_t *data, uint16_t num_samples) {
 	return;
 }
 
-void mic_start(void) {
+void mic_start(mp45dt02FullBufferCb customFullbufferCb) {
 
 	if(I2SD2.state != I2S_STOP) {
 		return;
@@ -105,7 +105,10 @@ void mic_start(void) {
     // ***************************
     mp45dt02Config micConfig;
     memset(&micConfig, 0, sizeof(micConfig));
-    micConfig.fullbufferCb = handlePCMdata; // Callback called when the buffer is filled with 10 ms of PCM data.
+    if (customFullbufferCb)
+        micConfig.fullbufferCb = customFullbufferCb; // Custom callback called when the buffer is filled with 10 ms of PCM data.
+    else
+    	micConfig.fullbufferCb = handlePCMdata; // Callback called when the buffer is filled with 10 ms of PCM data.
     mp45dt02Init(&micConfig);
 
 

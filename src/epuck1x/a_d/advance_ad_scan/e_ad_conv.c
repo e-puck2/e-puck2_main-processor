@@ -12,7 +12,7 @@ void e_init_ad_scan(unsigned char only_micro)
 	(void)only_micro;
 	proximity_start();
 	imu_start();
-	mic_start();
+	mic_start(NULL);
 	e_mic_scan = mic_get_buffer_ptr();
 }
 

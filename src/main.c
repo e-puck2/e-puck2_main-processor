@@ -400,7 +400,7 @@ int main(void)
 	spi_comm_start();
 	VL53L0X_start();
 	serial_start();
-	mic_start();
+	mic_start(NULL);
 	sdio_start();
 	play_melody_start();
 

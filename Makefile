@@ -228,7 +228,7 @@ CPPWARN = -Wall -Wextra -Wundef -Wno-implicit-fallthrough
 # List all user C define here, like -D_DEBUG=1
 UDEFS =
 
-UDEFS += -DSTDOUT_SD=SDU1 -DSTDIN_SD=SDU1
+UDEFS += -DSTDOUT_SD=SDU1 -DSTDIN_SD=SDU1 -DARM_MATH_CM4 -D__FPU_PRESENT
 
 ifeq ($(USE_ASEBA_BOOTLOADER),yes)
 	UDEFS += -DCORTEX_VTOR_INIT=0x08020000
@@ -244,7 +244,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS = $(GLOBAL_PATH)/libPDMFilter_CM4F_GCC.a
+ULIBS = $(GLOBAL_PATH)/libPDMFilter_CM4F_GCC.a $(GLOBAL_PATH)/libarm_cortexM4lf_math.a
 
 #
 # End of user defines

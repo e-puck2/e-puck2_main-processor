@@ -53,7 +53,7 @@ int8_t mpu9250_setup(int config);
 int8_t mpu9250_magnetometer_setup(void);
 
  /**
- * @brief   Perfoms a ping test
+ * @brief   Performs a ping test
  * 
  * @return              1 if OK, 0 if not.
  */
@@ -62,8 +62,8 @@ bool mpu9250_ping(void);
  /**
  * @brief   Gets the last measurements from the sensor. acc and gyro values are corrected with the offsets
  * 
- * @param gyro			pointer to a buffer of at least a size of 3 elements to store the gyro measurement [m/s^2]
- * @param acc			pointer to a buffer of at least a size of 3 elements to store the acc measurement [rad/s]
+ * @param gyro			pointer to a buffer of at least a size of 3 elements to store the gyro measurement [rad/s]
+ * @param acc			pointer to a buffer of at least a size of 3 elements to store the acc measurement [m/s^2]
  * @param temp			pointer to store the temperature measurement
  * @param magnet		pointer to a buffer of at least a size of 3 elements to store the magnetometer measurement [uT]
  * @param gyro_raw		pointer to a buffer of at least a size of 3 elements to store the gyro raw measurement

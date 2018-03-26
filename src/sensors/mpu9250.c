@@ -15,7 +15,6 @@
 #define ACC_RAW2G           (RES_2G / MAX_INT16)   //2G scale for int16 raw value
 #define GYRO_RAW2DPS        (RES_250DPS / MAX_INT16)   //250DPS (degrees per second) scale for int16 raw value
 
-static uint32_t imuConfig;
 static uint8_t imu_addr = MPU9250_ADDRESS_AD1_0;
 
 /***************************INTERNAL FUNCTIONS************************************/
@@ -68,8 +67,6 @@ static int32_t read_word(const uint8_t *buf) // signed int16
 int8_t mpu9250_setup(int config) {
 	int8_t err = 0;
 	uint8_t regValue = 0;
-	
-	imuConfig = config;
 
     // Reset device.
     if((err = write_reg(imu_addr, PWR_MGMT_1, 0x80)) != MSG_OK) {

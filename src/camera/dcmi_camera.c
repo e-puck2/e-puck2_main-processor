@@ -18,6 +18,7 @@ static capture_mode_t capture_mode = CAPTURE_ONE_SHOT;
 static uint8_t *image_buff1 = NULL;
 static uint8_t *image_buff2 = NULL;
 static uint8_t double_buffering = 0;
+static uint8_t image_ready = 0;
 static uint8_t dcmiErrorFlag = 0;
 static uint8_t dcmi_prepared = 0;
 
@@ -33,6 +34,7 @@ void frameEndCb(DCMIDriver* dcmip) {
     (void) dcmip;
     //palTogglePad(GPIOD, 13) ; // Orange.
     //signals an image has been captured
+    image_ready = 1;
     chSysLockFromISR();
 	chCondBroadcastI(&dcmi_condvar);
 	chSysUnlockFromISR();
@@ -135,6 +137,10 @@ void dcmi_unprepare(void) {
 		dcmiUnprepare(&DCMID);
 	}
 	dcmi_prepared = 0;
+}
+
+uint8_t image_is_ready(void) {
+	return image_ready;
 }
 
 void wait_image_ready(void) {

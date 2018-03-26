@@ -665,6 +665,10 @@ int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1,
 	unsigned int scale_th;
 	float scale_th_f;
 	
+	if(width>PO8030_MAX_WIDTH || height>PO8030_MAX_HEIGHT) {
+		return -8;
+	}
+
 	if(x1>PO8030_MAX_WIDTH) {
 		return -2;
 	}
@@ -850,10 +854,10 @@ int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1,
     }
 
     if(fmt == FORMAT_YYYY) {
-		scale_th_f = (648.0-(float)(x2-x1))*((float)(x2-x1)+8.0)/(656.0);
+		scale_th_f = (648.0-(float)(x2-x1+1))*((float)(x2-x1+1)+8.0)/(656.0);
 		scale_th = (unsigned int)scale_th_f;
 	} else {
-		scale_th_f = ((648.0-(float)(x2-x1))*2.0)*((float)(x2-x1)*2.0+8.0)/(1304.0);
+		scale_th_f = ((648.0-(float)(x2-x1+1))*2.0)*((float)(x2-x1+1)*2.0+8.0)/(1304.0);
 		scale_th = (unsigned int)scale_th_f;
 	}
 	

@@ -46,6 +46,16 @@ int8_t dcmi_prepare(void);
 void dcmi_unprepare(void);
 
 /**
+ * @brief 		Returns if an image is ready
+ *
+ * @return		Image ready
+ * @retval 1	an image is ready
+ * @retval 0	no image ready
+ *
+ */
+uint8_t image_is_ready(void);
+
+/**
  * @brief 		Put the thread invocking this function in sleep 
  * 				until an image is ready
  *

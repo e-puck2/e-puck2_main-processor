@@ -95,6 +95,8 @@ static THD_FUNCTION(selector_thd, arg)
 
     uint8_t magneto_state = 0;
 
+    uint8_t demo15_state = 0;
+
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
 
@@ -364,8 +366,22 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 15:
-				chprintf((BaseSequentialStream *)&SD3, "battery=%d, %f V \r\n", get_battery_raw(), get_battery_voltage());
-				chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 2 Hz.
+				switch(demo15_state) {
+					case 0:
+						po8030_advanced_config(FORMAT_YYYY, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);
+						dcmi_enable_double_buffering();
+						dcmi_set_capture_mode(CAPTURE_CONTINUOUS);
+						dcmi_prepare();
+						dcmi_capture_start();
+
+						demo15_state = 1;
+						break;
+
+					case 1:
+						chprintf((BaseSequentialStream *)&SD3, "battery=%d, %f V \r\n", get_battery_raw(), get_battery_voltage());
+						chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 2 Hz.
+						break;
+				}
 				break;
 		}
     }

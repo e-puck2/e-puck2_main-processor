@@ -6,7 +6,7 @@
 #include "dcmi.h"
 #include "po8030.h"
 
-#define MAX_BUFF_SIZE 19200 //76800 // This means 2 color QQVGA images: (160x120x2)x2; or a single greyscale QVGA image: 320x240.
+#define MAX_BUFF_SIZE 38400 //19200 //76800 // This means 2 color QQVGA images: (160x120x2)x2; or a single greyscale QVGA image: 320x240.
 
 typedef enum {
 	CAPTURE_ONE_SHOT = 0,
@@ -108,6 +108,8 @@ void dcmi_set_capture_mode(capture_mode_t mode);
 *
 */
 uint8_t* dcmi_get_last_image_ptr(void);
+
+void dcmi_release_last_image_ptr(void) ;
 
 /**
 * @brief   Get the pointer to the first image buffer.

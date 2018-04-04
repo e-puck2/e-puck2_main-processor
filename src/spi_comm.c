@@ -13,6 +13,7 @@
 
 uint8_t spi_rx_buff[SPI_PACKET_MAX_SIZE];
 uint8_t spi_tx_buff[SPI_PACKET_MAX_SIZE];
+uint8_t *last_img_ptr = NULL;
 
 event_source_t ss_event;
 
@@ -24,14 +25,15 @@ static THD_FUNCTION(spi_thread, p) {
 	(void)p;
 	chRegSetThreadName("SPI thread");
 
+	uint8_t rx_err = 0;
 //	uint32_t i = 0;
 //	//uint16_t transCount = 0; // image size / SPI_BUFF_LEN
 //	uint8_t id = 0;
 //	uint16_t checksum = 0;
-//	volatile uint32_t delay = 0;
-//	uint16_t packetId = 0;
-//	uint16_t numPackets = 0;
-//	uint32_t remainingBytes = 0;
+	volatile uint32_t delay = 0;
+	uint16_t packetId = 0;
+	uint16_t numPackets = 0;
+	uint32_t remainingBytes = 0;
 //	uint32_t spiDataIndex = 0;
 //	event_listener_t ss_listener;
 //	//eventmask_t evt;
@@ -70,7 +72,7 @@ static THD_FUNCTION(spi_thread, p) {
 
 	while (true) {
 
-//		memset(spi_tx_buff, 0x00, 12);
+		memset(spi_rx_buff, 0xFF, SPI_PACKET_MAX_SIZE);
 		get_all_rgb_state(&spi_tx_buff[0]);
 //		spi_tx_buff[0] = 50;
 //		spi_tx_buff[4] = 50;
@@ -88,25 +90,79 @@ static THD_FUNCTION(spi_thread, p) {
 //		}
 		spiUnselect(&SPID1);
 
-//		// A little pause is needed for the communication to work, 400 NOP loops last about 26 us.
-//		// Probably this pause can be avoided since we loose some time computing the checksum...
-//		for(delay=0; delay<SPI_DELAY; delay++) {
-//			__NOP();
-//		}
+		// A little pause is needed for the communication to work, 400 NOP loops last about 26 us.
+		// Probably this pause can be avoided since we loose some time computing the checksum...
+		for(delay=0; delay<SPI_DELAY; delay++) {
+			__NOP();
+		}
 
 		button_set_state(spi_rx_buff[0]);
 
-		//because of DMA problem between SPI1 and DCMI, we need to wait the end of 
-		//the DCMI transfer before beginning this one
-		// !!!!  not sure it will work when thransfer size of SPI will be greater !!!!
-		if(DCMID.state == DCMI_ACTIVE_STREAM || DCMID.state == DCMI_ACTIVE_ONESHOT){
-			//between 26Hz and 12Hz depending ont the capture time of the camera
-			wait_image_ready();
+//		//because of DMA problem between SPI1 and DCMI, we need to wait the end of
+//		//the DCMI transfer before beginning this one
+//		// !!!!  not sure it will work when transfer size of SPI will be greater !!!!
+//		if(DCMID.state == DCMI_ACTIVE_STREAM || DCMID.state == DCMI_ACTIVE_ONESHOT){
+//			//between 26Hz and 12Hz depending on the capture time of the camera
+//			wait_image_ready();
+//		}
+//		else{
+//			//100Hz
+//			chThdSleepMilliseconds(20);
+//		}
+
+		if(spi_rx_buff[1] == 0xB7) { // -'I' => camera image
+
+			numPackets = po8030_get_image_size()/SPI_PACKET_MAX_SIZE;
+			remainingBytes = po8030_get_image_size()%SPI_PACKET_MAX_SIZE;
+			rx_err = 0;
+
+//			dcmi_capture_stop();
+
+			last_img_ptr = dcmi_get_last_image_ptr();
+
+//			memset(spi_tx_buff, 0xFF, SPI_PACKET_MAX_SIZE);
+
+			for(packetId=0; packetId<numPackets; packetId++) {
+				spiSelect(&SPID1);
+				//chThdSleepMilliseconds(1);
+				spiExchange(&SPID1, SPI_PACKET_MAX_SIZE, &last_img_ptr[packetId*SPI_PACKET_MAX_SIZE], spi_rx_buff);
+//				spiExchange(&SPID1, SPI_PACKET_MAX_SIZE, spi_tx_buff, spi_rx_buff);
+				//chThdSleepMilliseconds(1);
+				spiUnselect(&SPID1);
+
+				// A little pause is needed for the communication to work, 400 NOP loops last about 26 us.
+				for(delay=0; delay<SPI_DELAY; delay++) {
+					__NOP();
+				}
+
+				if(spi_rx_buff[1] == 0) { // No answer from ESP32...
+					rx_err = 1;
+					break;
+				}
+			}
+
+			if(remainingBytes>0 && rx_err==0) {
+				spiSelect(&SPID1);
+				//chThdSleepMilliseconds(1);
+				spiExchange(&SPID1, remainingBytes, &last_img_ptr[packetId*SPI_PACKET_MAX_SIZE], spi_rx_buff);
+//				spiExchange(&SPID1, remainingBytes, spi_tx_buff, spi_rx_buff);
+				//chThdSleepMilliseconds(1);
+				spiUnselect(&SPID1);
+
+				// A little pause is needed for the communication to work, 400 NOP loops last about 26 us.
+				for(delay=0; delay<SPI_DELAY; delay++) {
+					__NOP();
+				}
+			}
+
+			dcmi_release_last_image_ptr();
+//			dcmi_capture_start();
+
+		} else if(spi_rx_buff[1] == 0xB6) { // -'J' => camera settings
+
 		}
-		else{
-			//100Hz
-			chThdSleepMilliseconds(20);
-		}
+
+		chThdSleepMilliseconds(1);
 
 //		//evt = chEvtWaitAny(ALL_EVENTS);
 //
@@ -278,7 +334,7 @@ void spi_comm_start(void) {
 		//SPI_CR1_BR_1 | SPI_CR1_BR_0 // 5.25 MHz
 	};
 	spiStart(&SPID1, &hs_spicfg);	// Setup transfer parameters.
-	chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO+1, spi_thread, NULL);
-	//chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO + 1, spi_thread, NULL);
+	chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO, spi_thread, NULL);
+	//chThdCreateStatic(spi_thread_wa, sizeof(spi_thread_wa), NORMALPRIO+1, spi_thread, NULL);
 }
 

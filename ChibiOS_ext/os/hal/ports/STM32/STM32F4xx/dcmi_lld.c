@@ -66,9 +66,18 @@ static void dcmi_lld_serve_dma_rx_interrupt(DCMIDriver *dcmip, uint32_t flags) {
 	if ((flags & (STM32_DMA_ISR_TEIF | STM32_DMA_ISR_DMEIF)) != 0) {
 		_dcmi_isr_error_code(dcmip, DCMI_ERR_DMAFAILURE);
 	}
-	if( dcmip->config->transfer_complete_cb != NULL ) {
-		dcmip->config->transfer_complete_cb(dcmip);
-	}
+
+    if ((flags & STM32_DMA_ISR_TCIF) != 0) {
+    	/* Transfer complete processing.*/
+    	if( dcmip->config->transfer_complete_cb != NULL ) {
+    		dcmip->config->transfer_complete_cb(dcmip);
+    	}
+    } else if ((flags & STM32_DMA_ISR_HTIF) != 0) {
+    	/* Half transfer processing.*/
+    	if( dcmip->config->half_transfer_complete_cb != NULL ) {
+    		dcmip->config->half_transfer_complete_cb(dcmip);
+    	}
+    }
 
 }
 
@@ -122,8 +131,8 @@ void dcmi_lld_init(void) {
                     STM32_DMA_CR_PSIZE_WORD |					// Peripheral data size = 4 bytes.
                     STM32_DMA_CR_MSIZE_WORD |					// Memory data size = 4 bytes.
                     STM32_DMA_CR_MINC |							// Increment memory address after each data transfer.
-                    STM32_DMA_CR_CIRC;							// Circular mode.
-                    //STM32_DMA_CR_HTIE |						// Half transfer interrupt enabled.
+                    STM32_DMA_CR_CIRC |							// Circular mode.
+                    STM32_DMA_CR_HTIE;							// Half transfer interrupt enabled.
 }
 
 /**

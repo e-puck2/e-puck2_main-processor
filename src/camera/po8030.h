@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "hal.h"
+#include "i2c_ms.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <hal.h>
+#include "i2c_ms.h"
 
 /**
  * @brief Starts the I2C interface

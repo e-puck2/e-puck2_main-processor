@@ -27,6 +27,7 @@
 #include "cmd.h"
 #include "config_flash_storage.h"
 #include "exti.h"
+#include "gumstix.h"
 #include "i2c_bus.h"
 #include "ir_remote.h"
 #include "leds.h"
@@ -81,7 +82,7 @@ static THD_FUNCTION(selector_thd, arg)
     proximity_msg_t prox_values;
     int16_t leftSpeed = 0, rightSpeed = 0;
 
-    messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
+    messagebus_topic_t *imu_topic; // = messagebus_find_topic_blocking(&bus, "/imu");
     imu_msg_t imu_values;
 
     uint8_t toEsp32 = 'c', fromEsp32 = 0;
@@ -175,10 +176,13 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 10: // Gumstix extension.
-				imu_stop();
-				VL53L0X_stop();
-				i2c_stop();
-				stop_loop = 1;
+//				chThdSleepMilliseconds(3000);
+//				imu_stop();
+//				VL53L0X_stop();
+//				i2c_stop();
+				//chprintf((BaseSequentialStream *)&SDU1, "gumstix\r\n");
+				start_gumstix_comm((BaseSequentialStream *)&SDU1);
+				//stop_loop = 1;
 				break;
 
 			case 11: // Simple obstacle avoidance + some animation.
@@ -389,16 +393,16 @@ int main(void)
 	set_front_led(0);
 	usb_start();
 	dcmi_start();
-	po8030_start();
+//	po8030_start();
 	motors_init();
 	proximity_start();
 	battery_level_start();
 	dac_start();
 	exti_start();
-	imu_start();
+//	imu_start();
 	ir_remote_start();
 	spi_comm_start();
-	VL53L0X_start();
+//	VL53L0X_start();
 	serial_start();
 	mic_start(NULL);
 	sdio_start();

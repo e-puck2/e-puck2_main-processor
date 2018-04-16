@@ -7,9 +7,11 @@ INCDIR += $(GLOBAL_PATH)/src/epuck1x
 
 INCDIR += $(GLOBAL_PATH)/src/
 
+CSRC += $(GLOBAL_PATH)/ChibiOS_ext/os/hal/ports/STM32/LLD/I2Cv1/i2c_ms_lld.c
 CSRC += $(GLOBAL_PATH)/ChibiOS_ext/os/hal/ports/STM32/LLD/SPIv1/spi3_slave_lld.c
 CSRC += $(GLOBAL_PATH)/ChibiOS_ext/os/hal/ports/STM32/STM32F4xx/dcmi_lld.c
 CSRC += $(GLOBAL_PATH)/ChibiOS_ext/os/hal/src/dcmi.c
+CSRC += $(GLOBAL_PATH)/ChibiOS_ext/os/hal/src/i2c_ms.c
 CSRC += $(GLOBAL_PATH)/ChibiOS_ext/os/hal/src/spi3_slave.c
 CSRC += $(GLOBAL_PATH)/src/audio/audio_thread.c
 CSRC += $(GLOBAL_PATH)/src/audio/microphone.c
@@ -39,6 +41,7 @@ CSRC += $(GLOBAL_PATH)/src/epuck1x/uart/e_uart_char.c
 CSRC += $(GLOBAL_PATH)/src/epuck1x/utility/utility.c
 CSRC += $(GLOBAL_PATH)/src/exti.c
 CSRC += $(GLOBAL_PATH)/src/flash/flash.c
+CSRC += $(GLOBAL_PATH)/src/gumstix.c
 CSRC += $(GLOBAL_PATH)/src/i2c_bus.c
 CSRC += $(GLOBAL_PATH)/src/ir_remote.c
 CSRC += $(GLOBAL_PATH)/src/leds.c

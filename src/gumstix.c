@@ -9,6 +9,7 @@
 #include "motors.h"
 #include "selector.h"
 #include "audio/microphone.h"
+#include "audio/play_melody.h"
 #include "ir_remote.h"
 
 /**
@@ -173,6 +174,7 @@ void messageProcessor(I2CDriver *i2cp) {
  */
 void clearAfterSend(I2CDriver *i2cp)
 {
+	(void)i2cp;
 	i2c_tx_msg.size = 0;
 }
 
@@ -237,7 +239,9 @@ void start_gumstix_comm(BaseSequentialStream *serport)
     	left_motor_set_speed(speedl);
     	right_motor_set_speed(speedr);
 
-    	// work_buffer[4] ==> speaker
+    	if(work_buffer[4]<=2) {
+    		play_melody(work_buffer[4]);
+    	}
 
     	set_led(LED1, (work_buffer[5])&0x01);
     	set_led(LED3, (work_buffer[5]>>1)&0x01);

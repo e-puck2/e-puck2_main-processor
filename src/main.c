@@ -392,6 +392,7 @@ int main(void)
 	set_body_led(0);
 	set_front_led(0);
 	usb_start();
+	i2cInit();
 	dcmi_start();
 //	po8030_start();
 	motors_init();

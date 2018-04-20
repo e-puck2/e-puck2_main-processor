@@ -8,6 +8,8 @@
 
 static const uint8_t step_halt[4] = {0, 0, 0, 0};
 //table of the differents steps of to control the motors
+//it corresponds to microsteps.
+//in the reality two microsteps correspond to 1 step of the motor.
 static const uint8_t step_table[8][4] = {
     {1, 0, 1, 0},
 	{0, 0, 1, 0},
@@ -26,7 +28,7 @@ struct stepper_motor_s {
         BACKWARD=2
     } direction;
     uint8_t step_index;
-    int32_t count;
+    int32_t count;  //in microsteps
     void (*update)(const uint8_t *out);
     void (*enable_power_save)(void);
     void (*disable_power_save)(void);
@@ -81,12 +83,12 @@ static void right_motor_timer_callback(PWMDriver *gptp)
     if (right_motor.direction == BACKWARD) {
         i = (right_motor.step_index + 1) & 7;
         right_motor.update(step_table[i]);
-        right_motor.count += 1;
+        right_motor.count -= 1;
         right_motor.step_index = i;
     } else if (right_motor.direction == FORWARD) {
         i = (right_motor.step_index - 1) & 7;
         right_motor.update(step_table[i]);
-        right_motor.count -= 1;
+        right_motor.count += 1;
         right_motor.step_index = i;
     } else {
         right_motor.update(step_halt);
@@ -196,6 +198,9 @@ void motor_set_speed(struct stepper_motor_s *m, int speed)
     } else if (speed < -MOTOR_SPEED_LIMIT) {
         speed = -MOTOR_SPEED_LIMIT;
     }
+    //twice the speed because we are doing microsteps, 
+    //which doubles the steps necessary to do one real step of the motor
+    speed *=2;
 
     uint16_t interval;
     if (speed == 0) {
@@ -228,20 +233,28 @@ void motor_set_speed(struct stepper_motor_s *m, int speed)
 
 /****************************PUBLIC FUNCTIONS*************************************/
 
+void left_motor_set_speed(int speed) {
+    motor_set_speed(&left_motor, speed);
+}
+
 void right_motor_set_speed(int speed) {
 	motor_set_speed(&right_motor, speed);
 }
 
-void left_motor_set_speed(int speed) {
-	motor_set_speed(&left_motor, speed);
+int32_t left_motor_get_pos(void) {
+    return left_motor.count/2;  //to return the real number of steps
 }
 
-uint32_t right_motor_get_pos(void) {
-	return right_motor.count;
+int32_t right_motor_get_pos(void) {
+	return right_motor.count/2; //to return the real number of steps
 }
 
-uint32_t left_motor_get_pos(void) {
-	return left_motor.count;
+void left_motor_set_pos(int32_t counter_value){
+    left_motor.count = counter_value*2; //converts steps to microsteps
+}
+
+void right_motor_set_pos(int32_t counter_value){
+    right_motor.count = counter_value*2; //converts steps to microsteps
 }
 
 void motors_init(void)

@@ -80,8 +80,7 @@ void e_init_motors(void)
  */
 void e_set_speed_left(int motor_speed)
 {
-	left_motor_set_speed((int16_t)motor_speed*2);	// Multiplied by 2 because on e-puck2 the motors are handled with 8 steps per cycle instead of 4 as done with e-puck1.x.
-											// Thus we need twice the number of steps to get the same speed as with the e-puck1.x.
+	left_motor_set_speed((int16_t)motor_speed);
 }
 
 /*! \brief Manage the right motor speed
@@ -95,8 +94,7 @@ void e_set_speed_left(int motor_speed)
  */
 void e_set_speed_right(int motor_speed)  // motor speed in percent
 {
-	right_motor_set_speed((int16_t)motor_speed*2);	// Multiplied by 2 because on e-puck2 the motors are handled with 8 steps per cycle instead of 4 as done with e-puck1.x.
-											// Thus we need twice the number of steps to get the same speed as with the e-puck1.x.
+	right_motor_set_speed((int16_t)motor_speed);
 }
 
 /*! \brief Manage linear/angular speed
@@ -111,10 +109,8 @@ void e_set_speed(int linear_speed, int angular_speed)
 	if(abs(linear_speed) + abs(angular_speed) > MOTOR_SPEED_LIMIT) {
 		return;
 	} else {
-		// Multiplied by 2 because on e-puck2 the motors are handled with 8 steps per cycle instead of 4 as done with e-puck1.x.
-		// Thus we need twice the number of steps to get the same speed as with the e-puck1.x.
-		left_motor_set_speed ((linear_speed - angular_speed)*2);
-		right_motor_set_speed((linear_speed + angular_speed)*2);
+		left_motor_set_speed ((linear_speed - angular_speed));
+		right_motor_set_speed((linear_speed + angular_speed));
 	}
 }
 

@@ -15,13 +15,15 @@ taken at https://www.princetronics.com/supermariothemesong/
 #include "play_melody.h"
 #include "audio_thread.h"
 
-typedef struct{
-	uint16_t* notes;
-	float* tempo;
-	uint16_t length;
-}melody_t;
 
+//conditional variable
+static MUTEX_DECL(play_melody_lock);
+static CONDVAR_DECL(play_melody_condvar);
+
+//reference
 static thread_reference_t play_melody_ref = NULL;
+
+//variable to stop the playing if necessary
 static bool play = true;
 
 //Mario main theme melody
@@ -147,7 +149,6 @@ melody_t melody[NB_SONGS] = {
 		.notes = mario_melody,
 		.tempo = mario_tempo,
 		.length = sizeof(mario_melody)/sizeof(uint16_t),
-
 	},
 	//UNDERWORLD
 	{
@@ -182,7 +183,7 @@ static THD_FUNCTION(PlayMelodyThd, arg) {
 	static melody_t* song = NULL;
 
 	while(1){
-		//this thread is wating until it receives a message
+		//this thread is waiting until it receives a message
 		chSysLock();
 		song = (melody_t*) chThdSuspendS(&play_melody_ref);
 		chSysUnlock();
@@ -206,10 +207,10 @@ static THD_FUNCTION(PlayMelodyThd, arg) {
 			chThdSleepMilliseconds(pauseBetweenNotes);
 
 		}
+    play = false;
+    //signals to the threads waiting that the melody has finished
+    chCondBroadcast(&play_melody_condvar);
 	}
-
-	
-	
 }
 
 void play_melody_start(void){
@@ -218,21 +219,54 @@ void play_melody_start(void){
 	chThdCreateStatic(waPlayMelodyThd, sizeof(waPlayMelodyThd), NORMALPRIO, PlayMelodyThd, NULL);
 }
 
-void play_melody(song_selection_t choice){
+void play_melody(song_selection_t choice, play_melody_option_t option, melody_t* external_melody){
 
-	melody_t* song = &melody[choice];
+  melody_t* song = NULL;
 
-	//if the refercence is NULL, then the thread is already running
-	//when the refercence becomes not NULL, it means the thread is waiting
-	if(play_melody_ref != NULL){
+  //case of an external melody provided
+  if(choice == EXTERNAL_SONG && external_melody != NULL){
+    song = external_melody;
+  }//case of an internal melody chosen
+  else if(choice < EXTERNAL_SONG){
+    song = &melody[choice];
+  }//if the internal melody is not valid
+  else{
+    return;
+  }
+
+  //SIMPLE_PLAY case
+  if(option == SIMPLE_PLAY){
+    //if the reference is NULL, then the thread is already running
+    //when the reference becomes not NULL, it means the thread is waiting
+    if(play_melody_ref != NULL){
+      play = true;
+      //tell the thread to play the song given
+      chThdResume(&play_melody_ref, (msg_t) song);
+    }
+  }//FORCE_CHANGE or WAIT_AND_CHANGE cases
+  else{
+    if(option == FORCE_CHANGE){
+      stop_current_melody();
+    }
+    wait_melody_has_finished();
     play = true;
-		//tell the thread to play the song given
-		chThdResume(&play_melody_ref, (msg_t) song);
-	}
+    //tell the thread to play the song given
+    chThdResume(&play_melody_ref, (msg_t) song);
+  }
 }
 
 void stop_current_melody(void){
     play = false;
+}
+
+void wait_melody_has_finished(void) {
+  //if a melody is playing
+  if(play_melody_ref == NULL){
+    //waits until the current melody is finished
+    chMtxLock(&play_melody_lock);
+    chCondWait(&play_melody_condvar);
+    chMtxUnlock(&play_melody_lock);
+  }
 }
 
 

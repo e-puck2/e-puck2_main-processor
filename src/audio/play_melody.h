@@ -110,11 +110,26 @@ taken at https://www.princetronics.com/supermariothemesong/
 
 //available songs
 typedef enum{
+	//internal songs available
 	MARIO = 0,
 	UNDERWORLD,
 	STARWARS,
-	NB_SONGS
+	NB_SONGS,	//tell the number of internal songs
+	//the following should be used if an external song has to be used 
+	EXTERNAL_SONG
 }song_selection_t;
+
+typedef enum{
+	SIMPLE_PLAY = 0,	//plays the new melody but if a melody is already playing, then this order is ignored
+	WAIT_AND_CHANGE,	//waits (put the invocking thread in sleep) the end of the current melody if any and ply the new one
+	FORCE_CHANGE,		//stops the current playing melody if any and play the new one
+}play_melody_option_t;
+
+typedef struct{
+	uint16_t* notes;	//table containing the notes to play
+	float* tempo;		//table containing the tempo of the notes to play. Example 8 correspond to a playing time of 1sec/8
+	uint16_t length;	//Number of elements in the tables. They should have the same number of elements
+}melody_t;
 
 /**
  * @brief Starts the play_melody module
@@ -124,12 +139,21 @@ void play_melody_start(void);
 
 /**
  * @brief Plays the selected melody. Does nothing if the module has not been started with start_play_start()
- * 						This function doesn't block the current thread. It uses it's self thread
+ * 							This function doesn't block the current thread. It uses it's self thread
  *
- * @param choice 		Song selectec (see song_selection_t)
+ * @param choice 			Song selected (see song_selection_t)
+ * @param option			Behavior to change the melody playing (see play_melody_option_t)
+ * @param external_melody	Used to provide an external melody to play. The song selection should be set 
+ * 							to EXTERNAL_SONG in this case. Use NULL othewrwise.
  * 				
  */
-void play_melody(song_selection_t choice);
+void play_melody(song_selection_t choice, play_melody_option_t option, melody_t* external_melody);
+
+/**
+ * @brief Waits until the melody playing has finished (put the invocking thread in sleep)
+ * 		  Immediatly returns if no melody is playing
+ */		
+void wait_melody_has_finished(void);
 
 /**
  * @brief Stops the melody beeing played.

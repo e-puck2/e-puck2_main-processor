@@ -220,7 +220,7 @@ static THD_FUNCTION(selector_thd, arg)
 				if(melody_counter == 2000) {
 					melody_counter = 0;
 					melody_state = (melody_state+1)%NB_SONGS;
-					play_melody(melody_state);
+					play_melody(melody_state, SIMPLE_PLAY, NULL);
 				}
 
 				chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
@@ -233,7 +233,7 @@ static THD_FUNCTION(selector_thd, arg)
 						calibrate_ir();
 
 						// Test audio.
-						play_melody(MARIO);
+						play_melody(MARIO, SIMPLE_PLAY, NULL);
 
 						// Test motors at low speed.
 						left_motor_set_speed(300);

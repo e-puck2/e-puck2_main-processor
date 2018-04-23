@@ -183,8 +183,8 @@ static THD_FUNCTION(selector_thd, arg)
 
 			case 11: // Simple obstacle avoidance + some animation.
 				messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
-				leftSpeed = 2000 - prox_values.delta[0]*4 - prox_values.delta[1]*2;
-				rightSpeed = 2000 - prox_values.delta[7]*4 - prox_values.delta[6]*2;
+				leftSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[0]*2 - prox_values.delta[1];
+				rightSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[7]*2 - prox_values.delta[6];
 				right_motor_set_speed(rightSpeed);
 				left_motor_set_speed(leftSpeed);
 
@@ -236,8 +236,8 @@ static THD_FUNCTION(selector_thd, arg)
 						play_melody(MARIO, SIMPLE_PLAY, NULL);
 
 						// Test motors at low speed.
-						left_motor_set_speed(300);
-						right_motor_set_speed(300);
+						left_motor_set_speed(150);
+						right_motor_set_speed(150);
 
 						// Init camera.
 						po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 160, SUBSAMPLING_X4, SUBSAMPLING_X4);

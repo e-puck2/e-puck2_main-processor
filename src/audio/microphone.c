@@ -4,24 +4,6 @@
 #include "microphone.h"
 #include "mp45dt02_processing.h"
 
-/**
- * Microphones position:
- *
- *      FRONT
- *       ###
- *    #   3   #
- *  #           #
- * # 1   TOP   0 #
- * #     VIEW    #
- *  #           #
- *    #   2   #
- *       ###
- *
- */
-#define MIC_RIGHT 0
-#define MIC_LEFT 1
-#define MIC_BACK 2
-#define MIC_FRONT 3
 
 static uint16_t mic_volume[4];
 static int16_t mic_last[4];
@@ -55,40 +37,45 @@ static void handlePCMdata(int16_t *data, uint16_t num_samples) {
 	mic_buffer_ready = true;
 
 	for(uint16_t i=0; i<num_samples; i+=4) {
-		if(data[i] > max_value[MIC_RIGHT]) {
-			max_value[MIC_RIGHT] = data[i];
+
+		if(data[i + MIC_LEFT] > max_value[MIC_LEFT]) {
+			max_value[MIC_LEFT] = data[i + MIC_LEFT];
 		}
-		if(data[i] < min_value[MIC_RIGHT]) {
-			min_value[MIC_RIGHT] = data[i];
+		if(data[i + MIC_LEFT] < min_value[MIC_LEFT]) {
+			min_value[MIC_LEFT] = data[i + MIC_LEFT];
 		}
-		if(data[i+1] > max_value[MIC_LEFT]) {
-			max_value[MIC_LEFT] = data[i+1];
+
+		if(data[i + MIC_RIGHT] > max_value[MIC_RIGHT]) {
+			max_value[MIC_RIGHT] = data[i + MIC_RIGHT];
 		}
-		if(data[i+1] < min_value[MIC_LEFT]) {
-			min_value[MIC_LEFT] = data[i+1];
+		if(data[i + MIC_RIGHT] < min_value[MIC_RIGHT]) {
+			min_value[MIC_RIGHT] = data[i + MIC_RIGHT];
 		}
-		if(data[i+2] > max_value[MIC_BACK]) {
-			max_value[MIC_BACK] = data[i+2];
+
+		if(data[i + MIC_FRONT] > max_value[MIC_FRONT]) {
+			max_value[MIC_FRONT] = data[i + MIC_FRONT];
 		}
-		if(data[i+2] < min_value[MIC_BACK]) {
-			min_value[MIC_BACK] = data[i+2];
+		if(data[i + MIC_FRONT] < min_value[MIC_FRONT]) {
+			min_value[MIC_FRONT] = data[i + MIC_FRONT];
 		}
-		if(data[i+3] > max_value[MIC_FRONT]) {
-			max_value[MIC_FRONT] = data[i+3];
+		
+		if(data[i + MIC_BACK] > max_value[MIC_BACK]) {
+			max_value[MIC_BACK] = data[i + MIC_BACK];
 		}
-		if(data[i+3] < min_value[MIC_FRONT]) {
-			min_value[MIC_FRONT] = data[i+3];
+		if(data[i + MIC_BACK] < min_value[MIC_BACK]) {
+			min_value[MIC_BACK] = data[i + MIC_BACK];
 		}
+		
 	}
 
 	mic_volume[MIC_RIGHT] = max_value[MIC_RIGHT] - min_value[MIC_RIGHT];
 	mic_volume[MIC_LEFT] = max_value[MIC_LEFT] - min_value[MIC_LEFT];
 	mic_volume[MIC_BACK] = max_value[MIC_BACK] - min_value[MIC_BACK];
 	mic_volume[MIC_FRONT] = max_value[MIC_FRONT] - min_value[MIC_FRONT];
-	mic_last[MIC_RIGHT] = data[MIC_BUFFER_LEN-4];
-	mic_last[MIC_LEFT] = data[MIC_BUFFER_LEN-3];
-	mic_last[MIC_BACK] = data[MIC_BUFFER_LEN-2];
-	mic_last[MIC_FRONT] = data[MIC_BUFFER_LEN-1];
+	mic_last[MIC_RIGHT] = data[MIC_BUFFER_LEN-3];
+	mic_last[MIC_LEFT] = data[MIC_BUFFER_LEN-4];
+	mic_last[MIC_BACK] = data[MIC_BUFFER_LEN-1];
+	mic_last[MIC_FRONT] = data[MIC_BUFFER_LEN-2];
 
 	return;
 }
@@ -98,19 +85,6 @@ void mic_start(mp45dt02FullBufferCb customFullbufferCb) {
 	if(I2SD2.state != I2S_STOP) {
 		return;
 	}
-
-
-    // ***************************
-	// I2S2 AND I2S3 CONFIGURATION
-    // ***************************
-    mp45dt02Config micConfig;
-    memset(&micConfig, 0, sizeof(micConfig));
-    if (customFullbufferCb)
-        micConfig.fullbufferCb = customFullbufferCb; // Custom callback called when the buffer is filled with 10 ms of PCM data.
-    else
-    	micConfig.fullbufferCb = handlePCMdata; // Callback called when the buffer is filled with 10 ms of PCM data.
-    mp45dt02Init(&micConfig);
-
 
 	// *******************
 	// TIMER CONFIGURATION
@@ -155,6 +129,18 @@ void mic_start(mp45dt02FullBufferCb customFullbufferCb) {
     // Enable channels.
     STM32_TIM9->CCER |= STM32_TIM_CCER_CC1E | STM32_TIM_CCER_CC2E;
     STM32_TIM9->CR1 |= STM32_TIM_CR1_CEN;
+
+    // ***************************
+	// I2S2 AND I2S3 CONFIGURATION
+    // ***************************
+    mp45dt02Config micConfig;
+    memset(&micConfig, 0, sizeof(micConfig));
+    if (customFullbufferCb)
+        micConfig.fullbufferCb = customFullbufferCb; // Custom callback called when the buffer is filled with 10 ms of PCM data.
+    else
+    	micConfig.fullbufferCb = handlePCMdata; // Callback called when the buffer is filled with 10 ms of PCM data.
+    mp45dt02Init(&micConfig);
+
 
 }
 

@@ -14,21 +14,21 @@ extern "C" {
  *
  *      FRONT
  *       ###
- *    #   2   #
+ *    #   3   #
  *  #           #
- * # 0   TOP   1 #
+ * # 1   TOP   0 #
  * #     VIEW    #
  *  #           #
- *    #   3   #
+ *    #   2   #
  *       ###
  *
  */
 
 //position of the microphones in the buffer given to the customFullbufferCb
-#define MIC_LEFT 0
-#define MIC_RIGHT 1
-#define MIC_FRONT 2
-#define MIC_BACK 3
+#define MIC_LEFT 1
+#define MIC_RIGHT 0
+#define MIC_FRONT 3
+#define MIC_BACK 2
 
 /**
  * @brief 	Starts the microphones acquisition and call the customFullbufferCb

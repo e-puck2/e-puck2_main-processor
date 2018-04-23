@@ -72,10 +72,10 @@ static void handlePCMdata(int16_t *data, uint16_t num_samples) {
 	mic_volume[MIC_LEFT] = max_value[MIC_LEFT] - min_value[MIC_LEFT];
 	mic_volume[MIC_BACK] = max_value[MIC_BACK] - min_value[MIC_BACK];
 	mic_volume[MIC_FRONT] = max_value[MIC_FRONT] - min_value[MIC_FRONT];
-	mic_last[MIC_RIGHT] = data[MIC_BUFFER_LEN-3];
-	mic_last[MIC_LEFT] = data[MIC_BUFFER_LEN-4];
-	mic_last[MIC_BACK] = data[MIC_BUFFER_LEN-1];
-	mic_last[MIC_FRONT] = data[MIC_BUFFER_LEN-2];
+	mic_last[MIC_RIGHT] = data[MIC_BUFFER_LEN-(4-MIC_RIGHT)];
+	mic_last[MIC_LEFT] = data[MIC_BUFFER_LEN-(4-MIC_LEFT)];
+	mic_last[MIC_BACK] = data[MIC_BUFFER_LEN-(4-MIC_BACK)];
+	mic_last[MIC_FRONT] = data[MIC_BUFFER_LEN-(4-MIC_FRONT)];
 
 	return;
 }

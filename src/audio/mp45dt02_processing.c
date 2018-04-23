@@ -306,10 +306,10 @@ static THD_FUNCTION(DataProcessing, arg)
 
         // Arrange the buffer in order to have the microphones data in sequence: mic0, mic1, mic2, mic3, mic0, mic1, mic2, mic3, ...
         for(index=0; index<MP45DT02_DECIMATED_BUFFER_SIZE/2; index++) {
-        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)] = I2S_PCM_samples[index*2+1]; // Right microphone is MIC0
-        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)+1] = I2S_PCM_samples[index*2]; // Left microphone is MIC1
-        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)+2] = SPI_PCM_samples[index*2]; // Back microphone is MIC2
-        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)+3] = SPI_PCM_samples[index*2+1]; // Front microphone is MIC3
+        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)] = I2S_PCM_samples[index*2]; // Right microphone is MIC0
+        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)+1] = I2S_PCM_samples[index*2+1]; // Left microphone is MIC1
+        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)+2] = SPI_PCM_samples[index*2+1]; // Back microphone is MIC2
+        	PCM_buffer_ptr_curr[(PCM_buffer_index*2*MP45DT02_DECIMATED_BUFFER_SIZE)+(index*4)+3] = SPI_PCM_samples[index*2]; // Front microphone is MIC3
         }
 
         if(PCM_buffer_index == 9) {

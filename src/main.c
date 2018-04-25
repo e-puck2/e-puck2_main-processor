@@ -6,12 +6,12 @@
 #include "ch.h"
 #include "chprintf.h"
 #include "hal.h"
-#include "shell.h"
+//#include "shell.h"
 
-#include "aseba_vm/aseba_node.h"
-#include "aseba_vm/skel_user.h"
-#include "aseba_vm/aseba_can_interface.h"
-#include "aseba_vm/aseba_bridge.h"
+//#include "aseba_vm/aseba_node.h"
+//#include "aseba_vm/skel_user.h"
+//#include "aseba_vm/aseba_can_interface.h"
+//#include "aseba_vm/aseba_bridge.h"
 #include "audio/audio_thread.h"
 #include "audio/play_melody.h"
 #include "audio/microphone.h"
@@ -24,7 +24,7 @@
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
 #include "sensors/VL53L0X/VL53L0X.h"
-#include "cmd.h"
+//#include "cmd.h"
 #include "config_flash_storage.h"
 #include "exti.h"
 #include "i2c_bus.h"
@@ -102,12 +102,12 @@ static THD_FUNCTION(selector_thd, arg)
 
 		switch(get_selector()) {
 			case 0: // Aseba.
-				aseba_vm_start();
+//				aseba_vm_start();
 				stop_loop = 1;
 				break;
 
 			case 1: // Shell.
-				shell_start();
+//				shell_start();
 				stop_loop = 1;
 				break;
 
@@ -368,10 +368,19 @@ static THD_FUNCTION(selector_thd, arg)
 			case 15:
 				switch(demo15_state) {
 					case 0:
-						po8030_advanced_config(FORMAT_YYYY, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);
-						dcmi_enable_double_buffering();
+//						if(po8030_advanced_config(FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1) != MSG_OK) {
+//							set_led(LED1, 1);
+//						}
+						if(po8030_advanced_config(FORMAT_RGB565, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1) != MSG_OK) {
+							set_led(LED1, 1);
+						}
+						if(dcmi_enable_double_buffering() < 0) {
+							set_led(LED3, 1);
+						}
 						dcmi_set_capture_mode(CAPTURE_CONTINUOUS);
-						dcmi_prepare();
+						if(dcmi_prepare() < 0) {
+							set_led(LED5, 1);
+						}
 						dcmi_capture_start();
 
 						demo15_state = 1;
@@ -397,7 +406,7 @@ int main(void)
     /** Inits the Inter Process Communication bus. */
     messagebus_init(&bus, &bus_lock, &bus_condvar);
 
-    parameter_namespace_declare(&parameter_root, NULL, NULL);
+//    parameter_namespace_declare(&parameter_root, NULL, NULL);
 
     // Init the peripherals.
 	clear_leds();
@@ -420,17 +429,17 @@ int main(void)
 	sdio_start();
 	play_melody_start();
 
-	// Initialise Aseba system, declaring parameters
-    parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
-    aseba_declare_parameters(&aseba_ns);
-
-    /* Load parameter tree from flash. */
-    load_config();
-
-    /* Start AsebaCAN. Must be after config was loaded because the CAN id
-     * cannot be changed at runtime. */
-    aseba_vm_init();
-    aseba_can_start(&vmState);
+//	// Initialise Aseba system, declaring parameters
+//    parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
+//    aseba_declare_parameters(&aseba_ns);
+//
+//    /* Load parameter tree from flash. */
+//    load_config();
+//
+//    /* Start AsebaCAN. Must be after config was loaded because the CAN id
+//     * cannot be changed at runtime. */
+//    aseba_vm_init();
+//    aseba_can_start(&vmState);
 
     chThdCreateStatic(selector_thd_wa, sizeof(selector_thd_wa), NORMALPRIO, selector_thd, NULL);
 

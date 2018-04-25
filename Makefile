@@ -117,7 +117,7 @@ include $(CHIBIOS)/os/rt/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 include $(CHIBIOS)/test/rt/test.mk
 
 
-include $(GLOBAL_PATH)/src/aseba_vm/aseba.mk
+#include $(GLOBAL_PATH)/src/aseba_vm/aseba.mk
 include $(GLOBAL_PATH)/src/src.mk
 
 # Define linker script file here

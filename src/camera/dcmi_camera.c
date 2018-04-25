@@ -16,6 +16,7 @@ const DCMIConfig dcmicfg = {
     DCMI_CR_PCKPOL
 };
 
+static uint8_t image_buff[MAX_BUFF_SIZE];
 static capture_mode_t capture_mode = CAPTURE_ONE_SHOT;
 static uint8_t *image_buff0 = NULL;
 static uint8_t *image_buff1 = NULL;
@@ -162,14 +163,18 @@ msg_t dcmi_stop_stream(DCMIDriver *dcmip) {
 
 int8_t dcmi_start(void) {
 	dcmiInit();
-    if(image_buff0 != NULL) {
-        free(image_buff0);
-        image_buff0 = NULL;
-    }
-    image_buff0 = (uint8_t*)malloc(MAX_BUFF_SIZE);
-    if(image_buff0 == NULL) {
-        return -1;
-    }
+//    if(image_buff0 != NULL) {
+//        free(image_buff0);
+//        image_buff0 = NULL;
+//    }
+//    image_buff0 = (uint8_t*)malloc(MAX_BUFF_SIZE);
+//    if(image_buff0 == NULL) {
+//        return -1;
+//    }
+
+    image_buff0 = image_buff;
+    image_buff1 = image_buff+(MAX_BUFF_SIZE/2);
+
     return 0;
 }
 
@@ -220,47 +225,47 @@ uint8_t dcmi_double_buffering_enabled(void) {
 int8_t dcmi_enable_double_buffering(void) {
 	double_buffering = 1;
 
-	// Free the first buffer memory that was allocated with the max available memory.
-    if(image_buff0 != NULL) {
-        free(image_buff0);
-        image_buff0 = NULL;
-    }
-    // Allocate half of the available memory for the first buffer.
-    image_buff0 = (uint8_t*)malloc(MAX_BUFF_SIZE/2);
-    if(image_buff0 == NULL) {
-        return -1;
-    }
-    // Free the second buffer in case it was already allocated.
-    if(image_buff1 != NULL) {
-        free(image_buff1);
-        image_buff1 = NULL;
-    }
-    // Allocate half of the available memory for the second buffer.
-    image_buff1 = (uint8_t*)malloc(MAX_BUFF_SIZE/2);
-    if(image_buff1 == NULL) {
-    	return -1;
-    }
+//	// Free the first buffer memory that was allocated with the max available memory.
+//    if(image_buff0 != NULL) {
+//        free(image_buff0);
+//        image_buff0 = NULL;
+//    }
+//    // Allocate half of the available memory for the first buffer.
+//    image_buff0 = (uint8_t*)malloc(MAX_BUFF_SIZE/2);
+//    if(image_buff0 == NULL) {
+//        return -1;
+//    }
+//    // Free the second buffer in case it was already allocated.
+//    if(image_buff1 != NULL) {
+//        free(image_buff1);
+//        image_buff1 = NULL;
+//    }
+//    // Allocate half of the available memory for the second buffer.
+//    image_buff1 = (uint8_t*)malloc(MAX_BUFF_SIZE/2);
+//    if(image_buff1 == NULL) {
+//    	return -1;
+//    }
     return 0;
 }
 
 int8_t dcmi_disable_double_buffering(void) {
 	double_buffering = 0;
 
-	// Free the second buffer.
-    if(image_buff1 != NULL) {
-        free(image_buff1);
-        image_buff1 = NULL;
-    }
-	// Free the first buffer.
-    if(image_buff0 != NULL) {
-        free(image_buff0);
-        image_buff0 = NULL;
-    }
-    // Allocate all of the available memory for the first buffer.
-    image_buff0 = (uint8_t*)malloc(MAX_BUFF_SIZE);
-    if(image_buff0 == NULL) {
-        return -1;
-    }
+//	// Free the second buffer.
+//    if(image_buff1 != NULL) {
+//        free(image_buff1);
+//        image_buff1 = NULL;
+//    }
+//	// Free the first buffer.
+//    if(image_buff0 != NULL) {
+//        free(image_buff0);
+//        image_buff0 = NULL;
+//    }
+//    // Allocate all of the available memory for the first buffer.
+//    image_buff0 = (uint8_t*)malloc(MAX_BUFF_SIZE);
+//    if(image_buff0 == NULL) {
+//        return -1;
+//    }
     return 0;
 }
 
@@ -351,7 +356,7 @@ void dcmi_capture_start(void) {
 
 msg_t dcmi_capture_stop(void) {
 	if(dcmi_prepared == 0) {
-		return;
+		return -3;
 	}
 
 	if(capture_mode == CAPTURE_ONE_SHOT) {

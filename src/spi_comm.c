@@ -12,7 +12,7 @@
 //uint8_t spiHeader[SPI_DATA_HEADER_SIZE];
 
 uint8_t spi_rx_buff[SPI_PACKET_MAX_SIZE];
-uint8_t spi_tx_buff[SPI_PACKET_MAX_SIZE];
+uint8_t spi_tx_buff[SPI_PACKET_MAX_SIZE]; //12]; //SPI_PACKET_MAX_SIZE];
 uint8_t *last_img_ptr = NULL;
 
 event_source_t ss_event;
@@ -119,13 +119,18 @@ static THD_FUNCTION(spi_thread, p) {
 //			dcmi_capture_stop();
 
 			last_img_ptr = dcmi_get_last_image_ptr();
+//			if(last_img_ptr == NULL) {
+//				continue;
+//			}
 
 //			memset(spi_tx_buff, 0xFF, SPI_PACKET_MAX_SIZE);
+//			memset(last_img_ptr, 0xFF, SPI_PACKET_MAX_SIZE);
 
 			for(packetId=0; packetId<numPackets; packetId++) {
 				spiSelect(&SPID1);
 				//chThdSleepMilliseconds(1);
 				spiExchange(&SPID1, SPI_PACKET_MAX_SIZE, &last_img_ptr[packetId*SPI_PACKET_MAX_SIZE], spi_rx_buff);
+				//spiExchange(&SPID1, SPI_PACKET_MAX_SIZE, last_img_ptr, spi_rx_buff);
 //				spiExchange(&SPID1, SPI_PACKET_MAX_SIZE, spi_tx_buff, spi_rx_buff);
 				//chThdSleepMilliseconds(1);
 				spiUnselect(&SPID1);

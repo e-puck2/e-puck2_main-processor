@@ -70,7 +70,12 @@ static THD_FUNCTION(spi_thread, p) {
 //	//dcmiStartOneShot(&DCMID);
 //	//chThdSleepMilliseconds(500);
 
+	chThdSleepMilliseconds(1000); // Wait for the camera to be configured.
+	//wait_dcmi_ready(); // To be implemented...
+
 	while (true) {
+
+		dcmi_capture_start();
 
 		memset(spi_rx_buff, 0xFF, SPI_PACKET_MAX_SIZE);
 		get_all_rgb_state(&spi_tx_buff[0]);
@@ -109,6 +114,11 @@ static THD_FUNCTION(spi_thread, p) {
 //			//100Hz
 //			chThdSleepMilliseconds(20);
 //		}
+
+		//wait_image_ready();
+		while(!image_is_ready()) {
+			chThdSleepMilliseconds(1);
+		}
 
 		if(spi_rx_buff[1] == 0xB7) { // -'I' => camera image
 

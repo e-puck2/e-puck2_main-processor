@@ -50,7 +50,6 @@ void dmaTransferEndCb(DCMIDriver* dcmip) {
    (void) dcmip;
     //palTogglePad(GPIOD, 15); // Blue.
 	//osalEventBroadcastFlagsI(&ss_event, 0);
-
    half_transfer_complete = 0;
 }
 

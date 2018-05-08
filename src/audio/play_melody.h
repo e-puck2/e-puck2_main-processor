@@ -111,9 +111,21 @@ taken at https://www.princetronics.com/supermariothemesong/
 //available songs
 typedef enum{
 	//internal songs available
-	MARIO = 0,
+	IMPOSSIBLE_MISSION = 0,
+	WE_ARE_THE_CHAMPIONS,
+	RUSSIA,
+	MARIO,
 	UNDERWORLD,
+	MARIO_START,
+	MARIO_DEATH,
+	MARIO_FLAG,
+	WALKING,
+	PIRATES_OF_THE_CARIBBEAN,
+	SIMPSON,
 	STARWARS,
+	SANDSTORMS,
+	SEVEN_NATION_ARMY,
+
 	NB_SONGS,	//tell the number of internal songs
 	//the following should be used if an external song has to be used 
 	EXTERNAL_SONG
@@ -121,13 +133,13 @@ typedef enum{
 
 typedef enum{
 	SIMPLE_PLAY = 0,	//plays the new melody but if a melody is already playing, then this order is ignored
-	WAIT_AND_CHANGE,	//waits (put the invocking thread in sleep) the end of the current melody if any and ply the new one
+	WAIT_AND_CHANGE,	//waits (put the invocking thread in sleep) the end of the current melody if any and plays the new one
 	FORCE_CHANGE,		//stops the current playing melody if any and play the new one
 }play_melody_option_t;
 
-typedef struct{
-	uint16_t* notes;	//table containing the notes to play
-	float* tempo;		//table containing the tempo of the notes to play. Example 8 correspond to a playing time of 1sec/8
+typedef const struct{
+	const uint16_t* notes;	//table containing the notes to play
+	const float* tempo;		//table containing the tempo of the notes to play. Example 8 correspond to a playing time of 1sec/8
 	uint16_t length;	//Number of elements in the tables. They should have the same number of elements
 }melody_t;
 

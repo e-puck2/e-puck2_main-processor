@@ -19,6 +19,8 @@
 #include "leds.h"
 #include <main.h>
 #include "motors.h"
+#include <ff.h>
+#include <fat.h>
 
 #define TEST_WA_SIZE        THD_WORKING_AREA_SIZE(256)
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
@@ -39,6 +41,252 @@ static uint8_t buf2[MMCSD_BLOCK_SIZE * SDC_BURST_SIZE ];
 static format_t cmd_fmt;
 static subsampling_t cmd_subx, cmd_suby;
 static uint16_t cmd_x1, cmd_y1, cmd_width, cmd_height;
+
+/*
+*   fatFS related variables
+*/
+/* Generic large buffer.*/
+#define SIZE_GENERIC_BUFFER 1024
+static char fbuff[SIZE_GENERIC_BUFFER];
+//volume structure
+static FATFS SDC_FS;
+
+void cmd_mount(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FRESULT err;
+    (void)argc;
+    (void)argv;
+    /*
+     * Attempt to mount the drive.
+     */
+    err = f_mount(&SDC_FS,"",0);
+    if (err != FR_OK) {
+        chprintf(chp, "FS: f_mount() failed. Is the SD card inserted?\r\n");
+        fverbose_error(chp, err);
+        return;
+    }
+    chprintf(chp, "FS: f_mount() succeeded\r\n");
+    sdcConnect(&SDCD1);
+}
+
+void cmd_unmount(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FRESULT err;
+    (void)argc;
+    (void)argv;
+
+    sdcDisconnect(&SDCD1);
+    err = f_mount(NULL,"",0);
+    if (err != FR_OK) {
+        chprintf(chp, "FS: f_mount() unmount failed\r\n");
+        fverbose_error(chp, err);
+        return;
+    }
+    return;
+}
+
+void cmd_free(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FRESULT err;
+    uint32_t clusters;
+    FATFS *fsp;
+    (void)argc;
+    (void)argv;
+
+    err = f_getfree("/", &clusters, &fsp);
+    if (err != FR_OK) {
+        chprintf(chp, "FS: f_getfree() failed\r\n");
+        return;
+    }
+    /*
+     * Print the number of free clusters and size free in B, KiB and MiB.
+     */
+    chprintf(chp,"FS: %lu free clusters\r\n    %lu sectors per cluster\r\n",
+        clusters, (uint32_t)SDC_FS.csize);
+    chprintf(chp,"%lu B free\r\n",
+        clusters * (uint32_t)SDC_FS.csize * (uint32_t)MMCSD_BLOCK_SIZE);
+    chprintf(chp,"%lu KB free\r\n",
+        (clusters * (uint32_t)SDC_FS.csize * (uint32_t)MMCSD_BLOCK_SIZE)/(1024));
+    chprintf(chp,"%lu MB free\r\n",
+        (clusters * (uint32_t)SDC_FS.csize * (uint32_t)MMCSD_BLOCK_SIZE)/(1024*1024));
+}
+
+void cmd_tree(BaseSequentialStream *chp, int argc, char *argv[]) {
+    (void)argv;
+    (void)argc;
+    
+    /*
+    * Set the file path buffer to 0. Also means we will open the root directory
+    */
+    memset(fbuff,0,sizeof(fbuff));
+
+    scan_files(chp, fbuff);
+}
+
+//create a file called hello.txt and write "Hello World" in it
+void cmd_hello(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FIL fsrc;   /* file object */
+    FRESULT err;
+    int written;
+    (void)argv;
+    /*
+     * Print the input arguments.
+     */
+    if (argc > 0) {
+        chprintf(chp, "Usage: hello\r\n");
+        chprintf(chp, "       Creates hello.txt with 'Hello World'\r\n");
+        return;
+    }
+    /*
+     * Open the text file
+     */
+    err = f_open(&fsrc, "hello.txt", FA_READ | FA_WRITE | FA_CREATE_ALWAYS);
+    if (err != FR_OK) {
+        chprintf(chp, "FS: f_open(\"hello.txt\") failed.\r\n");
+        fverbose_error(chp, err);
+        return;
+    } else {
+        chprintf(chp, "FS: f_open(\"hello.txt\") succeeded\r\n");
+    }
+    /*
+     * Write text to the file.
+     */
+    written = f_puts("Hello World", &fsrc);
+    if (written == -1) {
+        chprintf(chp, "FS: f_puts(\"Hello World\",\"hello.txt\") failed\r\n");
+    } else {
+        chprintf(chp, "FS: f_puts(\"Hello World\",\"hello.txt\") succeeded\r\n");
+    }
+    /*
+     * Close the file
+     */
+    f_close(&fsrc);
+}
+
+void cmd_mkdir(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FRESULT err;
+    if (argc != 1) {
+        chprintf(chp, "Usage: mkdir dirName\r\n");
+        chprintf(chp, "       Creates directory with dirName (no spaces)\r\n");
+        return;
+    }
+    /*
+     * Attempt to make the directory with the name given in argv[0]
+     */
+    err=f_mkdir(argv[0]);
+    if (err != FR_OK) {
+        /*
+         * Display failure message and reason.
+         */
+        chprintf(chp, "FS: f_mkdir(%s) failed\r\n",argv[0]);
+        fverbose_error(chp, err);
+        return;
+    } else {
+        chprintf(chp, "FS: f_mkdir(%s) succeeded\r\n",argv[0]);
+    }
+    return;
+}
+
+void cmd_setlabel(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FRESULT err;
+    if (argc != 1) {
+        chprintf(chp, "Usage: setlabel label\r\n");
+        chprintf(chp, "       Sets FAT label (no spaces)\r\n");
+        return;
+    }
+    /*
+     * Attempt to set the label with the name given in argv[0].
+     */
+    err=f_setlabel(argv[0]);
+    if (err != FR_OK) {
+        chprintf(chp, "FS: f_setlabel(%s) failed.\r\n");
+        fverbose_error(chp, err);
+        return;
+    } else {
+        chprintf(chp, "FS: f_setlabel(%s) succeeded.\r\n");
+    }
+    return;
+}
+
+void cmd_getlabel(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FRESULT err;
+    char lbl[12];
+    DWORD sn;
+    (void)argv;
+    if (argc > 0) {
+        chprintf(chp, "Usage: getlabel\r\n");
+        chprintf(chp, "       Gets and prints FAT label\r\n");
+        return;
+    }
+    memset(lbl,0,sizeof(lbl));
+    /*
+     * Get volume label & serial of the default drive
+     */
+    err = f_getlabel("", lbl, &sn);
+    if (err != FR_OK) {
+        chprintf(chp, "FS: f_getlabel failed.\r\n");
+        fverbose_error(chp, err);
+        return;
+    }
+    /*
+     * Print the label and serial number
+     */
+    chprintf(chp, "LABEL: %s\r\n",lbl);
+    chprintf(chp, "  S/N: 0x%X\r\n",sn);
+    return;
+}
+
+/*
+ * Print a text file to screen
+ */
+void cmd_cat(BaseSequentialStream *chp, int argc, char *argv[]) {
+    FRESULT err;
+    FIL fsrc;   /* file object */
+    char Buffer[255];
+    UINT ByteToRead=sizeof(Buffer);
+    UINT ByteRead;
+    /*
+     * Print usage
+     */
+    if (argc != 1) {
+        chprintf(chp, "Usage: cat filename\r\n");
+        chprintf(chp, "       Echos filename (no spaces)\r\n");
+        return;
+    }
+    /*
+     * Attempt to open the file, error out if it fails.
+     */
+    err=f_open(&fsrc, argv[0], FA_READ);
+    if (err != FR_OK) {
+        chprintf(chp, "FS: f_open(%s) failed.\r\n",argv[0]);
+        fverbose_error(chp, err);
+        return;
+    }
+    /*
+     * Do while the number of bytes read is equal to the number of bytes to read
+     * (the buffer is filled)
+     */
+    do {
+        /*
+         * Clear the buffer.
+         */
+        memset(Buffer,0,sizeof(Buffer));
+        /*
+         * Read the file.
+         */
+        err=f_read(&fsrc,Buffer,ByteToRead,&ByteRead);
+        if (err != FR_OK) {
+            chprintf(chp, "FS: f_read() failed\r\n");
+            fverbose_error(chp, err);
+            f_close(&fsrc);
+            return;
+        }
+        chprintf(chp, "%s", Buffer);
+    } while (ByteRead>=ByteToRead);
+    chprintf(chp,"\r\n");
+    /*
+     * Close the file.
+     */
+    f_close(&fsrc);
+    return;
+}
 
 static void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[])
 {
@@ -933,6 +1181,17 @@ exittest:
 }
 
 const ShellCommand shell_commands[] = {
+    {"mount", cmd_mount},
+    {"unmount", cmd_unmount},
+    {"getlabel", cmd_getlabel},
+    {"setlabel", cmd_setlabel},
+    {"tree", cmd_tree},
+    {"free", cmd_free},
+    {"mkdir", cmd_mkdir},
+    {"hello", cmd_hello},
+    {"cat", cmd_cat},
+    {"mem", cmd_mem},
+    {"threads", cmd_threads},
     {"mem", cmd_mem},
     {"threads", cmd_threads},
     {"test", cmd_test},

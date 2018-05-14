@@ -17,6 +17,12 @@ void dac_start(void);
  */
 void dac_play(uint16_t freq);
 
+void dac_change_bufferI(uint16_t* buf, uint32_t size, uint32_t sampling_frequency);
+
+void dac_play_buffer(uint16_t * buf, uint32_t size, uint32_t sampling_frequency, daccallback_t end_cb);
+
+void dac_stopI(void);
+
 /**
  * @brief   Stops the sound being played on the speaker (if any)
  */

@@ -110,6 +110,34 @@ void dac_play(uint16_t freq) {
 	}
 }
 
+void dac_change_bufferI(uint16_t* buf, uint32_t size, uint32_t sampling_frequency){
+  gptStopTimerI(&GPTD6);
+  dacStopConversionI(&DACD2);
+
+  dacStartConversionI(&DACD2, &dac_conversion, buf, size);
+  gptStartContinuousI(&GPTD6, STM32_TIMCLK1 / sampling_frequency);
+
+}
+
+void dac_play_buffer(uint16_t * buf, uint32_t size, uint32_t sampling_frequency, daccallback_t end_cb) {
+  if(dac_state == STATE_STOPPED) {
+    dac_state = STATE_PLAYING;
+    dac_conversion.end_cb = end_cb;
+    palClearPad(GPIOD, GPIOD_AUDIO_PWR); // Turn on audio.
+    dacStartConversion(&DACD2, &dac_conversion, buf, size);
+    gptStartContinuous(&GPTD6, STM32_TIMCLK1 / sampling_frequency);
+  } else {
+    gptChangeInterval(&GPTD6, STM32_TIMCLK1 / sampling_frequency);
+  }
+}
+
+void dac_stopI(void) {
+  palSetPad(GPIOD, GPIOD_AUDIO_PWR); // Turn off audio.
+    gptStopTimerI(&GPTD6);
+    dacStopConversionI(&DACD2);
+  dac_state = STATE_STOPPED;
+}
+
 void dac_stop(void) {
 	palSetPad(GPIOD, GPIOD_AUDIO_PWR); // Turn off audio.
     gptStopTimer(&GPTD6);

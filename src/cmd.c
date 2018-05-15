@@ -19,8 +19,9 @@
 #include "leds.h"
 #include <main.h>
 #include "motors.h"
-#include <ff.h>
 #include <fat.h>
+#include <audio/play_sound_file.h>
+#include <audio/play_melody.h>
 
 #define TEST_WA_SIZE        THD_WORKING_AREA_SIZE(256)
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
@@ -46,47 +47,38 @@ static uint16_t cmd_x1, cmd_y1, cmd_width, cmd_height;
 *   fatFS related variables
 */
 /* Generic large buffer.*/
-#define SIZE_GENERIC_BUFFER 1024
+#define SIZE_GENERIC_BUFFER 256
 static char fbuff[SIZE_GENERIC_BUFFER];
-//volume structure
-static FATFS SDC_FS;
 
 void cmd_mount(BaseSequentialStream *chp, int argc, char *argv[]) {
-    FRESULT err;
     (void)argc;
     (void)argv;
+
     /*
      * Attempt to mount the drive.
      */
-    err = f_mount(&SDC_FS,"",0);
-    if (err != FR_OK) {
+    if (!mountSDCard()) {
         chprintf(chp, "FS: f_mount() failed. Is the SD card inserted?\r\n");
-        fverbose_error(chp, err);
         return;
     }
     chprintf(chp, "FS: f_mount() succeeded\r\n");
-    sdcConnect(&SDCD1);
 }
 
 void cmd_unmount(BaseSequentialStream *chp, int argc, char *argv[]) {
-    FRESULT err;
     (void)argc;
     (void)argv;
 
-    sdcDisconnect(&SDCD1);
-    err = f_mount(NULL,"",0);
-    if (err != FR_OK) {
+    if (!unmountSDCard()) {
         chprintf(chp, "FS: f_mount() unmount failed\r\n");
-        fverbose_error(chp, err);
         return;
     }
-    return;
 }
 
 void cmd_free(BaseSequentialStream *chp, int argc, char *argv[]) {
     FRESULT err;
     uint32_t clusters;
     FATFS *fsp;
+    BYTE cluster_size;
     (void)argc;
     (void)argv;
 
@@ -95,17 +87,19 @@ void cmd_free(BaseSequentialStream *chp, int argc, char *argv[]) {
         chprintf(chp, "FS: f_getfree() failed\r\n");
         return;
     }
+
+    cluster_size = getSDCardClusterSize();
     /*
      * Print the number of free clusters and size free in B, KiB and MiB.
      */
     chprintf(chp,"FS: %lu free clusters\r\n    %lu sectors per cluster\r\n",
-        clusters, (uint32_t)SDC_FS.csize);
+        clusters, (uint32_t)cluster_size);
     chprintf(chp,"%lu B free\r\n",
-        clusters * (uint32_t)SDC_FS.csize * (uint32_t)MMCSD_BLOCK_SIZE);
+        clusters * (uint32_t)cluster_size * (uint32_t)MMCSD_BLOCK_SIZE);
     chprintf(chp,"%lu KB free\r\n",
-        (clusters * (uint32_t)SDC_FS.csize * (uint32_t)MMCSD_BLOCK_SIZE)/(1024));
+        (clusters * (uint32_t)cluster_size * (uint32_t)MMCSD_BLOCK_SIZE)/(1024));
     chprintf(chp,"%lu MB free\r\n",
-        (clusters * (uint32_t)SDC_FS.csize * (uint32_t)MMCSD_BLOCK_SIZE)/(1024*1024));
+        (clusters * (uint32_t)cluster_size * (uint32_t)MMCSD_BLOCK_SIZE)/(1024*1024));
 }
 
 void cmd_tree(BaseSequentialStream *chp, int argc, char *argv[]) {
@@ -286,6 +280,72 @@ void cmd_cat(BaseSequentialStream *chp, int argc, char *argv[]) {
      */
     f_close(&fsrc);
     return;
+}
+
+static void cmd_sound_file_play(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void)argv;
+    if (argc != 1) {
+        chprintf(chp, "Usage: sf_play pathToTheMusic\r\n");
+        return;
+    }
+    
+    playSoundFile(argv[0],SF_FORCE_CHANGE);
+
+}
+
+static void cmd_sound_file_stop(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    (void)chp;
+    
+    stopCurrentSoundFile();
+}
+
+static void cmd_sound_file_volume(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void)argv;
+    if (argc != 1) {
+        chprintf(chp, "Usage: sf_volume value\r\n");
+        return;
+    }
+
+    setSoundFileVolume(atoi(argv[0]));
+}
+
+static void cmd_melody_play(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void)argv;
+    if (argc != 1) {
+        chprintf(chp, "Usage: ml_play numberOfTheMelody\r\n");
+        chprintf(chp, "melodies availables :\r\n");
+        chprintf(chp, "1) IMPOSSIBLE_MISSION,\r\n");
+        chprintf(chp, "2) WE_ARE_THE_CHAMPIONS,\r\n");
+        chprintf(chp, "3) RUSSIA,\r\n");
+        chprintf(chp, "4) MARIO,\r\n");
+        chprintf(chp, "5) UNDERWORLD,\r\n");
+        chprintf(chp, "6) MARIO_START,\r\n");
+        chprintf(chp, "7) MARIO_DEATH,\r\n");
+        chprintf(chp, "8) MARIO_FLAG,\r\n");
+        chprintf(chp, "9) WALKING,\r\n");
+        chprintf(chp, "10) PIRATES_OF_THE_CARIBBEAN,\r\n");
+        chprintf(chp, "11) SIMPSON,\r\n");
+        chprintf(chp, "12) STARWARS,\r\n");
+        chprintf(chp, "13) SANDSTORMS,\r\n");
+        chprintf(chp, "14) SEVEN_NATION_ARMY\r\n");
+        return;
+    }
+    playMelody(atoi(argv[0])-1, ML_FORCE_CHANGE, NULL);
+}
+
+static void cmd_melody_stop(BaseSequentialStream *chp, int argc, char *argv[])
+{
+    (void)argc;
+    (void)argv;
+    (void)chp;
+    
+    stopCurrentMelody();
 }
 
 static void cmd_mem(BaseSequentialStream *chp, int argc, char *argv[])
@@ -1190,6 +1250,11 @@ const ShellCommand shell_commands[] = {
     {"mkdir", cmd_mkdir},
     {"hello", cmd_hello},
     {"cat", cmd_cat},
+    {"sf_play",cmd_sound_file_play},
+    {"sf_stop",cmd_sound_file_stop},
+    {"sf_volume",cmd_sound_file_volume},
+    {"ml_play",cmd_melody_play},
+    {"ml_stop",cmd_melody_stop},
     {"mem", cmd_mem},
     {"threads", cmd_threads},
     {"mem", cmd_mem},

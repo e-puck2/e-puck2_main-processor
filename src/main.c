@@ -14,6 +14,7 @@
 #include "aseba_vm/aseba_bridge.h"
 #include "audio/audio_thread.h"
 #include "audio/play_melody.h"
+#include "audio/play_sound_file.h"
 #include "audio/microphone.h"
 #include "camera/po8030.h"
 #include "epuck1x/Asercom.h"
@@ -220,7 +221,7 @@ static THD_FUNCTION(selector_thd, arg)
 				if(melody_counter == 2000) {
 					melody_counter = 0;
 					melody_state = (melody_state+1)%NB_SONGS;
-					play_melody(melody_state, SIMPLE_PLAY, NULL);
+					playMelody(melody_state, ML_SIMPLE_PLAY, NULL);
 				}
 
 				chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
@@ -233,7 +234,7 @@ static THD_FUNCTION(selector_thd, arg)
 						calibrate_ir();
 
 						// Test audio.
-						play_melody(MARIO, SIMPLE_PLAY, NULL);
+						playMelody(MARIO, ML_SIMPLE_PLAY, NULL);
 
 						// Test motors at low speed.
 						left_motor_set_speed(150);
@@ -402,7 +403,8 @@ int main(void)
 	serial_start();
 	mic_start(NULL);
 	sdio_start();
-	play_melody_start();
+	playMelodyStart();
+	playSoundFileStart();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

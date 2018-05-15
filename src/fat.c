@@ -18,10 +18,15 @@ taken at https://github.com/jed-frey/ARMCM4-STM32F407-STF4BB-FATFS
 #include <chprintf.h>
 #include <string.h>
 
-
 #include <fat.h>
+#include <sdio.h>
 
 #define SIZE_ERROR_BUFFER	255
+
+
+static FATFS SDC_FS;
+static bool sd_card_mounted = false;
+
 //////////////////////////////PRIVATE FUNCTIONS////////////////////////////
 
 /**
@@ -31,8 +36,8 @@ taken at https://github.com/jed-frey/ARMCM4-STM32F407-STF4BB-FATFS
  * @return 		A pointer to a string containing the text of the error
  */
 char* fresult_str(FRESULT stat) {
-    static char str[SIZE_ERROR_BUFFER];
-    memset(str,0,sizeof(str));
+    // static char str[SIZE_ERROR_BUFFER];
+    // memset(str,0,sizeof(str));
 
     switch (stat) {
         case FR_OK:
@@ -82,6 +87,52 @@ char* fresult_str(FRESULT stat) {
 }
 
 //////////////////////////////PUBLIC FUNCTIONS////////////////////////////
+/**
+ * @brief Mount the sd card
+ */
+bool mountSDCard(void){
+
+    if(!sd_card_mounted){
+        /*
+        * Attempt to mount the drive.
+        */
+        if (sdio_connect() != HAL_SUCCESS) {
+            return false;
+        }
+        if(f_mount(&SDC_FS,"",0) != FR_OK){
+            return false;
+        }
+        sd_card_mounted = true;
+    }
+    return true;
+}
+
+/**
+ * @brief Unmount the sd card
+ */
+bool unmountSDCard(void){
+    if(sd_card_mounted){
+        /*
+        * Attempt to mount the drive.
+        */
+        if(sdio_disconnect() != HAL_SUCCESS) {
+            return false;
+        }
+        if(f_mount(NULL,"",0) != FR_OK){
+            return false;
+        }
+        sd_card_mounted = false;
+    }
+    
+    return true;
+}
+
+/**
+ * @brief   Returns if the sd card is mounted or not
+ */
+bool isSDCardMounted(void){
+    return sd_card_mounted;
+}
 
 /*
  * Scan Files in a path and print them to the given stream.
@@ -174,6 +225,14 @@ FRESULT scan_files(BaseSequentialStream *chp, char *path) {
         chprintf(chp, "FS: f_opendir() failed\r\n");
     }
     return res;
+}
+
+/**
+ * @brief   Returns the size of the clusters of the sd card mounted
+ * @return  number of elements per cluster
+ */
+BYTE getSDCardClusterSize(void){
+    return SDC_FS.csize;
 }
 /*
 *	Prints a complete error string depending on the error given

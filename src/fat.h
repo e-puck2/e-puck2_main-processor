@@ -30,13 +30,37 @@ extern "C" {
 #endif
 
 /**
+ * @brief 	Mount the sd card with fatFS.
+ * @return 	true if it worked and false it not
+ */
+bool mountSDCard(void);
+
+/**
+ * @brief 	Unmount the sd card with fatFS.
+ * @return 	true if it worked and false it not
+ */
+bool unmountSDCard(void);
+
+/**
+ * @brief   Returns if the sd card is mounted or not
+ * @return  true = mounted, false = not mounted
+ */
+bool isSDCardMounted(void);
+
+/**
  * @brief Prints the directory tree to the given stream
  * 
  * @param chp 	Output stream to use for the chprintf
- * @param path 	path to use to begin the scan (0 means the root). Also used as wotking area (bigger is better)
+ * @param path 	path to use to begin the scan (0 means the root). Also used as working area (bigger is better)
  * @return 		result. See FRESULT
  */
 FRESULT scan_files(BaseSequentialStream *chp, char *path);
+
+/**
+ * @brief   Returns the size of the clusters of the sd card mounted
+ * @return  number of elements per cluster
+ */
+BYTE getSDCardClusterSize(void);
 
 /**
  * @brief Prints a complete error string depending on the error given

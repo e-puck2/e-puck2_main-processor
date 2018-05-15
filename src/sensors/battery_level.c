@@ -120,7 +120,7 @@ static THD_FUNCTION(battery_thd, arg)
 void battery_level_start(void)
 {
     adcStart(&ADCD1, NULL);
-    static THD_WORKING_AREA(battery_thd_wa, 1024);
+    static THD_WORKING_AREA(battery_thd_wa, 256);
     chThdCreateStatic(battery_thd_wa, sizeof(battery_thd_wa), NORMALPRIO, battery_thd, NULL);
 }
 

@@ -368,10 +368,10 @@ void ir_remote_start(void) {
 	gptStart(&GPTD11, &gpt11cfg);
 	gptStartContinuous(&GPTD11, 0xFFFF);
 
-	static THD_WORKING_AREA(remote_motion_thd_wa, 512);
+	static THD_WORKING_AREA(remote_motion_thd_wa, 128);
 	chThdCreateStatic(remote_motion_thd_wa, sizeof(remote_motion_thd_wa), NORMALPRIO, remote_motion_thd, NULL);
 
-	static THD_WORKING_AREA(remote_cmd_recv_thd_wa, 512);
+	static THD_WORKING_AREA(remote_cmd_recv_thd_wa, 256);
 	chThdCreateStatic(remote_cmd_recv_thd_wa, sizeof(remote_cmd_recv_thd_wa), NORMALPRIO, remote_cmd_recv_thd, NULL);
 }
 

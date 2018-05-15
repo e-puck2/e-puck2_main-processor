@@ -227,7 +227,7 @@ bool mpu9250_ping(void) {
 int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, int16_t *gyro_offset, int16_t *acc_offset, uint8_t *status) {
 	int8_t err = 0;
 
-    uint8_t buf[1 + 6 + 2 + 6 + 6 + 1]; // interrupt status, accel, temp, gyro, magnetometer, status magnetometer
+    static uint8_t buf[1 + 6 + 2 + 6 + 6 + 1]; // interrupt status, accel, temp, gyro, magnetometer, status magnetometer
     if((err = read_reg_multi(imu_addr, INT_STATUS, buf, sizeof(buf))) != MSG_OK) {
     	mpu9250_change_addr();
     	if((err = read_reg_multi(imu_addr, INT_STATUS, buf, sizeof(buf))) != MSG_OK) {

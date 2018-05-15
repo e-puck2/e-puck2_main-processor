@@ -30,6 +30,7 @@ static bool imu_configured = false;
  /**
  * @brief   Thread which updates the measures and publishes them
  */
+static THD_WORKING_AREA(imu_reader_thd_wa, 512);
 static THD_FUNCTION(imu_reader_thd, arg) {
      (void) arg;
      chRegSetThreadName(__FUNCTION__);
@@ -156,7 +157,6 @@ void imu_start(void)
     	imu_configured = true;
     }
 
-    static THD_WORKING_AREA(imu_reader_thd_wa, 1024);
     imuThd = chThdCreateStatic(imu_reader_thd_wa, sizeof(imu_reader_thd_wa), NORMALPRIO, imu_reader_thd, NULL);
 }
 

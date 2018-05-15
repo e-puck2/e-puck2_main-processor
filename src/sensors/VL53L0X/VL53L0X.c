@@ -19,14 +19,14 @@ static thread_t *distThd;
 static bool VL53L0X_configured = false;
 
 //////////////////// PUBLIC FUNCTIONS /////////////////////////
-static THD_WORKING_AREA(waVL53L0XThd, 2048);
+static THD_WORKING_AREA(waVL53L0XThd, 512);
 static THD_FUNCTION(VL53L0XThd, arg) {
 
 	chRegSetThreadName("VL53L0x Thd");
 	VL53L0X_Error status = VL53L0X_ERROR_NONE;
 
 	(void)arg;
-	VL53L0X_Dev_t device;
+	static VL53L0X_Dev_t device;
 
 	device.I2cDevAddr = VL53L0X_ADDR;
 	

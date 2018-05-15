@@ -155,6 +155,7 @@ static const ADCConversionGroup adcgrpcfg2 = {
  /**
  * @brief   Thread which updates the measures and publishes them
  */
+static THD_WORKING_AREA(proximity_thd_wa, 256);
 static THD_FUNCTION(proximity_thd, arg)
 {
     (void) arg;
@@ -322,7 +323,6 @@ void proximity_start(void)
     pwmEnablePeriodicNotification(&PWMD2); // PWM general interrupt at the beginning of the period to handle pulse ignition.
     pwmEnableChannel(&PWMD2, 1, (pwmcnt_t) (PWM_CYCLE * ON_MEASUREMENT_POS)); // Enable channel 2 to trigger the measures.
 
-    static THD_WORKING_AREA(proximity_thd_wa, 1024);
     chThdCreateStatic(proximity_thd_wa, sizeof(proximity_thd_wa), NORMALPRIO, proximity_thd, NULL);
 	
 }

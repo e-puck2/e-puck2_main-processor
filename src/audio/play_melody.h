@@ -132,9 +132,9 @@ typedef enum{
 }song_selection_t;
 
 typedef enum{
-	SIMPLE_PLAY = 0,	//plays the new melody but if a melody is already playing, then this order is ignored
-	WAIT_AND_CHANGE,	//waits (put the invocking thread in sleep) the end of the current melody if any and plays the new one
-	FORCE_CHANGE,		//stops the current playing melody if any and play the new one
+	ML_SIMPLE_PLAY = 0,	//plays the new melody but if a melody is already playing, then this order is ignored
+	ML_WAIT_AND_CHANGE,	//waits (put the invocking thread in sleep) the end of the current melody if any and ply the new one
+	ML_FORCE_CHANGE,	//stops the current playing melody if any and play the new one
 }play_melody_option_t;
 
 typedef const struct{
@@ -147,7 +147,7 @@ typedef const struct{
  * @brief Starts the play_melody module
  * 				
  */
-void play_melody_start(void);
+void playMelodyStart(void);
 
 /**
  * @brief Plays the selected melody. Does nothing if the module has not been started with start_play_start()
@@ -159,18 +159,18 @@ void play_melody_start(void);
  * 							to EXTERNAL_SONG in this case. Use NULL othewrwise.
  * 				
  */
-void play_melody(song_selection_t choice, play_melody_option_t option, melody_t* external_melody);
+void playMelody(song_selection_t choice, play_melody_option_t option, melody_t* external_melody);
 
 /**
  * @brief Waits until the melody playing has finished (put the invocking thread in sleep)
  * 		  Immediatly returns if no melody is playing
  */		
-void wait_melody_has_finished(void);
+void waitMelodyHasFinished(void);
 
 /**
  * @brief Stops the melody beeing played.
  */
-void stop_current_melody(void);
+void stopCurrentMelody(void);
 
 /**
  * @brief Plays a note during a given time. This function blocks the calling thread during its execution
@@ -179,6 +179,6 @@ void stop_current_melody(void);
  * @param duration_ms	Duration of the note (ms)
  * 					
  */
-void play_note(uint16_t note, uint16_t duration_ms);
+void playNote(uint16_t note, uint16_t duration_ms);
 
 #endif /* PLAY_MELODY_H */

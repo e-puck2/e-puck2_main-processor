@@ -48,6 +48,12 @@ void dac_stopI(void);
  * @brief   Stops the sound being played on the speaker (if any)
  */
 void dac_stop(void);
+/**
+ * @brief Powers ON or OFF the alimentation of the speaker
+ * 
+ * @param on_off true to power ON and false to power OFF
+ */
+void dac_power_speaker(bool on_off);
 
 #ifdef __cplusplus
 }

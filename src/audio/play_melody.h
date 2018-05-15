@@ -150,7 +150,7 @@ typedef const struct{
 void playMelodyStart(void);
 
 /**
- * @brief Plays the selected melody. Does nothing if the module has not been started with start_play_start()
+ * @brief Plays the selected melody. Does nothing if the module has not been started with playMelodyStart()
  * 							This function doesn't block the current thread. It uses it's self thread
  *
  * @param choice 			Song selected (see song_selection_t)
@@ -168,7 +168,9 @@ void playMelody(song_selection_t choice, play_melody_option_t option, melody_t* 
 void waitMelodyHasFinished(void);
 
 /**
- * @brief Stops the melody beeing played.
+ * @brief 	Stops the melody beeing played. Even if this function returns immediatly, 
+ * 			the stopping of the playback is not immediate. It can take a very little time.
+ * 			Use waitMelodyHasFinished() to be sure the sound has stopped.
  */
 void stopCurrentMelody(void);
 

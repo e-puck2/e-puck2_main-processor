@@ -105,7 +105,7 @@ void dac_start(void)  {
 void dac_play(uint16_t freq) {
 	if(dac_state == STATE_STOPPED) {
 		dac_state = STATE_PLAYING;
-		palClearPad(GPIOD, GPIOD_AUDIO_PWR); // Turn on audio.
+		dac_power_speaker(true); // Turn on audio.
 		dacStartConversion(&DAC_USED, &dac_conversion, sinus_buffer, SINUS_BUFFER_SIZE);
 		gptStartContinuous(&TIMER_DAC, STM32_TIMCLK1 / (freq*SINUS_BUFFER_SIZE));
 	} else {
@@ -117,7 +117,7 @@ void dac_play_buffer(uint16_t * buf, uint32_t size, uint32_t sampling_frequency,
   if(dac_state == STATE_STOPPED) {
     dac_state = STATE_PLAYING;
     dac_conversion.end_cb = end_cb;
-    palClearPad(GPIOD, GPIOD_AUDIO_PWR); // Turn on audio.
+    dac_power_speaker(true); // Turn on audio.
     dacStartConversion(&DAC_USED, &dac_conversion, buf, size);
     gptStartContinuous(&TIMER_DAC, STM32_TIMCLK1 / sampling_frequency);
   } else {
@@ -135,17 +135,25 @@ void dac_change_bufferI(uint16_t* buf, uint32_t size, uint32_t sampling_frequenc
 }
 
 void dac_stopI(void) {
-  palSetPad(GPIOD, GPIOD_AUDIO_PWR); // Turn off audio.
+  dac_power_speaker(false); // Turn off audio.
   gptStopTimerI(&TIMER_DAC);
   dacStopConversionI(&DAC_USED);
   dac_state = STATE_STOPPED;
 }
 
 void dac_stop(void) {
-	palSetPad(GPIOD, GPIOD_AUDIO_PWR); // Turn off audio.
+	dac_power_speaker(false); // Turn off audio.
   gptStopTimer(&TIMER_DAC);
   dacStopConversion(&DAC_USED);
 	dac_state = STATE_STOPPED;
+}
+
+void dac_power_speaker(bool on_off){
+  if(on_off){
+    palClearPad(GPIOD, GPIOD_AUDIO_PWR);
+  }else{
+    palSetPad(GPIOD, GPIOD_AUDIO_PWR);
+  }
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

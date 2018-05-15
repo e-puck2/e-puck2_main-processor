@@ -5,7 +5,7 @@ Author  : Eliot Ferragni
 Date    : 9 may 2018
 REV 1.0
 
-Functions and defines to play sounds from the sd card in the uncompressed WAV format in signed 16bits 44,1kHz
+Functions and defines to play sounds from the sd card in the uncompressed WAV format in signed 16bits 44,1kHz mono
 
 */
 
@@ -251,6 +251,17 @@ void setSoundFileVolume(uint8_t volume){
     if(volume > VOLUME_MAX){
         volume = VOLUME_MAX;
     }
+
+    //powers OFF the speaker if we are below the minimum volume
+    //because we have a lot of noise on the speaker when the volume is to low
+    if(play){
+        if(volume < VOLUME_MIN){
+            dac_power_speaker(false);
+        }else{
+            dac_power_speaker(true);
+        }
+    }
+    
     sound_file_volume = volume;
 }
 

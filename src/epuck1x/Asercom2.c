@@ -11,9 +11,10 @@
 #include <main.h>
 #include "sensors/VL53L0X/VL53L0X.h"
 #include "audio/play_melody.h"
+#include "audio/play_sound_file.h"
 #include "button.h"
 #include "leds.h"
-#include "sdio.h"
+#include "fat.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -98,6 +99,8 @@ int run_asercom2(void) {
     } else {
     	gumstix_connected = 0;
     }
+    //mounts the sdCard
+    mountSDCard();
 
 #ifdef FLOOR_SENSORS
     if (gumstix_connected == 0) { // the I2C must remain disabled when using the gumstix extension
@@ -330,10 +333,8 @@ int run_asercom2(void) {
 						break;
 
 					case 0xE: // Get SD state (0=not ok, 1=ok)
-						if(sdio_is_present()) {
-							n = !sdio_connect();
-							buffer[i++] = n & 0xff;
-							sdio_disconnect();
+						if(isSDCardMounted()) {
+							buffer[i++] = 1;
 						} else {
 							buffer[i++] = 0;
 						}
@@ -1116,11 +1117,11 @@ int run_asercom2(void) {
                 		first = 1;
                 	}
                 	switch (sound) {
-                		case 1: play_melody(MARIO, FORCE_CHANGE, NULL);//e_play_sound(0, 2112);
+                		case 1: playMelody(MARIO, ML_FORCE_CHANGE, NULL);//e_play_sound(0, 2112);
                 			break;
-                		case 2: play_melody(UNDERWORLD, FORCE_CHANGE, NULL);//e_play_sound(2116, 1760);
+                		case 2: playMelody(UNDERWORLD, ML_FORCE_CHANGE, NULL);//e_play_sound(2116, 1760);
                 			break;
-                		case 3: play_melody(STARWARS, FORCE_CHANGE, NULL);//e_play_sound(3878, 3412);
+                		case 3: playMelody(STARWARS, ML_FORCE_CHANGE, NULL);//e_play_sound(3878, 3412);
                 			break;
                 		case 4: e_play_sound(7294, 3732);
                 			break;
@@ -1128,7 +1129,7 @@ int run_asercom2(void) {
                 			break;
                 		default:
                 			e_close_sound();
-                            stop_current_melody();
+                            stopCurrentMelody();
                 			first = 0;
                 			break;
                 	}

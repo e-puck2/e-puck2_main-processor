@@ -76,3 +76,5 @@ CSRC += $(GLOBAL_PATH)/src/msgbus/messagebus.c
 CSRC += $(GLOBAL_PATH)/src/parameter/parameter.c
 CSRC += $(GLOBAL_PATH)/src/parameter/parameter_msgpack.c
 CSRC += $(GLOBAL_PATH)/src/parameter/parameter_print.c
+CSRC += $(GLOBAL_PATH)/src/fat.c
+CSRC += $(GLOBAL_PATH)/src/audio/play_sound_file.c

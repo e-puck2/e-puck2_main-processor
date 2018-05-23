@@ -972,11 +972,11 @@ int run_asercom(void) {
                             first = 1;
                         }
                         switch (sound) {
-                            case 1: play_melody(MARIO, FORCE_CHANGE, NULL);//e_play_sound(0, 2112);
+                            case 1: playMelody(MARIO, ML_FORCE_CHANGE, NULL);//e_play_sound(0, 2112);
                                 break;
-                            case 2: play_melody(UNDERWORLD, FORCE_CHANGE, NULL);//e_play_sound(2116, 1760);
+                            case 2: playMelody(UNDERWORLD, ML_FORCE_CHANGE, NULL);//e_play_sound(2116, 1760);
                                 break;
-                            case 3: play_melody(STARWARS, FORCE_CHANGE, NULL);//e_play_sound(3878, 3412);
+                            case 3: playMelody(STARWARS, ML_FORCE_CHANGE, NULL);//e_play_sound(3878, 3412);
                                 break;
                             case 4: e_play_sound(7294, 3732);
                                 break;
@@ -984,7 +984,7 @@ int run_asercom(void) {
                                 break;
                             default:
                                 e_close_sound();
-                                stop_current_melody();
+                                stopCurrentMelody();
                                 first = 0;
                                 break;
                         }

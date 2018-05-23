@@ -2,9 +2,12 @@
 #include <hal.h>
 #include "audio_thread.h"
 
-#define STATE_STOPPED 0
-#define STATE_PLAYING 1
-#define DAC_BUFFER_SIZE2 360
+#define STATE_STOPPED     0
+#define STATE_PLAYING     1
+#define SINUS_BUFFER_SIZE 360
+
+#define DAC_USED          DACD2
+#define TIMER_DAC         GPTD6
 
 /*
  * The DAC of the uC is configured to output a buffer given in a circular manner, 
@@ -18,7 +21,7 @@
 /*
  * DAC test buffer (sine wave).
  */
-static const dacsample_t dac_buffer[DAC_BUFFER_SIZE2] = {
+static const dacsample_t sinus_buffer[SINUS_BUFFER_SIZE] = {
   2047, 2082, 2118, 2154, 2189, 2225, 2260, 2296, 2331, 2367, 2402, 2437,
   2472, 2507, 2542, 2576, 2611, 2645, 2679, 2713, 2747, 2780, 2813, 2846,
   2879, 2912, 2944, 2976, 3008, 3039, 3070, 3101, 3131, 3161, 3191, 3221,
@@ -83,7 +86,7 @@ void dac_start(void)  {
     dac_config.init = 2048; // Set start value to half of the range.
     dac_config.datamode = DAC_DHRM_12BIT_RIGHT;
 
-    dacStart(&DACD2, &dac_config);
+    dacStart(&DAC_USED, &dac_config);
 
     /* start timer for DAC trigger */
 	static GPTConfig config;
@@ -92,7 +95,7 @@ void dac_start(void)  {
     config.cr2 = TIM_CR2_MMS_1; /* trigger output on timer update */
     config.dier = 0U;
 	
-    gptStart(&GPTD6, &config);
+    gptStart(&TIMER_DAC, &config);
 
     //because when we do nothing, the speaker produces noise due to noise on the alimentation
     dac_stop();
@@ -102,19 +105,55 @@ void dac_start(void)  {
 void dac_play(uint16_t freq) {
 	if(dac_state == STATE_STOPPED) {
 		dac_state = STATE_PLAYING;
-		palClearPad(GPIOD, GPIOD_AUDIO_PWR); // Turn on audio.
-		dacStartConversion(&DACD2, &dac_conversion, dac_buffer, DAC_BUFFER_SIZE2);
-		gptStartContinuous(&GPTD6, STM32_TIMCLK1 / (freq*DAC_BUFFER_SIZE2));
+		dac_power_speaker(true); // Turn on audio.
+		dacStartConversion(&DAC_USED, &dac_conversion, sinus_buffer, SINUS_BUFFER_SIZE);
+		gptStartContinuous(&TIMER_DAC, STM32_TIMCLK1 / (freq*SINUS_BUFFER_SIZE));
 	} else {
-		gptChangeInterval(&GPTD6, STM32_TIMCLK1 / (freq*DAC_BUFFER_SIZE2));
+		gptChangeInterval(&TIMER_DAC, STM32_TIMCLK1 / (freq*SINUS_BUFFER_SIZE));
 	}
 }
 
+void dac_play_buffer(uint16_t * buf, uint32_t size, uint32_t sampling_frequency, daccallback_t end_cb) {
+  if(dac_state == STATE_STOPPED) {
+    dac_state = STATE_PLAYING;
+    dac_conversion.end_cb = end_cb;
+    dac_power_speaker(true); // Turn on audio.
+    dacStartConversion(&DAC_USED, &dac_conversion, buf, size);
+    gptStartContinuous(&TIMER_DAC, STM32_TIMCLK1 / sampling_frequency);
+  } else {
+    gptChangeInterval(&TIMER_DAC, STM32_TIMCLK1 / sampling_frequency);
+  }
+}
+
+void dac_change_bufferI(uint16_t* buf, uint32_t size, uint32_t sampling_frequency){
+  gptStopTimerI(&TIMER_DAC);
+  dacStopConversionI(&DAC_USED);
+
+  dacStartConversionI(&DAC_USED, &dac_conversion, buf, size);
+  gptStartContinuousI(&TIMER_DAC, STM32_TIMCLK1 / sampling_frequency);
+
+}
+
+void dac_stopI(void) {
+  dac_power_speaker(false); // Turn off audio.
+  gptStopTimerI(&TIMER_DAC);
+  dacStopConversionI(&DAC_USED);
+  dac_state = STATE_STOPPED;
+}
+
 void dac_stop(void) {
-	palSetPad(GPIOD, GPIOD_AUDIO_PWR); // Turn off audio.
-    gptStopTimer(&GPTD6);
-    dacStopConversion(&DACD2);
+	dac_power_speaker(false); // Turn off audio.
+  gptStopTimer(&TIMER_DAC);
+  dacStopConversion(&DAC_USED);
 	dac_state = STATE_STOPPED;
+}
+
+void dac_power_speaker(bool on_off){
+  if(on_off){
+    palClearPad(GPIOD, GPIOD_AUDIO_PWR);
+  }else{
+    palSetPad(GPIOD, GPIOD_AUDIO_PWR);
+  }
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

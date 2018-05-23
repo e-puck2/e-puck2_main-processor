@@ -720,7 +720,7 @@ static const melody_t melody[NB_SONGS] = {
   },
 };
 
-void play_note(uint16_t note, uint16_t duration_ms) {
+void playNote(uint16_t note, uint16_t duration_ms) {
 
 	if(note != 0){
 		dac_play(note);
@@ -755,7 +755,7 @@ static THD_FUNCTION(PlayMelodyThd, arg) {
 			//e.g. quarter note = 1000 / 4, eighth note = 1000/8, etc.
 			uint16_t noteDuration = (uint16_t)(1000 / song->tempo[thisNote]);
 
-			play_note(song->notes[thisNote], noteDuration);
+			playNote(song->notes[thisNote], noteDuration);
 
 			// to distinguish the notes, set a minimum time between them.
 			// the note's duration + 30% seems to work well:
@@ -769,13 +769,13 @@ static THD_FUNCTION(PlayMelodyThd, arg) {
 	}
 }
 
-void play_melody_start(void){
+void playMelodyStart(void){
 
 	//create the thread
 	chThdCreateStatic(waPlayMelodyThd, sizeof(waPlayMelodyThd), NORMALPRIO, PlayMelodyThd, NULL);
 }
 
-void play_melody(song_selection_t choice, play_melody_option_t option, melody_t* external_melody){
+void playMelody(song_selection_t choice, play_melody_option_t option, melody_t* external_melody){
 
   melody_t* song = NULL;
 
@@ -791,7 +791,7 @@ void play_melody(song_selection_t choice, play_melody_option_t option, melody_t*
   }
 
   //SIMPLE_PLAY case
-  if(option == SIMPLE_PLAY){
+  if(option == ML_SIMPLE_PLAY){
     //if the reference is NULL, then the thread is already running
     //when the reference becomes not NULL, it means the thread is waiting
     if(play_melody_ref != NULL){
@@ -801,21 +801,21 @@ void play_melody(song_selection_t choice, play_melody_option_t option, melody_t*
     }
   }//FORCE_CHANGE or WAIT_AND_CHANGE cases
   else{
-    if(option == FORCE_CHANGE){
-      stop_current_melody();
+    if(option == ML_FORCE_CHANGE){
+      stopCurrentMelody();
     }
-    wait_melody_has_finished();
+    waitMelodyHasFinished();
     play = true;
     //tell the thread to play the song given
     chThdResume(&play_melody_ref, (msg_t) song);
   }
 }
 
-void stop_current_melody(void){
+void stopCurrentMelody(void){
     play = false;
 }
 
-void wait_melody_has_finished(void) {
+void waitMelodyHasFinished(void) {
   //if a melody is playing
   if(play_melody_ref == NULL){
     //waits until the current melody is finished

@@ -96,6 +96,15 @@ static THD_FUNCTION(selector_thd, arg)
 
     uint8_t magneto_state = 0;
 
+	uint8_t rab_addr = 0x20;
+	uint8_t rab_state = 0;
+	int8_t i2c_err = 0;
+	uint8_t regValue[2] = {0};
+	uint16_t rab_data = 0;
+	double rab_bearing = 0.0;
+	uint16_t rab_range = 0;
+	uint16_t rab_sensor = 0;
+
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
 
@@ -135,18 +144,68 @@ static THD_FUNCTION(selector_thd, arg)
 				stop_loop = 1;
 				break;
 
-			case 4: // Read IMU raw sensors values.
-		    	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+			case 4: // Range and bearing - receiver.
+				switch(rab_state) {
+					case 0:
+						write_reg(rab_addr, 12, 150);	// Set range.
+						write_reg(rab_addr, 17, 0);		// Onboard calculation.
+						write_reg(rab_addr, 16, 0);		// Store light conditions.
+						rab_state = 1;
+						break;
+
+					case 1:
+					    if((i2c_err = read_reg(rab_addr, 0, &regValue[0])) != MSG_OK) {
+					    	chprintf((BaseSequentialStream *)&SDU1, "err\r\n");
+					        break;
+					    }
+					    if(regValue[0] != 0) {
+					    	read_reg(rab_addr, 1, &regValue[0]);
+							read_reg(rab_addr, 2, &regValue[1]);
+							rab_data = (((uint16_t)regValue[0])<<8) + regValue[1];
+
+					    	read_reg(rab_addr, 3, &regValue[0]);
+							read_reg(rab_addr, 4, &regValue[1]);
+							rab_bearing = ((double)((((uint16_t)regValue[0])<<8) + regValue[1])) * 0.0001;
+
+					    	read_reg(rab_addr, 5, &regValue[0]);
+							read_reg(rab_addr, 6, &regValue[1]);
+							rab_range = (((uint16_t)regValue[0])<<8) + regValue[1];
+
+							read_reg(rab_addr, 9, &regValue[0]);
+							rab_sensor = regValue[0];
+
 		    	if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
-		    		continue;
+								break;
+							}
+
+							chprintf((BaseSequentialStream *)&SDU1, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
 		    	}
-		    	chprintf((BaseSequentialStream *)&SDU1, "%Ax=%-7d Ay=%-7d Az=%-7d Gx=%-7d Gy=%-7d Gz=%-7d (%x)\r\n", imu_values.acc_raw[0], imu_values.acc_raw[1], imu_values.acc_raw[2], imu_values.gyro_raw[0], imu_values.gyro_raw[1], imu_values.gyro_raw[2], imu_values.status);
-		    	chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
+						break;
+				}
+				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.
 				break;
 
-			case 5: // Distance sensor reading.
-				chprintf((BaseSequentialStream *)&SDU1, "range=%d mm\r\n", VL53L0X_get_dist_mm());
-				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
+			case 5: // Range and bearing - transmitter.
+				switch(rab_state) {
+					case 0:
+						write_reg(rab_addr, 12, 150); // Set range.
+						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
+							chprintf((BaseSequentialStream *)&SDU1, "set range to %d\r\n", regValue[0]);
+						}
+						write_reg(rab_addr, 17, 0); // Onboard calculation.
+						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
+							chprintf((BaseSequentialStream *)&SDU1, "onboard calculation enabled = %d\r\n", regValue[0]);
+						}
+						write_reg(rab_addr, 16, 0); // Store light conditions.
+						rab_state = 1;
+						break;
+
+					case 1:
+						write_reg(rab_addr, 13, 0xAA);
+						write_reg(rab_addr, 14, 0xFF);
+						break;
+				}
+				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.
 				break;
 
 			case 6: // ESP32 UART communication test.

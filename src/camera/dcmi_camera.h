@@ -143,5 +143,19 @@ void dcmi_capture_start(void);
 */
 msg_t dcmi_capture_stop(void);
 
+/**
+* @brief   Return the last error encountered.
+*
+* @return              The error code.
+*
+*/
+uint8_t dcmi_get_error(void);
+
+/**
+ * @brief Forcedly deactivates the DCMI peripheral (even when there was an error).
+ * @details This function disables the DCMI and related interrupts; also the DMA is released.
+ *
+ */
+void dcmi_release(void);
 
 #endif /* DCMI_CAMERA_H */

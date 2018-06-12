@@ -374,15 +374,18 @@ static THD_FUNCTION(selector_thd, arg)
 						if(po8030_advanced_config(FORMAT_RGB565, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1) != MSG_OK) {
 							set_led(LED1, 1);
 						}
-						//if(dcmi_enable_double_buffering() < 0) {
-						//	set_led(LED3, 1);
-						//}
-						//dcmi_set_capture_mode(CAPTURE_CONTINUOUS);
+						po8030_set_exposure(512, 0);
+
+//						if(dcmi_enable_double_buffering() < 0) {
+//							set_led(LED3, 1);
+//						}
+//						dcmi_set_capture_mode(CAPTURE_CONTINUOUS);
+//						dcmi_capture_start();
+
 						dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 						if(dcmi_prepare() < 0) {
 							set_led(LED5, 1);
 						}
-						//dcmi_capture_start();
 
 						demo15_state = 1;
 						break;

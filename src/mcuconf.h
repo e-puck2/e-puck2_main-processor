@@ -110,7 +110,7 @@
 #define STM32_DCMI_IRQ_PRIORITY             11
 #define STM32_DCMI_DMA_PRIORITY             2
 #define STM32_DCMI_DMA_IRQ_PRIORITY         12
-#define STM32_DCMI_DMA_STREAM               STM32_DMA_STREAM_ID(2, 1)
+#define STM32_DCMI_DMA_STREAM               STM32_DMA_STREAM_ID(2, 7)
 
 /*
  * EXT driver system settings.

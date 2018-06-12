@@ -79,12 +79,12 @@ static THD_FUNCTION(battery_thd, arg)
     uint8_t first_value = 1;
 
     while (true) {
-        adcAcquireBus(&ADCD1);
+        adcAcquireBus(&ADCD3);
 
         /* Starts a measurement and waits for it to complete. */
-        adcStartConversion(&ADCD1, &group, adc_samples, DMA_BUFFER_SIZE);
+        adcStartConversion(&ADCD3, &group, adc_samples, DMA_BUFFER_SIZE);
         chBSemWait(&measurement_ready);
-        adcReleaseBus(&ADCD1);
+        adcReleaseBus(&ADCD3);
 
         /* Converts the measurement to volts and publish the measurement on the
          * bus. */
@@ -114,7 +114,7 @@ static THD_FUNCTION(battery_thd, arg)
 
 void battery_level_start(void)
 {
-	adcStart(&ADCD1, NULL);
+	adcStart(&ADCD3, NULL);
     static THD_WORKING_AREA(battery_thd_wa, 512);
     chThdCreateStatic(battery_thd_wa, sizeof(battery_thd_wa), NORMALPRIO, battery_thd, NULL);
 }

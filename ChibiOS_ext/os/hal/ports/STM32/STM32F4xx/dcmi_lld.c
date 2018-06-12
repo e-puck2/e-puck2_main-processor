@@ -64,6 +64,7 @@ static void dcmi_lld_serve_dma_rx_interrupt(DCMIDriver *dcmip, uint32_t flags) {
 
 	/* DMA errors handling.*/
 	if ((flags & (STM32_DMA_ISR_TEIF | STM32_DMA_ISR_DMEIF)) != 0) {
+		dmaStreamClearInterrupt(dcmip->dmastp);
 		_dcmi_isr_error_code(dcmip, DCMI_ERR_DMAFAILURE);
 	}
 
@@ -155,7 +156,9 @@ void dcmi_lld_prepare(DCMIDriver *dcmip, uint32_t transactionSize, void* rxbuf0,
 			b = dmaStreamAllocate(dcmip->dmastp, STM32_DCMI_DMA_IRQ_PRIORITY, (stm32_dmaisr_t)dcmi_lld_serve_dma_rx_interrupt, (void *)dcmip);
 			osalDbgAssert(!b, "stream already allocated");
 			dmaStreamSetPeripheral(dcmip->dmastp, &dcmip->dcmi->DR);
-			dmaStreamSetFIFO(dcmip->dmastp, STM32_DMA_FCR_DMDIS); // Direct mode enabled (FIFO disabled).
+			dmaStreamSetFIFO(dcmip->dmastp, STM32_DMA_FCR_DMDIS); // Direct mode disabled and FIFO enabled with 1/4 threshold.
+			//dmaStreamSetFIFO(dcmip->dmastp, STM32_DMA_FCR_DMDIS | STM32_DMA_FCR_FTH_HALF); // Direct mode disabled => FIFO enabled with 1/2 threshold.
+			//dmaStreamSetFIFO(dcmip->dmastp, STM32_DMA_FCR_DMDIS | STM32_DMA_FCR_FTH_3Q); // Direct mode disabled => FIFO enabled with 3/4 threshold.
 			dmaStreamSetMemory0(dcmip->dmastp, rxbuf0);
 			dmaStreamSetMemory1(dcmip->dmastp, rxbuf1);
 			dmaStreamSetTransactionSize(dcmip->dmastp, transactionSize/4); // The DMA transactions are 32-bit width.

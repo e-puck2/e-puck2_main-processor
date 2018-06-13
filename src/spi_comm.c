@@ -26,7 +26,7 @@ static THD_FUNCTION(spi_thread, p) {
 	uint16_t numPackets = 0;
 	uint32_t remainingBytes = 0;
 
-	chThdSleepMilliseconds(1000); // Wait for the camera to be configured.
+	chThdSleepMilliseconds(50); // Wait for the camera to be configured.
 	//wait_dcmi_ready(); // To be implemented...
 
 #if 0

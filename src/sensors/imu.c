@@ -5,7 +5,6 @@
 #include "chprintf.h"
 #include "i2c_bus.h"
 #include "imu.h"
-#include "sensors/mpu9250.h"
 #include "exti.h"
 
 static imu_msg_t imu_values;

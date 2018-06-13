@@ -8,7 +8,6 @@
 #include "skel_user.h"
 
 #include "vm/natives.h"
-#include "../leds.h"
 #include "common/productids.h"
 #include "common/consts.h"
 #include <main.h>
@@ -31,8 +30,17 @@ const AsebaVMDescription vmDescription = {
      {2, "_fwversion"},
      {1, "_productId"},
 
-     {6, "leds"},
-     {3, "acc"},
+     {1, "led1"},
+     {NUM_COLOR_LED, "led2"},
+     {1, "led3"},
+     {NUM_COLOR_LED, "led4"},
+     {1, "led5"},
+     {NUM_COLOR_LED, "led6"},
+     {1, "led7"},
+     {NUM_COLOR_LED, "led8"},
+     
+     {NB_AXIS, "acc"},
+     {NB_AXIS, "gyro"},
 
      {0, NULL}
 }
@@ -40,7 +48,7 @@ const AsebaVMDescription vmDescription = {
 
 // Event descriptions
 const AsebaLocalEventDescription localEvents[] = {
-    {"new_acc", "New accelerometer measurement"},
+    {"new_imu", "New imu measurement"},
     {"button", "User button clicked"},
     {NULL, NULL}
 };
@@ -75,21 +83,35 @@ void aseba_read_variables_from_system(AsebaVMState *vm)
 void aseba_write_variables_to_system(AsebaVMState *vm)
 {
     ASEBA_UNUSED(vm);
-    int i;
-    for (i = 0; i <= 3; i++) {
-        set_led(i, vmVariables.leds[i - 1]);
-    }
+
+    imu_cb();
+    leds_cb();
 }
 
 // This function must update the accelerometer variables
-void accelerometer_cb(void)
+void imu_cb(void)
 {
-    static float accf[3];
-    //demo_acc_get_acc(accf);
-    vmVariables.acc[0] = (sint16) accf[0];
-    vmVariables.acc[1] = (sint16) accf[1];
-    vmVariables.acc[2] = (sint16) accf[2];
-    SET_EVENT(EVENT_ACC);
+    vmVariables.acc[X_AXIS] = (sint16) (1000 * get_acceleration(X_AXIS));
+    vmVariables.acc[Y_AXIS] = (sint16) (1000 * get_acceleration(Y_AXIS));
+    vmVariables.acc[Z_AXIS] = (sint16) (1000 * get_acceleration(Z_AXIS));
+
+    vmVariables.gyro[X_AXIS] = (sint16) get_gyro(X_AXIS);
+    vmVariables.gyro[Y_AXIS] = (sint16) get_gyro(Y_AXIS);
+    vmVariables.gyro[Z_AXIS] = (sint16) get_gyro(Z_AXIS);
+
+    SET_EVENT(EVENT_IMU);
+}
+
+void leds_cb(void){
+    
+    set_led(LED1, vmVariables.led1);
+    set_rgb_led(LED2, vmVariables.led2[RED_LED], vmVariables.led2[GREEN_LED], vmVariables.led2[BLUE_LED]);
+    set_led(LED3, vmVariables.led3);
+    set_rgb_led(LED4, vmVariables.led4[RED_LED], vmVariables.led4[GREEN_LED], vmVariables.led4[BLUE_LED]);
+    set_led(LED5, vmVariables.led5);
+    set_rgb_led(LED6, vmVariables.led6[RED_LED], vmVariables.led6[GREEN_LED], vmVariables.led6[BLUE_LED]);
+    set_led(LED7, vmVariables.led7);
+    set_rgb_led(LED8, vmVariables.led8[RED_LED], vmVariables.led8[GREEN_LED], vmVariables.led8[BLUE_LED]);
 }
 
 void button_cb(void)
@@ -219,12 +241,24 @@ AsebaNativeFunctionDescription AsebaNativeDescription_clear_all_leds = {
 void clear_all_leds(AsebaVMState *vm)
 {
     ASEBA_UNUSED(vm);
-    int i;
+    
+    vmVariables.led1 = 0;
+    vmVariables.led2[RED_LED] = 0;
+    vmVariables.led2[GREEN_LED] = 0;
+    vmVariables.led2[BLUE_LED] = 0;
+    vmVariables.led3 = 0;
+    vmVariables.led4[RED_LED] = 0;
+    vmVariables.led4[GREEN_LED] = 0;
+    vmVariables.led4[BLUE_LED] = 0;
+    vmVariables.led5 = 0;
+    vmVariables.led6[RED_LED] = 0;
+    vmVariables.led6[GREEN_LED] = 0;
+    vmVariables.led6[BLUE_LED] = 0;
+    vmVariables.led7 = 0;
+    vmVariables.led8[RED_LED] = 0;
+    vmVariables.led8[GREEN_LED] = 0;
+    vmVariables.led8[BLUE_LED] = 0;
 
-    for (i = 0; i <=3; i++) {
-        set_led(i, 0);
-        vmVariables.leds[i - 1] = 0;
-    }
 }
 
 

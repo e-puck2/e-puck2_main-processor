@@ -105,6 +105,9 @@ static THD_FUNCTION(selector_thd, arg)
 	uint16_t rab_range = 0;
 	uint16_t rab_sensor = 0;
 
+	calibrate_acc();
+	calibrate_gyro();
+
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
 

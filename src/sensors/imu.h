@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <hal.h>
+#include "sensors/mpu9250.h"
 
 /** Message containing one measurement from the IMU. */
 typedef struct {

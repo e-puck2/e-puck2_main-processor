@@ -9,6 +9,8 @@ extern "C" {
 #include "vm/vm.h"
 #include "vm/natives.h"
 #include "parameter/parameter.h"
+#include "sensors/imu.h"
+#include "leds.h"
 
 /** Number of variables usable by the Aseba script. */
 #define VM_VARIABLES_FREE_SPACE 256
@@ -20,7 +22,7 @@ extern "C" {
 
 /** Enum containing all the possible events. */
 enum AsebaLocalEvents {
-    EVENT_ACC=0,   // New accelerometer measurement
+    EVENT_IMU=0,   // New accelerometer measurement
     EVENT_BUTTON, // Button click
 };
 
@@ -37,8 +39,17 @@ struct _vmVariables {
     sint16 productId;                   // Product ID
 
     // Variables
-    uint16 leds[6];
-    sint16 acc[3];
+    uint16 led1;
+    uint16 led2[NUM_COLOR_LED];
+    uint16 led3;
+    uint16 led4[NUM_COLOR_LED];
+    uint16 led5;
+    uint16 led6[NUM_COLOR_LED];
+    uint16 led7;
+    uint16 led8[NUM_COLOR_LED];
+
+    sint16 acc[NB_AXIS];
+    sint16 gyro[NB_AXIS];
 
     // Free space
     sint16 freeSpace[VM_VARIABLES_FREE_SPACE];
@@ -53,7 +64,8 @@ void aseba_read_variables_from_system(AsebaVMState *vm);
 /** Updates the system from the Aseba variables. */
 void aseba_write_variables_to_system(AsebaVMState *vm);
 
-void accelerometer_cb(void);
+void leds_cb(void);
+void imu_cb(void);
 void button_cb(void);
 
 extern struct _vmVariables vmVariables;

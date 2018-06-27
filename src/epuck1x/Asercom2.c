@@ -88,7 +88,7 @@ int run_asercom2(void) {
     //e_init_ad_scan();
 
     selector = getselector(); //SELECTOR0 + 2*SELECTOR1 + 4*SELECTOR2 + 8*SELECTOR3;
-    if (selector == 3) {
+    if (selector == 3 || selector == 15) {
         use_bt = 1;
     } else {
         use_bt = 0;
@@ -125,9 +125,9 @@ int run_asercom2(void) {
     cam_size = cam_width * cam_heigth * 2;
 
     if (gumstix_connected == 0) {
-        e_poxxxx_init_cam();
-        e_poxxxx_config_cam((ARRAY_WIDTH - cam_width * cam_zoom) / 2, (ARRAY_HEIGHT - cam_heigth * cam_zoom) / 2, cam_width*cam_zoom, cam_heigth*cam_zoom, cam_zoom, cam_zoom, cam_mode);
-        e_poxxxx_write_cam_registers();
+//        e_poxxxx_init_cam();
+//        e_poxxxx_config_cam((ARRAY_WIDTH - cam_width * cam_zoom) / 2, (ARRAY_HEIGHT - cam_heigth * cam_zoom) / 2, cam_width*cam_zoom, cam_heigth*cam_zoom, cam_zoom, cam_zoom, cam_mode);
+//        e_poxxxx_write_cam_registers();
     }
 
     if(gumstix_connected) { // Communicate with gumstix (i2c).

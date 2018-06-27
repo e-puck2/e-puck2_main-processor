@@ -391,8 +391,18 @@ static THD_FUNCTION(selector_thd, arg)
 						break;
 
 					case 1:
-						chprintf((BaseSequentialStream *)&SD3, "battery=%d, %f V \r\n", get_battery_raw(), get_battery_voltage());
-						chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 2 Hz.
+						/*
+						//sdPut(&SD3, toEsp32);
+						len = sdReadTimeout(&SD3, &fromEsp32, 1, MS2ST(50));
+						if(len > 0) {
+							sdPut(&SDU1, fromEsp32);
+						}
+						chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
+						*/
+						run_asercom2();
+						stop_loop = 1;
+						//chprintf((BaseSequentialStream *)&SD3, "battery=%d, %f V \r\n", get_battery_raw(), get_battery_voltage());
+						//chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 2 Hz.
 						break;
 				}
 				break;

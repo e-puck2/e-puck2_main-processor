@@ -124,10 +124,10 @@ int run_asercom2(void) {
     cam_zoom = 8;
     cam_size = cam_width * cam_heigth * 2;
 
-    if (gumstix_connected == 0) {
-//        e_poxxxx_init_cam();
-//        e_poxxxx_config_cam((ARRAY_WIDTH - cam_width * cam_zoom) / 2, (ARRAY_HEIGHT - cam_heigth * cam_zoom) / 2, cam_width*cam_zoom, cam_heigth*cam_zoom, cam_zoom, cam_zoom, cam_mode);
-//        e_poxxxx_write_cam_registers();
+    if (gumstix_connected == 0 && selector != 15) {
+        e_poxxxx_init_cam();
+        e_poxxxx_config_cam((ARRAY_WIDTH - cam_width * cam_zoom) / 2, (ARRAY_HEIGHT - cam_heigth * cam_zoom) / 2, cam_width*cam_zoom, cam_heigth*cam_zoom, cam_zoom, cam_zoom, cam_mode);
+        e_poxxxx_write_cam_registers();
     }
 
     if(gumstix_connected) { // Communicate with gumstix (i2c).

@@ -287,5 +287,12 @@ float get_temperature(void) {
 	return imu_values.temperature;
 }
 
+float get_magnetic_field(uint8_t axis) {
+	if(axis < 3) {
+		return imu_values.magnetometer[axis];
+	}
+	return 0;
+}
+
 /**************************END PUBLIC FUNCTIONS***********************************/
 

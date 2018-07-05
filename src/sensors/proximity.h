@@ -9,7 +9,7 @@ extern "C" {
 
 #define PROXIMITY_NB_CHANNELS 8
 
-/** Struct containing a proximity measurment message. */
+/** Struct containing a proximity measurement message. */
 typedef struct {
     /** Ambient light level (LED is OFF). */
     unsigned int ambient[PROXIMITY_NB_CHANNELS];

@@ -10,6 +10,9 @@
 
 #include <main.h>
 #include "sensors/VL53L0X/VL53L0X.h"
+#include "sensors/ground.h"
+#include "sensors/imu.h"
+#include "sensors/proximity.h"
 #include "audio/play_melody.h"
 #include "button.h"
 #include "leds.h"
@@ -80,6 +83,9 @@ int run_asercom2(void) {
     unsigned int battValue = 0;
     uint8_t gumstix_connected = 0;
     uint16_t cam_start_index = 0;
+    char cmd = 0;
+    float tempf = 0.0;
+    uint32_t tempi = 0;
 
     //e_init_port();    // configure port pins
     //e_start_agendas_processing();
@@ -280,6 +286,281 @@ int run_asercom2(void) {
             i = 0;
             do {
                 switch ((int8_t)-c) {
+					case 0x8: // Get all sensors.
+						// Read accelerometer.
+                        if(gumstix_connected == 0) {
+                            accelero = e_read_acc_spheric();
+                        } else {
+                        	accelero.acceleration = 0.0;
+                        	accelero.inclination = 0.0;
+                        	accelero.orientation = 0.0;
+                        }
+                        ptr = (char *) &accelero.acceleration;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+
+                        ptr = (char *) &accelero.orientation;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+
+                        ptr = (char *) &accelero.inclination;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+                        ptr++;
+                        buffer[i++] = (*ptr);
+
+                    	// Read gyro.
+                    	if(gumstix_connected == 0) {
+                            getAllAxesGyro(&gyrox, &gyroy, &gyroz);
+                            buffer[i++] = gyrox & 0xFF;
+                            buffer[i++] = gyrox >> 8;
+                            buffer[i++] = gyroy & 0xFF;
+                            buffer[i++] = gyroy >> 8;
+                            buffer[i++] = gyroz & 0xFF;
+                            buffer[i++] = gyroz >> 8;
+                    	} else {
+							buffer[i++] = 0;
+							buffer[i++] = 0;
+							buffer[i++] = 0;
+							buffer[i++] = 0;
+							buffer[i++] = 0;
+							buffer[i++] = 0;
+                    	}
+
+						// Read magnetometer.
+                    	for (j=0; j<3; j++) {
+                    		tempf = get_magnetic_field(j);
+                    		tempi = *((uint32_t*)&tempf);
+                    		buffer[i++] = tempi & 0xff;
+                    		buffer[i++] = tempi >> 8;
+                    		buffer[i++] = tempi >> 16;
+                    		buffer[i++] = tempi >> 24;
+                    	}
+
+                        // Read temperature.
+                    	if(gumstix_connected == 0) {
+                    		buffer[i++] = 0;
+                    	} else {
+                            buffer[i++] = getTemperature();
+                        }
+
+                        // Read proximities.
+                    	for (j=0; j<8; j++) {
+                    		n = e_get_calibrated_prox(j); // or ? n=e_get_prox(j);
+                    		buffer[i++] = n & 0xff;
+                    		buffer[i++] = n >> 8;
+                    	}
+
+                        // Read ambient light.
+                    	for (j=0; j<8; j++) {
+                    		n = e_get_ambient_light(j);
+                    		buffer[i++] = n & 0xff;
+                    		buffer[i++] = n >> 8;
+                    	}
+
+                    	// Read ToF.
+						if(gumstix_connected == 0) {
+							n = VL53L0X_get_dist_mm();
+							buffer[i++] = n & 0xff;
+							buffer[i++] = n >> 8;
+						} else {
+							buffer[i++] = 0;
+							buffer[i++] = 0;
+						}
+
+                    	// Read microphones.
+                        n = e_get_micro_volume(0);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+                        n = e_get_micro_volume(1);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+                        n = e_get_micro_volume(2);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+                        n = e_get_micro_volume(3);
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+
+						// Read encoders.
+                        n = e_get_steps_left();
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+                        n = e_get_steps_right();
+                        buffer[i++] = n & 0xff;
+                        buffer[i++] = n >> 8;
+
+                        // Read battery.
+                    	battValue = getBatteryValueRaw();
+                    	buffer[i++] = battValue & 0xFF;
+                    	buffer[i++] = battValue >> 8;
+
+						// Read micro sd state.
+						if(sdio_is_present()) {
+							n = !sdio_connect();
+							buffer[i++] = n & 0xff;
+							sdio_disconnect();
+						} else {
+							buffer[i++] = 0;
+						}
+
+						// Read tv remote.
+						buffer[i++] = e_get_check();
+						buffer[i++] = e_get_address();
+						buffer[i++] = e_get_data();
+
+						// Read selector.
+	                    selector = SELECTOR0 + 2 * SELECTOR1 + 4 * SELECTOR2 + 8 * SELECTOR3;
+	                    buffer[i++] = selector;
+
+                    	// Read ground sensor proximity.
+                    	for (j=0; j<3; j++) {
+                    		n = get_ground_prox(j);
+                    		buffer[i++] = n & 0xff;
+                    		buffer[i++] = n >> 8;
+                    	}
+
+                		// Read ground sensor ambient.
+                    	for (j=0; j<3; j++) {
+                    		n = get_ground_ambient_light(j);
+                    		buffer[i++] = n & 0xff;
+                    		buffer[i++] = n >> 8;
+                    	}
+
+						// Additional empty byte for future use.
+						buffer[i++] = 0;
+
+						break;
+
+					case 0x9: // Set all actuators.
+                        // Handle behaviors and others commands.
+                        if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                        } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                        	while (e_getchar_uart1(&cmd) == 0);
+                        } else { // Communicate with the pc (usb).
+                        	while (e_getchar_uart2(&cmd) == 0);
+                        }
+                        if(cmd & 0x01) { // Calibrate proximity.
+                        	calibrate_ir();
+                        }
+                        if(cmd & 0x02) { // Enable obastacle avoidance.
+
+                        } else { // Disable obstacle avoidance
+
+                        }
+
+						// Set motor speed or motor position.
+                    	if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                            while (e_getchar_uart1(&c1) == 0);
+                            while (e_getchar_uart1(&c2) == 0);
+                        } else { // Communicate with the pc (usb).
+                            while (e_getchar_uart2(&c1) == 0);
+                            while (e_getchar_uart2(&c2) == 0);
+                        }
+                        speedl = (unsigned char) c1 + ((unsigned int) c2 << 8);
+                        if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                        } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                            while (e_getchar_uart1(&c1) == 0);
+                            while (e_getchar_uart1(&c2) == 0);
+                        } else { // Communicate with the pc (usb).
+                            while (e_getchar_uart2(&c1) == 0);
+                            while (e_getchar_uart2(&c2) == 0);
+                        }
+                        speedr = (unsigned char) c1 + ((unsigned int) c2 << 8);
+                        if(cmd & 0x04) { // Set steps.
+                        	e_set_steps_left(speedl);
+                        	e_set_steps_right(speedr);
+                        } else { // Set speed.
+                        	e_set_speed_left(speedl);
+                        	e_set_speed_right(speedr);
+                        }
+
+                        // Set LEDs.
+                    	if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                            while (e_getchar_uart1(&c1) == 0);
+                        } else { // Communicate with the pc (usb).
+                            while (e_getchar_uart2(&c1) == 0);
+                        }
+                    	if(c1 & 0x01) {
+                    		set_led(LED1, 1);
+                    	} else {
+                    		set_led(LED1, 0);
+                    	}
+                    	if(c1 & 0x02) {
+                    		set_led(LED3, 1);
+                    	} else {
+                    		set_led(LED3, 0);
+                    	}
+                    	if(c1 & 0x04) {
+                    		set_led(LED5, 1);
+                    	} else {
+                    		set_led(LED5, 0);
+                    	}
+                    	if(c1 & 0x08) {
+                    		set_led(LED7, 1);
+                    	} else {
+                    		set_led(LED7, 0);
+                    	}
+                    	if(c1 & 0x10) {
+                    		set_body_led(1);
+                    	} else {
+                    		set_body_led(0);
+                    	}
+                    	if(c1 & 0x20) {
+                    		set_front_led(1);
+                    	} else {
+                    		set_front_led(0);
+                    	}
+
+                    	// Play sound.
+                    	if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                    		while (e_getchar_uart1(&c1) == 0);
+                    	} else { // Communicate with the pc (usb).
+                    		while (e_getchar_uart2(&c1) == 0);
+                    	}
+                    	if(c1 & 0x01) {
+                    		play_melody(MARIO);//e_play_sound(0, 2112);
+                    	}
+                    	if(c1 & 0x02) {
+                    		play_melody(UNDERWORLD);//e_play_sound(2116, 1760);
+                    	}
+                    	if(c1 & 0x04) {
+                    		play_melody(STARWARS);//e_play_sound(3878, 3412);
+                    	}
+                    	if(c1 & 0x08) {
+                    		e_play_sound(7294, 3732);
+                    	}
+                    	if(c1 & 0x10) {
+                    		e_play_sound(11028, 8016);
+                    	}
+                    	if(c1 & 0x20) {
+                    		e_close_sound();
+                    		stop_current_melody();
+                    	}
+
+						break;
+
 					case 0xA: // RGB setting => ESP32
 						for(j=0; j<12; j++) {
 							if(gumstix_connected) { // Communicate with gumstix (i2c).

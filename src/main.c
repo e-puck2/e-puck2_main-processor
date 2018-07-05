@@ -20,6 +20,7 @@
 #include "epuck1x/Asercom2.h"
 #include "epuck1x/a_d/advance_ad_scan/e_acc.h"
 #include "sensors/battery_level.h"
+#include "sensors/ground.h"
 #include "sensors/imu.h"
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
@@ -387,6 +388,8 @@ static THD_FUNCTION(selector_thd, arg)
 							set_led(LED5, 1);
 						}
 
+						mpu9250_magnetometer_setup();
+
 						demo15_state = 1;
 						break;
 
@@ -442,6 +445,7 @@ int main(void)
 	mic_start(NULL);
 	sdio_start();
 	play_melody_start();
+	ground_start();
 
 //	// Initialise Aseba system, declaring parameters
 //    parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

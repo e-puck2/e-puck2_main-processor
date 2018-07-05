@@ -148,9 +148,18 @@ float get_gyro_rate(uint8_t axis);
  /**
  * @brief   Returns the last temperature value measured
  * 
- * @return          Last temperature value measured in °C
+ * @return          Last temperature value measured in Celsius degrees.
  */
 float get_temperature(void);
+
+/**
+* @brief   Returns the last magnetic field (micro Tesla) for the given axis.
+*
+* @param axis      0-2, respectively x,y or z
+*
+* @return          Last Last measured magnetic field.
+*/
+float get_magnetic_field(uint8_t axis);
 
 #ifdef __cplusplus
 }

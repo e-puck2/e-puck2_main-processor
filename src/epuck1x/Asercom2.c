@@ -289,6 +289,22 @@ int run_asercom2(void) {
 					case 0x8: // Get all sensors.
 						// Read accelerometer.
                         if(gumstix_connected == 0) {
+                            accx = e_get_acc(0);
+                            accy = e_get_acc(1);
+                            accz = e_get_acc(2);
+                        } else {
+                        	accx = 0;
+                        	accy = 0;
+                        	accz = 0;
+                        }
+                        buffer[i++] = accx & 0xff;
+                        buffer[i++] = accx >> 8;
+                        buffer[i++] = accy & 0xff;
+                        buffer[i++] = accy >> 8;
+                        buffer[i++] = accz & 0xff;
+                        buffer[i++] = accz >> 8;
+
+                        if(gumstix_connected == 0) {
                             accelero = e_read_acc_spheric();
                         } else {
                         	accelero.acceleration = 0.0;

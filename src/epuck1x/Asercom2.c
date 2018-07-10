@@ -1,7 +1,6 @@
 //#include "p30F6014A.h"
 // Advanced Sercom B
 
-#define CLIFF_SENSORS
 #define FLOOR_SENSORS	// define to enable floor sensors
 #define IR_RECEIVER
 
@@ -37,10 +36,8 @@
 #include <codec/e_sound.h>
 #include <utility/utility.h>
 #include <acc_gyro/e_lsm330.h>
-#ifdef CLIFF_SENSORS
 #ifndef FLOOR_SENSORS
 #define FLOOR_SENSORS
-#endif
 #endif
 #ifdef FLOOR_SENSORS
 #include <I2C/e_I2C_protocol.h>
@@ -786,26 +783,14 @@ int run_asercom2(void) {
                     case 'M': // optional floor sensors
 #ifdef FLOOR_SENSORS
                         if (gumstix_connected == 0) {
-                            e_i2cp_init();
-                            e_i2cp_enable();
-                            e_i2cp_read(0xC0, 0);
-                            for (j = 0; j < 6; j++) {
-                                if (j % 2 == 0) buffer[i++] = e_i2cp_read(0xC0, j + 1);
-                                else buffer[i++] = e_i2cp_read(0xC0, j - 1);
-                            }
-#ifdef CLIFF_SENSORS
-                            for (j = 13; j < 17; j++) {
-                                if (j % 2 == 0) buffer[i++] = e_i2cp_read(0xC0, j - 1);
-                                else buffer[i++] = e_i2cp_read(0xC0, j + 1);
-                            }
-#endif
-                            e_i2cp_disable();
+                        	for (j=0; j<3; j++) {
+                        		n = get_ground_prox(j);
+                        		buffer[i++] = n & 0xff;
+                        		buffer[i++] = n >> 8;
+                        	}
                         }
 #else
                         for (j = 0; j < 6; j++) buffer[i++] = 0;
-#ifdef CLIFF_SENSORS
-                        for (j = 13; j < 17; j++) buffer[i++] = 0;
-#endif
 #endif
                         break;
                     case 'N': // read proximity sensors
@@ -1290,40 +1275,7 @@ int run_asercom2(void) {
                 case 'M': // read floor sensors (optional)
 #ifdef FLOOR_SENSORS
                     if (gumstix_connected == 0) {
-                        e_i2cp_enable();
-                        for (j = 0; j < 6; j++) {
-                            if (j % 2 == 0) buffer[j] = e_i2cp_read(0xC0, j + 1);
-                            else buffer[j] = e_i2cp_read(0xC0, j - 1);
-                        }
-#ifdef CLIFF_SENSORS
-                        for (j = 13; j < 17; j++) {
-                            if (j % 2 == 0) buffer[j - 7] = e_i2cp_read(0xC0, j - 1);
-                            else buffer[j - 7] = e_i2cp_read(0xC0, j + 1);
-                        }
-#endif
-                        e_i2cp_disable();
-
-#ifdef CLIFF_SENSORS
-                        sprintf(buffer, "m,%d,%d,%d,%d,%d\r\n",
-                                (unsigned int) (buffer[0] & 0xff) +
-                                ((unsigned int) buffer[1] << 8),
-                                (unsigned int) (buffer[2] & 0xff) +
-                                ((unsigned int) buffer[3] << 8),
-                                (unsigned int) (buffer[4] & 0xff) +
-                                ((unsigned int) buffer[5] << 8),
-                                (unsigned int) (buffer[6] & 0xff) +
-                                ((unsigned int) buffer[7] << 8),
-                                (unsigned int) (buffer[8] & 0xff) +
-                                ((unsigned int) buffer[9] << 8));
-#else
-                        sprintf(buffer, "m,%d,%d,%d\r\n",
-                                (unsigned int) (buffer[0] & 0xff) +
-                                ((unsigned int) buffer[1] << 8),
-                                (unsigned int) (buffer[2] & 0xff) +
-                                ((unsigned int) buffer[3] << 8),
-                                (unsigned int) (buffer[4] & 0xff) +
-                                ((unsigned int) buffer[5] << 8));
-#endif
+                        sprintf(buffer, "m,%d,%d,%d\r\n", get_ground_prox(0), get_ground_prox(1), get_ground_prox(2));
                         if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_text(buffer);
                         } else { // Communicate with the pc (usb).

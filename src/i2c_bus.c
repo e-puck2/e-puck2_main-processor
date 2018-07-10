@@ -17,7 +17,7 @@ void i2c_start(void) {
      */
     static const I2CConfig i2c_cfg1 = {
         .op_mode = OPMODE_I2C,
-        .clock_speed = 400000,
+        .clock_speed = 200000,
         .duty_cycle = FAST_DUTY_CYCLE_2
     };
 

@@ -124,7 +124,9 @@ void e_set_speed(int linear_speed, int angular_speed)
  */
 int e_get_steps_left(void)
 {
-	return left_motor_get_pos();
+	// Divided by 2 because on e-puck2 the motors are handled with 8 steps per cycle instead of 4 as done with e-puck1.x.
+	// Thus we need half the number of steps to get the same position as with the e-puck1.x.
+	return left_motor_get_pos()/2;
 }
 
 /*! \brief Set the number of left motor steps
@@ -142,7 +144,9 @@ void e_set_steps_left(int set_steps)
  */
 int e_get_steps_right()
 {
-	return right_motor_get_pos();
+	// Divided by 2 because on e-puck2 the motors are handled with 8 steps per cycle instead of 4 as done with e-puck1.x.
+	// Thus we need half the number of steps to get the same position as with the e-puck1.x.
+	return right_motor_get_pos()/2;
 }
 
 /*! \brief Set the number of right motor steps

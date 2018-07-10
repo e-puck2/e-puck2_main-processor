@@ -67,7 +67,7 @@ void e_i2cp_disable(void)
 char e_i2cp_read(char device_add, char reg)
 {
 	uint8_t value = 0;
-	read_reg(device_add, reg, &value);
+	read_reg(device_add>>1, reg, &value);
 	return value;
 }
 
@@ -80,7 +80,7 @@ char e_i2cp_read(char device_add, char reg)
 char e_i2cp_write (char device_add, char reg, char value)
 {
 	int8_t err = 0;
-	if((err = write_reg(device_add, reg, value)) != MSG_OK) {
+	if((err = write_reg(device_add>>1, reg, value)) != MSG_OK) {
 		return 0;
 	} else {
 		return 1;

@@ -365,9 +365,9 @@ int run_asercom2(void) {
 
                         // Read temperature.
                     	if(gumstix_connected == 0) {
-                    		buffer[i++] = 0;
+                    		buffer[i++] = getTemperature();
                     	} else {
-                            buffer[i++] = getTemperature();
+                            buffer[i++] = 0;
                         }
 
                         // Read proximities.

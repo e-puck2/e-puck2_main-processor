@@ -393,8 +393,8 @@ int main(void)
 	set_front_led(0);
 	usb_start();
 	i2cInit();
-	dcmi_start();
-//	po8030_start();
+//	dcmi_start();
+	po8030_start();
 	motors_init();
 	proximity_start();
 	battery_level_start();
@@ -402,7 +402,7 @@ int main(void)
 	exti_start();
 //	imu_start();
 	ir_remote_start();
-	spi_comm_start();
+//	spi_comm_start();
 //	VL53L0X_start();
 	serial_start();
 	mic_start(NULL);

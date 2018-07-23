@@ -604,7 +604,7 @@ int8_t po8030_set_scale_buffer_size(format_t fmt, image_size_t imgsize) {
 
 void po8030_start(void) {
 
-	i2c_start();
+	//i2c_start();
 
     /* timer init */
     static const PWMConfig pwmcfg_cam = {
@@ -625,7 +625,7 @@ void po8030_start(void) {
     pwmEnableChannel(&PWMD5, 0, 1); //1 is half the period set => duty cycle = 50%
 
     // Default camera configuration.
-	po8030_advanced_config(FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	//po8030_advanced_config(FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);
 }
 
 int8_t po8030_config(format_t fmt, image_size_t imgsize) {

@@ -372,7 +372,7 @@ static THD_FUNCTION(selector_thd, arg)
 //						if(po8030_advanced_config(FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1) != MSG_OK) {
 //							set_led(LED1, 1);
 //						}
-						if(po8030_advanced_config(FORMAT_RGB565, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1) != MSG_OK) {
+						if(po8030_advanced_config(FORMAT_RGB565, 0, 0, 640, 480, SUBSAMPLING_X4, SUBSAMPLING_X4) != MSG_OK) {
 							set_led(LED1, 1);
 						}
 						po8030_set_exposure(512, 0);

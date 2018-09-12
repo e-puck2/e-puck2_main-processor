@@ -388,7 +388,7 @@ static THD_FUNCTION(selector_thd, arg)
 							set_led(LED5, 1);
 						}
 
-						mpu9250_magnetometer_setup();
+						//mpu9250_magnetometer_setup();
 
 						demo15_state = 1;
 						break;

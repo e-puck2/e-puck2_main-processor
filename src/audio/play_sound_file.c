@@ -73,6 +73,11 @@ static void end_cb(DACDriver *dacp, const dacsample_t *buffer, size_t n) {
     //changes the buffer only if we have remaining data to send
     chSysLockFromISR();
     if(size_buffer_to_read){
+        //we need to be sure the number of sample is 1 or even. BUT NOT ODD !
+        //so in case of we simply remove 1
+        if(size_buffer_to_read > 1 && size_buffer_to_read%2){
+            size_buffer_to_read -= 1;
+        }
         dac_change_bufferI(buffer_to_read, size_buffer_to_read, SAMPLING_44100HZ);
         //if we have less than the specified amount of data, it means we are at the end of the file
         //thus we set the size to 0 to stop the dac at the next iteration.
@@ -121,6 +126,10 @@ uint8_t playWAVFile(char *pathToFile){
     //flushes the header
     //for now we don't care to read the header.
     err = f_read(&file, buffer_to_fill, SIZE_WAV_HEADER_BYTES, &bytesRead);
+    if (err != FR_OK) {
+        f_close(&file);
+        return SF_ERROR;
+    }
 
     //loop to read te file until we have no more data to read
     do{
@@ -192,6 +201,8 @@ static THD_FUNCTION(PlaySoundFileThd, arg) {
 
         playWAVFile(pathToFile);
         play = false;
+        //little delay otherwise there is a playback error sometime resulting in a disgracefull noise
+        chThdSleepMilliseconds(10);
         //signals to the threads waiting that the sound is finished
         chCondBroadcast(&play_sound_file_condvar);
     }

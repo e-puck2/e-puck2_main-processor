@@ -75,4 +75,12 @@ bool mpu9250_ping(void);
 int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, 
 					int16_t *acc_raw, int16_t *gyro_offset, int16_t *acc_offset, uint8_t *status);
 
+/**
+* @brief	Read the sensitivity adjustment values from the sensor; these values come from factory calibration.
+* 			The returned values are a multiplication factor to apply to each axis.
+*
+* @param values			pointer to a buffer (of at least a size of 3 * float) to store the factors.
+*/
+int8_t mpu9250_magnetometer_read_sens_adj(float *values);
+
 #endif // MPU9250_H

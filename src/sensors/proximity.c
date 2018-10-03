@@ -190,7 +190,11 @@ static THD_FUNCTION(proximity_thd, arg)
     	prox_values.reflected[7] = adc2_values[15];
 
         for (int i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
-        	prox_values.delta[i] = prox_values.ambient[i] - prox_values.reflected[i];
+        	if(prox_values.reflected[i] > prox_values.ambient[i]) {
+        		prox_values.delta[i] = 0;
+        	} else {
+        		prox_values.delta[i] = prox_values.ambient[i] - prox_values.reflected[i];
+        	}
         }
 
         messagebus_topic_publish(&proximity_topic, &prox_values, sizeof(prox_values));

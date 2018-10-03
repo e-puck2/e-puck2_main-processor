@@ -20,6 +20,8 @@
 #include "epuck1x/Asercom.h"
 #include "epuck1x/Asercom2.h"
 #include "epuck1x/a_d/advance_ad_scan/e_acc.h"
+#include "epuck1x/motor_led/advance_one_timer/e_led.h"
+#include "epuck1x/utility/utility.h"
 #include "sensors/battery_level.h"
 #include "sensors/imu.h"
 #include "sensors/mpu9250.h"
@@ -81,12 +83,12 @@ static THD_FUNCTION(selector_thd, arg)
     messagebus_topic_t *prox_topic = messagebus_find_topic_blocking(&bus, "/proximity");
     proximity_msg_t prox_values;
     int16_t leftSpeed = 0, rightSpeed = 0;
+    int16_t prox_values_temp[8];
 
     messagebus_topic_t *imu_topic = messagebus_find_topic_blocking(&bus, "/imu");
     imu_msg_t imu_values;
 
-    uint8_t toEsp32 = 'c', fromEsp32 = 0;
-    int16_t len = 0;
+    uint16_t prox_thr = 1000;
 
     uint8_t hw_test_state = 0;
     uint8_t *img_buff_ptr;
@@ -105,8 +107,17 @@ static THD_FUNCTION(selector_thd, arg)
 	uint16_t rab_range = 0;
 	uint16_t rab_sensor = 0;
 
+	uint8_t back_and_forth_state = 0;
+	float turn_angle_rad = 0.0;
+	uint8_t led_animation_state = 0;
+	uint32_t led_animation_count = 0;
+
+	double heading = 0.0;
+	float mag_values[3];
+
 	calibrate_acc();
 	calibrate_gyro();
+	calibrate_ir();
 
     while(stop_loop == 0) {
     	time = chVTGetSystemTime();
@@ -122,22 +133,67 @@ static THD_FUNCTION(selector_thd, arg)
 				stop_loop = 1;
 				break;
 
-			case 2: // Read proximity sensors.
+			case 2: // Turn on the LEDs for the proximities that have an obstacle in front of them.
 				messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
 
-				if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
-					continue;
+				if((get_calibrated_prox(0) > prox_thr) || (get_calibrated_prox(7) > prox_thr)) {
+					e_set_led(0, 1);
+				} else {
+					e_set_led(0, 0);
 				}
 
-				// Sensors info print: each line contains data related to a single sensor.
-		        for (uint8_t i = 0; i < sizeof(prox_values.ambient)/sizeof(prox_values.ambient[0]); i++) {
-		        //for (uint8_t i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
-		        	chprintf((BaseSequentialStream *)&SDU1, "%4d,", prox_values.ambient[i]);
-		        	chprintf((BaseSequentialStream *)&SDU1, "%4d,", prox_values.reflected[i]);
-		        	chprintf((BaseSequentialStream *)&SDU1, "%4d", prox_values.delta[i]);
-		        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-		        }
-		        chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+				if(get_calibrated_prox(1) > prox_thr) {
+					e_set_led(1, 1);
+				} else {
+					e_set_led(1, 0);
+				}
+
+				if(get_calibrated_prox(2) > prox_thr) {
+					e_set_led(2, 1);
+				} else {
+					e_set_led(2, 0);
+				}
+
+				if(get_calibrated_prox(3) > prox_thr) {
+					e_set_led(3, 1);
+				} else {
+					e_set_led(3, 0);
+				}
+
+				if((get_calibrated_prox(3) > prox_thr) || (get_calibrated_prox(4) > prox_thr)) {
+					e_set_led(4, 1);
+				} else {
+					e_set_led(4, 0);
+				}
+
+				if(get_calibrated_prox(4) > prox_thr) {
+					e_set_led(5, 1);
+				} else {
+					e_set_led(5, 0);
+				}
+
+				if(get_calibrated_prox(5) > prox_thr) {
+					e_set_led(6, 1);
+				} else {
+					e_set_led(6, 0);
+				}
+
+				if(get_calibrated_prox(6) > prox_thr) {
+					e_set_led(7, 1);
+				} else {
+					e_set_led(7, 0);
+				}
+
+				if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+					// Sensors info print: each line contains data related to a single sensor.
+			        for (uint8_t i = 0; i < sizeof(prox_values.ambient)/sizeof(prox_values.ambient[0]); i++) {
+			        	chprintf((BaseSequentialStream *)&SDU1, "%4d,", prox_values.ambient[i]);
+			        	chprintf((BaseSequentialStream *)&SDU1, "%4d,", prox_values.reflected[i]);
+			        	chprintf((BaseSequentialStream *)&SDU1, "%4d", prox_values.delta[i]);
+			        	chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+			        }
+			        chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+				}
 
 				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
@@ -211,13 +267,100 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.
 				break;
 
-			case 6: // ESP32 UART communication test.
-				sdPut(&SD3, toEsp32);
-				len = sdReadTimeout(&SD3, &fromEsp32, 1, MS2ST(50));
-				if(len > 0) {
-					sdPut(&SDU1, fromEsp32);
+			case 6: // Move the robot back and forth exploiting the gyroscope to turn 180 degrees + LEDs animation.
+				while(1) {
+					switch(back_and_forth_state) {
+						case 0: // Set speed to go forward.
+							right_motor_set_speed(300);
+							left_motor_set_speed(300);
+							left_motor_set_pos(0);
+							back_and_forth_state = 1;
+							break;
+
+						case 1: // Go forward for a while.
+							if(left_motor_get_pos() >= 800) {
+								right_motor_set_speed(150);
+								left_motor_set_speed(-150);
+								turn_angle_rad = 0.0;
+								resetTime();
+								clear_leds();
+								set_body_led(1);
+								back_and_forth_state = 2;
+							}
+
+							led_animation_count++;
+							if(led_animation_count >= 200000) {
+								led_animation_count = 0;
+								switch(led_animation_state) {
+									case 0:
+										e_set_led(0, 1);
+										led_animation_state = 1;
+										break;
+									case 1:
+										e_set_led(1, 1);
+										led_animation_state = 2;
+										break;
+									case 2:
+										e_set_led(0, 0);
+										e_set_led(2, 1);
+										led_animation_state = 3;
+										break;
+									case 3:
+										e_set_led(1, 0);
+										e_set_led(3, 1);
+										led_animation_state = 4;
+										break;
+									case 4:
+										e_set_led(2, 0);
+										e_set_led(4, 1);
+										led_animation_state = 5;
+										break;
+									case 5:
+										e_set_led(3, 0);
+										e_set_led(5, 1);
+										led_animation_state = 6;
+										break;
+									case 6:
+										e_set_led(4, 0);
+										e_set_led(6, 1);
+										led_animation_state = 7;
+										break;
+									case 7:
+										e_set_led(5, 0);
+										e_set_led(7, 1);
+										led_animation_state = 8;
+										break;
+									case 8:
+										e_set_led(6, 0);
+										e_set_led(0, 1);
+										led_animation_state = 9;
+										break;
+									case 9:
+										e_set_led(7, 0);
+										e_set_led(1, 1);
+										led_animation_state = 2;
+										break;
+								}
+							}
+							break;
+
+						case 2:
+							messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+//							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+//								chprintf((BaseSequentialStream *)&SDU1, "rate=%f, angle=%f\r\n", get_gyro_rate(2), turn_angle_rad);
+//							}
+							turn_angle_rad += get_gyro_rate(2)*getDiffTimeMsAndReset()*0.001;
+							if(turn_angle_rad >= M_PI) {
+								right_motor_set_speed(300);
+								left_motor_set_speed(300);
+								left_motor_set_pos(0);
+								set_body_led(0);
+								back_and_forth_state = 1;
+							}
+							break;
+					}
+
 				}
-				chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz.
 				break;
 
 			case 7:
@@ -246,8 +389,16 @@ static THD_FUNCTION(selector_thd, arg)
 
 			case 11: // Simple obstacle avoidance + some animation.
 				messagebus_topic_wait(prox_topic, &prox_values, sizeof(prox_values));
-				leftSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[0]*2 - prox_values.delta[1];
-				rightSpeed = MOTOR_SPEED_LIMIT - prox_values.delta[7]*2 - prox_values.delta[6];
+
+				prox_values_temp[0] = get_calibrated_prox(0);
+				prox_values_temp[1] = get_calibrated_prox(1);
+				prox_values_temp[2] = get_calibrated_prox(2);
+				prox_values_temp[5] = get_calibrated_prox(5);
+				prox_values_temp[6] = get_calibrated_prox(6);
+				prox_values_temp[7] = get_calibrated_prox(7);
+
+				leftSpeed = MOTOR_SPEED_LIMIT/2 - prox_values_temp[0]*8 - prox_values_temp[1]*4 - prox_values_temp[2]*2;
+				rightSpeed = MOTOR_SPEED_LIMIT/2 - prox_values_temp[7]*8 - prox_values_temp[6]*4 - prox_values_temp[5]*2;
 				right_motor_set_speed(rightSpeed);
 				left_motor_set_speed(leftSpeed);
 
@@ -362,7 +513,7 @@ static THD_FUNCTION(selector_thd, arg)
 
 						// Read IMU.
 						chprintf((BaseSequentialStream *)&SDU1, "IMU\r\n");
-				    	chprintf((BaseSequentialStream *)&SDU1, "%Ax=%-7d Ay=%-7d Az=%-7d Gx=%-7d Gy=%-7d Gz=%-7d\r\n\n", imu_values.acc_raw[0], imu_values.acc_raw[1], imu_values.acc_raw[2], imu_values.gyro_raw[0], imu_values.gyro_raw[1], imu_values.gyro_raw[2]);
+				    	chprintf((BaseSequentialStream *)&SDU1, "Ax=%-7d Ay=%-7d Az=%-7d Gx=%-7d Gy=%-7d Gz=%-7d\r\n\n", imu_values.acc_raw[0], imu_values.acc_raw[1], imu_values.acc_raw[2], imu_values.gyro_raw[0], imu_values.gyro_raw[1], imu_values.gyro_raw[2]);
 
 						// Read selector position.
 				    	chprintf((BaseSequentialStream *)&SDU1, "SELECTOR\r\n");
@@ -408,20 +559,54 @@ static THD_FUNCTION(selector_thd, arg)
 				chThdSleepMilliseconds(50);
 				break;
 
-			case 14: // Read magnetometer sensors values.
+			case 14: // Read magnetometer sensors values and compute heading.
 				switch(magneto_state) {
-					case 0:
+					case 0: // Setup and calibrate the magnetometer.
 						mpu9250_magnetometer_setup();
+						//set_body_led(1);
+						//calibrate_magnetometer();
+						//set_body_led(0);
+						messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+						if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+							chprintf((BaseSequentialStream *)&SDU1, "adj_x=%f adj_y=%f adj_z=%f\r\n", imu_values.mag_sens_adjust[0], imu_values.mag_sens_adjust[1], imu_values.mag_sens_adjust[2]);
+							chprintf((BaseSequentialStream *)&SDU1, "offset_x=%f offset_y=%f offset_z=%f\r\n", imu_values.mag_offset[0], imu_values.mag_offset[1], imu_values.mag_offset[2]);
+							chprintf((BaseSequentialStream *)&SDU1, "scale_x=%f scale_y=%f scale_z=%f\r\n", imu_values.mag_scale[0], imu_values.mag_scale[1], imu_values.mag_scale[2]);
+						}
 						magneto_state = 1;
 						break;
 
-					case 1:
-				    	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
-				    	if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
-				    		continue;
+					case 1: // Compute the heading.
+				    	messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values)); // Wait for the next measurement.
+						get_mag_filtered(mag_values);
+						heading = (atan2(mag_values[1], mag_values[0]) * 180.0)/M_PI;
+						heading += 180.0; // 0..360
+
+						// Turn on a LED based on the current heading.
+						e_led_clear();
+						if ((heading > 332.5) || (heading <= 27.5)) // 332.5 .. 27.5
+							e_set_led(0, 1);
+						else if ((heading > 27.5) && (heading <= 72.5)) // 27.5 .. 72.5
+							e_set_led(1, 1);
+						else if ((heading > 72.5)  && (heading <= 107.5)) // 72.5 .. 107.5
+							e_set_led(2, 1);
+						else if (( heading > 107.5) && (heading <= 152.5)) // 112.5 .. 152.5
+							e_set_led(3, 1);
+						else if (( heading > 152.5) && (heading <= 207.5)) // 152.5 .. 207.5
+							e_set_led(4, 1);
+						else if ( (heading > 207.5) && (heading <= 252.5)) // 207.5 .. 252.5
+							e_set_led(5, 1);
+						else if ( (heading > 252.5) && (heading <= 287.5)) // 252.5 .. 287.5
+							e_set_led(6, 1);
+						else if ( (heading > 287.5) && (heading <= 332.5)) // 287.5 .. 332.5
+							e_set_led(7, 1);
+
+				    	if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+				    		chprintf((BaseSequentialStream *)&SDU1, "Mx=%f My=%f Mz=%f\r\n", imu_values.magnetometer[0], imu_values.magnetometer[1], imu_values.magnetometer[2]);
+				    		chprintf((BaseSequentialStream *)&SDU1, "Mx=%f My=%f Mz=%f\r\n", mag_values[0], mag_values[1], mag_values[2]);
+				    		chprintf((BaseSequentialStream *)&SDU1, "heading = %f\r\n", heading);
 				    	}
-				    	chprintf((BaseSequentialStream *)&SDU1, "%Mx=%f My=%f Mz=%f\r\n", imu_values.magnetometer[0], imu_values.magnetometer[1], imu_values.magnetometer[2]);
-				    	chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
+
+				    	chThdSleepUntilWindowed(time, time + MS2ST(125)); // Refresh @ 8 Hz, that is the magnetometer update frequency.
 						break;
 				}
 				break;

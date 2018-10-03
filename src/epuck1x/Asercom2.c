@@ -14,7 +14,7 @@
 #include "audio/play_sound_file.h"
 #include "button.h"
 #include "leds.h"
-#include "fat.h"
+#include "sdio.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -99,8 +99,6 @@ int run_asercom2(void) {
     } else {
     	gumstix_connected = 0;
     }
-    //mounts the sdCard
-    mountSDCard();
 
 #ifdef FLOOR_SENSORS
     if (gumstix_connected == 0) { // the I2C must remain disabled when using the gumstix extension
@@ -333,8 +331,10 @@ int run_asercom2(void) {
 						break;
 
 					case 0xE: // Get SD state (0=not ok, 1=ok)
-						if(isSDCardMounted()) {
-							buffer[i++] = 1;
+						if(sdio_is_present()) {
+							n = !sdio_connect();
+							buffer[i++] = n & 0xff;
+							sdio_disconnect();
 						} else {
 							buffer[i++] = 0;
 						}

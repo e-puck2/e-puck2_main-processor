@@ -8,10 +8,9 @@
 
 #define RES_2G      2.0f
 #define RES_250DPS  250.0f
-#define RES_4800UT  4800.0f
 #define MAX_INT16   32768.0f
 
-#define RAW16BITS_TO_TESLA  (RES_4800UT/MAX_INT16)  //4800uT scale for int16 raw
+#define RAW16BITS_TO_TESLA  (4912.0/32760.0)  // Measurement range of each axis is [-32760..32760] in 16-bit output, with magnetic flux ranging from 4912 to -4912 (see "mpu9250 register map").
 #define ACC_RAW2G           (RES_2G / MAX_INT16)   //2G scale for int16 raw value
 #define GYRO_RAW2DPS        (RES_250DPS / MAX_INT16)   //250DPS (degrees per second) scale for int16 raw value
 
@@ -214,6 +213,23 @@ int8_t mpu9250_magnetometer_setup(void){
     	}
     }
     chThdSleepMilliseconds(1);
+
+    return err;
+}
+
+int8_t mpu9250_magnetometer_read_sens_adj(float *values) {
+	int8_t err = 0;
+    static uint8_t buf[3];
+
+    if((err = read_reg_multi(imu_addr, AK8963_ASAX, buf, sizeof(buf))) != MSG_OK) {
+    	mpu9250_change_addr();
+    	if((err = read_reg_multi(imu_addr, AK8963_ASAX, buf, sizeof(buf))) != MSG_OK) {
+    		return err;
+    	}
+    }
+    values[0] = (float)(buf[0] - 128)/256.0 + 1.0;
+    values[1] = (float)(buf[1] - 128)/256.0 + 1.0;
+    values[2] = (float)(buf[2] - 128)/256.0 + 1.0;
 
     return err;
 }

@@ -5,7 +5,7 @@
 #include "chprintf.h"
 #include "i2c_bus.h"
 #include "imu.h"
-#include "exti.h"
+//#include "exti.h"
 
 static imu_msg_t imu_values;
 
@@ -21,6 +21,9 @@ static uint8_t gyroAxisSelected = 0;
 static uint8_t gyroFilterSize = 0;
 static uint8_t gyroCalibrationInProgress = 0;
 
+static uint8_t magCalibrationInProgress = 0;
+static uint8_t magCalibrationState = 0;
+
 static thread_t *imuThd;
 static bool imu_configured = false;
 
@@ -34,12 +37,12 @@ static THD_FUNCTION(imu_reader_thd, arg) {
      (void) arg;
      chRegSetThreadName(__FUNCTION__);
 
-     event_listener_t imu_int;
+     //event_listener_t imu_int;
 
      /* Starts waiting for the external interrupts. */
-     chEvtRegisterMaskWithFlags(&exti_events, &imu_int,
-                                (eventmask_t)EXTI_EVENT_IMU_INT,
-                                (eventflags_t)EXTI_EVENT_IMU_INT);
+     //chEvtRegisterMaskWithFlags(&exti_events, &imu_int,
+     //                           (eventmask_t)EXTI_EVENT_IMU_INT,
+     //                           (eventflags_t)EXTI_EVENT_IMU_INT);
 
      // Declares the topic on the bus.
      messagebus_topic_t imu_topic;
@@ -53,6 +56,21 @@ static THD_FUNCTION(imu_reader_thd, arg) {
      uint8_t gyroCalibrationNumSamples = 0;
      int32_t gyroCalibrationSum = 0;
      systime_t time;
+     uint8_t mag_samples = 0;
+     float mag_min[3] = {0.0};
+     float mag_max[3] = {0.0};
+     uint8_t mag_update_cycles = 0;
+
+     // Set the magnetometer calibration values that will be used if no other calibrations will be accomplished.
+	imu_values.mag_sens_adjust[0] = 1.148;
+ 	imu_values.mag_sens_adjust[1] = 1.097;
+ 	imu_values.mag_sens_adjust[2] = 1.445;
+ 	imu_values.mag_offset[0] = 37.0;
+ 	imu_values.mag_offset[1] = -3.5;
+ 	imu_values.mag_offset[2] = 187.0;
+ 	imu_values.mag_scale[0] = 1.43;
+ 	imu_values.mag_scale[1] = 0.99;
+ 	imu_values.mag_scale[2] = 0.77;
 
      while (chThdShouldTerminateX() == false) {
     	 time = chVTGetSystemTime();
@@ -119,6 +137,73 @@ static THD_FUNCTION(imu_reader_thd, arg) {
  					}
  					break;
          	}
+         }
+
+         if(magCalibrationInProgress) {
+        	 switch(magCalibrationState) {
+        	 	 case 0: // Reset calibration values.
+        	 		 imu_values.mag_offset[0] = imu_values.mag_offset[1] = imu_values.mag_offset[2] = 0.0;
+        	 		 imu_values.mag_scale[0] = imu_values.mag_scale[1] = imu_values.mag_scale[2] = 0.0;
+        	 		 mag_samples = 0;
+        	 		 mag_min[0] = mag_min[1] = mag_min[2] = 4912.0;
+        	 		 mag_max[0] = mag_max[1] = mag_max[2] = -4912.0;
+        	 		 mag_update_cycles = 35; // Magnetometer is updated @ 8 Hz, the thread run @ 250 Hz, plus a bit of safety (256/8+4=35).
+        	 		 magCalibrationState = 1;
+        	 		 break;
+
+        	 	 case 1: // Compute new calibration values.
+        	 		 mag_update_cycles++;
+        	 		 if(mag_update_cycles >= 35) { // Magnetometer values are for sure updated after 35 thread cycles (about 140 ms).
+        	 			 mag_update_cycles = 0;
+        	 			 if(imu_values.magnetometer[0] < mag_min[0]) {
+        	 				mag_min[0] = imu_values.magnetometer[0];
+        	 			 }
+        	 			 if(imu_values.magnetometer[0] > mag_max[0]) {
+        	 				 mag_max[0] = imu_values.magnetometer[0];
+        	 			 }
+        	 			 if(imu_values.magnetometer[1] < mag_min[1]) {
+        	 				mag_min[1] = imu_values.magnetometer[1];
+        	 			 }
+        	 			 if(imu_values.magnetometer[1] > mag_max[1]) {
+        	 				 mag_max[1] = imu_values.magnetometer[1];
+        	 			 }
+        	 			 if(imu_values.magnetometer[2] < mag_min[2]) {
+        	 				mag_min[2] = imu_values.magnetometer[2];
+        	 			 }
+        	 			 if(imu_values.magnetometer[2] > mag_max[2]) {
+        	 				 mag_max[2] = imu_values.magnetometer[2];
+        	 			 }
+
+        	 			//chprintf((BaseSequentialStream *)&SDU1, "x=%f, y=%f, z=%f\r\n", imu_values.magnetometer[0], imu_values.magnetometer[1], imu_values.magnetometer[2]);
+
+						 mag_samples++;
+						 if(mag_samples >= 50) { // The calibration lasts about 35*4*50 = 7000 ms.
+
+							 //chprintf((BaseSequentialStream *)&SDU1, "x=[%f;%f], y=[%f;%f], z=[%f;%f]\r\n", mag_min[0], mag_max[0], mag_min[1], mag_max[1], mag_min[2], mag_max[2]);
+
+							 // Hard iron correction.
+							 imu_values.mag_offset[0] = (mag_max[0] + mag_min[0]) / 2.0;
+							 imu_values.mag_offset[1] = (mag_max[1] + mag_min[1]) / 2.0;
+							 imu_values.mag_offset[2] = (mag_max[2] + mag_min[2]) / 2.0;
+
+							 //chprintf((BaseSequentialStream *)&SDU1, "off_x=%f, off_y=%f, off_z=%f\r\n", imu_values.mag_offset[0], imu_values.mag_offset[1], imu_values.mag_offset[2]);
+
+							 // Soft iron correction.
+							 imu_values.mag_scale[0] = (mag_max[0] - mag_min[0]) / 2.0;
+							 imu_values.mag_scale[1] = (mag_max[1] - mag_min[1]) / 2.0;
+							 imu_values.mag_scale[2] = (mag_max[2] - mag_min[2]) / 2.0;
+							 float avg = (imu_values.mag_scale[0] + imu_values.mag_scale[1] + imu_values.mag_scale[2])/3.0;
+							 imu_values.mag_scale[0] = avg / imu_values.mag_scale[0];
+							 imu_values.mag_scale[1] = avg / imu_values.mag_scale[1];
+							 imu_values.mag_scale[2] = avg / imu_values.mag_scale[2];
+
+							 //chprintf((BaseSequentialStream *)&SDU1, "scale_x=%f, scale_y=%f, scale_z=%f\r\n", imu_values.mag_scale[0], imu_values.mag_scale[1], imu_values.mag_scale[2]);
+
+							 magCalibrationInProgress = 0;
+						 }
+        	 		 }
+        	 		 break;
+        	 }
          }
 
          chThdSleepUntilWindowed(time, time + MS2ST(4)); //reduced the sample rate to 250Hz
@@ -284,6 +369,39 @@ float get_gyro_rate(uint8_t axis) {
 
 float get_temperature(void) {
 	return imu_values.temperature;
+}
+
+void calibrate_magnetometer(void) {
+	if(imu_configured == true) {
+		mpu9250_magnetometer_read_sens_adj(imu_values.mag_sens_adjust);
+		magCalibrationState = 0;
+		magCalibrationInProgress = 1;
+		while(magCalibrationInProgress) {
+			chThdSleepMilliseconds(20);
+		}
+	}
+}
+
+void get_mag_filtered(float *values) {
+	// Get last measure.
+	values[0] = imu_values.magnetometer[0];
+	values[1] = imu_values.magnetometer[1];
+	values[2] = imu_values.magnetometer[2];
+
+	// Apply factory axial sensitivity adjustments.
+	values[0] *= imu_values.mag_sens_adjust[0];
+	values[1] *= imu_values.mag_sens_adjust[1];
+	values[2] *= imu_values.mag_sens_adjust[2];
+
+	// Apply hard iron ie. offset bias from calibration.
+	values[0] -= imu_values.mag_offset[0];
+	values[1] -= imu_values.mag_offset[1];
+	values[2] -= imu_values.mag_offset[2];
+
+	// Apply soft iron ie. scale bias from calibration.
+	values[0] *= imu_values.mag_scale[0];
+	values[1] *= imu_values.mag_scale[1];
+	values[2] *= imu_values.mag_scale[2];
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

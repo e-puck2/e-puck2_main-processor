@@ -13,7 +13,7 @@ typedef struct {
     float acceleration[3]; // m/s^2
     float gyro_rate[3]; // rad/s
     float temperature;
-    float magnetometer[3]; //uT
+    float magnetometer[3]; //uT (1 microtesla [uT] = 10 milligauss [mG])
     int16_t acc_raw[3];
     int16_t gyro_raw[3];
     int16_t acc_offset[3];
@@ -21,6 +21,9 @@ typedef struct {
     int16_t acc_filtered[3];
     int16_t gyro_filtered[3];
     uint8_t status;
+    float mag_sens_adjust[3]; // Axial sensitivity adjustment factors.
+    float mag_offset[3]; // Hard iron calibration factors.
+    float mag_scale[3]; // Soft iron calibration factors.
 } imu_msg_t;
 
 
@@ -149,9 +152,25 @@ float get_gyro_rate(uint8_t axis);
  /**
  * @brief   Returns the last temperature value measured
  * 
- * @return          Last temperature value measured in Â°C
+ * @return          Last temperature value measured in °C
  */
 float get_temperature(void);
+
+/**
+* @brief   Launches a calibration process of the magnetometer.
+* The body LED of the robot will turn on during the calibration.
+* The user should move the robot following an "8 shape" motion, more times if possible, until the body LED turn off.
+*/
+void calibrate_magnetometer(void);
+
+/**
+* @brief	Returns the last magnetometer values measured for the three axes, corrected for the hard and soft iron
+*			distortions and adjusted with factory calibration parameters.
+*
+* @param value     pointer to a buffer (of at least a size of 3 * float)
+*                  to which store the corrected measures
+*/
+void get_mag_filtered(float *values);
 
 #ifdef __cplusplus
 }

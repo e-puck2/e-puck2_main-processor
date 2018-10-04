@@ -27,9 +27,11 @@
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
 #include "sensors/VL53L0X/VL53L0X.h"
+#include "button.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
 #include "exti.h"
+#include "fat.h"
 #include "i2c_bus.h"
 #include "ir_remote.h"
 #include "leds.h"
@@ -111,6 +113,9 @@ static THD_FUNCTION(selector_thd, arg)
 	float turn_angle_rad = 0.0;
 	uint8_t led_animation_state = 0;
 	uint32_t led_animation_count = 0;
+
+	uint8_t wav_volume = 20;
+	uint8_t wav_play_state = 0;
 
 	double heading = 0.0;
 	float mag_values[3];
@@ -363,11 +368,44 @@ static THD_FUNCTION(selector_thd, arg)
 				}
 				break;
 
-			case 7:
-				communication_start((BaseSequentialStream *)&SDU1);
-				 while (1) {
-			        chThdSleepMilliseconds(1000);
-			    }
+			case 7: // Play a wav (mono, 16 KHz) named "example.wav" from the micro sd when pressing the button. At each press the playback volume is also increased by 10%.
+				switch(wav_play_state) {
+					case 0:
+						if(mountSDCard()) {
+							wav_play_state = 1;
+						}
+						chThdSleepMilliseconds(1000);
+						break;
+
+					case 1:
+						if(button_is_pressed()) {
+							wav_play_state = 2;
+						}
+						break;
+
+					case 2:
+						if(!button_is_pressed()) {
+							wav_play_state = 3;
+						}
+						break;
+
+					case 3:
+						playSoundFile("example.wav", SF_FORCE_CHANGE, 16000);
+						waitSoundFileHasFinished();
+						if(wav_volume == 100) {
+							wav_volume = 0;
+						} else {
+							wav_volume += 10;
+						}
+						setSoundFileVolume(wav_volume);
+						if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+							chprintf((BaseSequentialStream *)&SDU1, "volume=%d\r\n", wav_volume);
+						}
+						wav_play_state = 1;
+						break;
+				}
+
+				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.
 				break;
 
 			case 8: // Asercom protocol v2 (USB).

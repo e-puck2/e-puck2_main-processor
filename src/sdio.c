@@ -17,25 +17,32 @@ uint8_t sdio_is_present(void) {
 }
 
 uint8_t sdio_connect(void) {
-	if(!sdio_connected){
-		if(sdcConnect(&SDCD1) == HAL_SUCCESS){
-			sdio_connected = true;
-		}else{
-			return HAL_FAILED;
+	if(sdio_is_present()) {
+		if(!sdio_connected){
+			if(sdcConnect(&SDCD1) == HAL_SUCCESS){
+				sdio_connected = true;
+			}else{
+				return HAL_FAILED;
+			}
 		}
+		return HAL_SUCCESS;
+	} else {
+		return HAL_FAILED;
 	}
-	return HAL_SUCCESS;
 }
 
 uint8_t sdio_disconnect(void) {
-	if(sdio_connected){
-		if(sdcDisconnect(&SDCD1) == HAL_SUCCESS){
-			sdio_connected = false;
-		}else{
-			return HAL_FAILED;
+	if(sdio_is_present()) {
+		if(sdio_connected){
+			if(sdcDisconnect(&SDCD1) == HAL_SUCCESS){
+				sdio_connected = false;
+			}else{
+				return HAL_FAILED;
+			}
 		}
+		return HAL_SUCCESS;
+	} else {
+		return HAL_FAILED;
 	}
-	return HAL_SUCCESS;
-	
 }
 

@@ -290,7 +290,7 @@ static void cmd_sound_file_play(BaseSequentialStream *chp, int argc, char *argv[
         return;
     }
     
-    playSoundFile(argv[0],SF_FORCE_CHANGE);
+    playSoundFile(argv[0],SF_FORCE_CHANGE, 44100);
 
 }
 

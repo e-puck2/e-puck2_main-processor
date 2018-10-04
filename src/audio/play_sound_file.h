@@ -1,9 +1,9 @@
 /*
 
 File    : play_sound_file.h
-Author  : Eliot Ferragni
-Date    : 9 may 2018
-REV 1.0
+Author  : Eliot Ferragni, Stefano Morgani
+Date    : 4 October 2018
+REV 1.1
 
 Functions and defines to play sounds from the sd card in the uncompressed WAV format in signed 16bits 44,1kHz mono
 
@@ -20,9 +20,9 @@ Functions and defines to play sounds from the sd card in the uncompressed WAV fo
 #define SF_ERROR 1
 #define SF_OK    0
 
-#define DEFAULT_VOLUME  10
-#define VOLUME_MIN 		5	//under this, the sound is distorted.
-#define VOLUME_MAX      50  //after this the sound begins to saturate.
+#define DEFAULT_VOLUME  20
+#define VOLUME_MIN 		1
+#define VOLUME_MAX      100 // This means the DAC output will be near the full range [0..4095].
 
 typedef enum{
   SF_SIMPLE_PLAY = 0,	//plays the new sound file but if a file is already playing, then this order is ignored
@@ -42,8 +42,9 @@ void playSoundFileStart(void);
  * 
  * @param pathToFile 	Path to the file on the sd card
  * @param option 		Behavior to change the sound file playing. (see play_melody_option_t)
+ * @param freq			Playback frequency in Hz (e.g. 44100).
  */
-void playSoundFile(char* pathToFile, playSoundFileOption_t option);
+void playSoundFile(char* pathToFile, playSoundFileOption_t option, uint32_t freq);
 
 /**
  * @brief Waits until the sound file playing has finished (put the invocking thread in sleep)
@@ -61,8 +62,7 @@ void stopCurrentSoundFile(void);
 /**
  * @brief Sets the volume output volume of the speaker. Only works for sound played with this library.
  * 
- * @param volume 	Desired volume between VOLUME_MIN and VOLUME_MAX. 
- * 					If less than VOLUME_MIN, then the volume is muted but the playback continues.
+ * @param volume 	Desired volume between VOLUME_MIN and VOLUME_MAX.
  */
 void setSoundFileVolume(uint8_t volume);
 

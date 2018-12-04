@@ -9,6 +9,7 @@
 #define IMAGE_MAX_SIZE (BUFFER_SIZE-IMAGE_HEADER_SIZE)
 
 #include <main.h>
+#include "camera/dcmi_camera.h"
 #include "sensors/VL53L0X/VL53L0X.h"
 #include "audio/play_melody.h"
 #include "audio/play_sound_file.h"

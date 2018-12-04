@@ -7,6 +7,7 @@
 
 #include <main.h>
 #include "audio/play_melody.h"
+#include "camera/dcmi_camera.h"
 
 #include <string.h>
 #include <ctype.h>

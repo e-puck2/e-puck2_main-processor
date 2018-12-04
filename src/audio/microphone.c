@@ -28,8 +28,7 @@ uint16_t mic_get_volume(uint8_t mic) {
 }
 
 // This function is called every 10 ms of recorded audio data.
-// It is called twice every 10 ms because the microphones are handled in pairs (left and right, front and back).
-// For each microphone there are 160 samples.
+// For each microphone there are 160 samples, that is 640 samples in total for the 4 microphones.
 // The function compute the volume for each microphone.
 static void handlePCMdata(int16_t *data, uint16_t num_samples) {
 	int16_t max_value[4]={INT16_MIN}, min_value[4]={INT16_MAX};

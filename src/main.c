@@ -23,6 +23,7 @@
 #include "epuck1x/motor_led/advance_one_timer/e_led.h"
 #include "epuck1x/utility/utility.h"
 #include "sensors/battery_level.h"
+#include "sensors/ground.h"
 #include "sensors/imu.h"
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
@@ -99,6 +100,9 @@ static THD_FUNCTION(selector_thd, arg)
     uint16_t melody_state = 0, melody_counter = 0;
 
     uint8_t magneto_state = 0;
+    
+    uint8_t demo15_state = 0;
+    uint8_t temp_rx = 0;
 
 	uint8_t rab_addr = 0x20;
 	uint8_t rab_state = 0;
@@ -650,8 +654,36 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 15:
-				chprintf((BaseSequentialStream *)&SD3, "battery=%d, %f V \r\n", get_battery_raw(), get_battery_voltage());
-				chThdSleepUntilWindowed(time, time + MS2ST(500)); // Refresh @ 2 Hz.
+				switch(demo15_state) {
+					case 0:
+						spi_rgb_setting_disable();
+						spi_image_transfer_enable();
+						if(po8030_advanced_config(FORMAT_RGB565, 0, 0, 640, 480, SUBSAMPLING_X4, SUBSAMPLING_X4) != MSG_OK) {
+							set_led(LED1, 1);
+						}
+						po8030_set_exposure(512, 0); // Fix the exposure to have a stable framerate.
+
+						dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
+
+						if(dcmi_prepare() < 0) {
+							set_led(LED5, 1);
+						}
+
+						//mpu9250_magnetometer_setup();
+
+						// Flush the uart input to avoid interpreting garbage as real commands.
+						while(chnReadTimeout(&SD3, (uint8_t*)&temp_rx, 1, MS2ST(1)>0)) {
+							chThdSleepMilliseconds(1);
+						}
+
+						demo15_state = 1;
+						break;
+
+					case 1:
+						run_asercom2();
+						stop_loop = 1;
+						break;
+				}
 				break;
 		}
     }
@@ -690,6 +722,7 @@ int main(void)
 	sdio_start();
 	playMelodyStart();
 	playSoundFileStart();
+	ground_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

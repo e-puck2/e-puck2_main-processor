@@ -292,7 +292,7 @@ static void pwm_ch1_cb(PWMDriver *pwmp) {
 
 void proximity_start(void)
 {
-	if(ADCD2.state != ADC_STOP) {
+	if(ADCD1.state != ADC_STOP) {
 		return;
 	}
 
@@ -314,10 +314,10 @@ void proximity_start(void)
         },
     };
 	
-    adcStart(&ADCD2, NULL);
-    adcAcquireBus(&ADCD2);
+    adcStart(&ADCD1, NULL);
+    adcAcquireBus(&ADCD1);
     // ADC waiting for the trigger from the timer.
-    adcStartConversion(&ADCD2, &adcgrpcfg2, adc2_proximity_samples, DMA_BUFFER_SIZE); 
+    adcStartConversion(&ADCD1, &adcgrpcfg2, adc2_proximity_samples, DMA_BUFFER_SIZE);
 
     /* Init PWM */
     pwmStart(&PWMD2, &pwmcfg_proximity);

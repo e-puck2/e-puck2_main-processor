@@ -183,6 +183,15 @@ msg_t dcmiStopStream(DCMIDriver *dcmip) {
 	return ret;
 }
 
+void dcmiRelease(DCMIDriver *dcmip) {
+	osalDbgCheck(dcmip != NULL);
+	osalSysLock();
+	dcmip->state = DCMI_READY;
+	dcmi_lld_unprepare(dcmip);
+	dcmip->state = DCMI_STOP;
+	osalSysUnlock();
+}
+
 #endif /* HAL_USE_DCMI */
 
 /** @} */

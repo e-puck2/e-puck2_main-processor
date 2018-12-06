@@ -623,6 +623,7 @@ void po8030_start(void) {
     pwmStart(&PWMD5, &pwmcfg_cam);
     // Enables channel 1 to clock the camera.
     pwmEnableChannel(&PWMD5, 0, 1); //1 is half the period set => duty cycle = 50%
+    chThdSleepMilliseconds(1000); // Give time for the clock to be stable and the camera to wake-up.
 
     // Default camera configuration.
 	po8030_advanced_config(FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);

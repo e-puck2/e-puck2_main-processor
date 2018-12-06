@@ -1,6 +1,7 @@
 #include "e_poxxxx.h"
 #include "../camera/dcmi_camera.h"
 #include "../camera/po8030.h"
+#include "../spi_comm.h"
 #include <stdlib.h>
 
 int e_poxxxx_config_cam(unsigned int sensor_x1,unsigned int sensor_y1,
@@ -130,6 +131,7 @@ unsigned int getCameraVersion(void) {
  */
 void e_poxxxx_launch_capture(char * buf) {
 	(void)buf;
+	spi_comm_suspend(); // Avoid DCMI and SPI at the same time.
 	dcmi_capture_start();
 }
 
@@ -146,4 +148,5 @@ int e_poxxxx_is_img_ready(void) {
  */
 void e_poxxxx_wait_img_ready(void) {
 	wait_image_ready();
+	spi_comm_resume(); // DCMI terminates, we can enable again the SPI.
 }

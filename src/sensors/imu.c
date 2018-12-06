@@ -404,5 +404,12 @@ void get_mag_filtered(float *values) {
 	values[2] *= imu_values.mag_scale[2];
 }
 
+float get_magnetic_field(uint8_t axis) {
+	if(axis < 3) {
+		return imu_values.magnetometer[axis];
+	}
+	return 0;
+}
+
 /**************************END PUBLIC FUNCTIONS***********************************/
 

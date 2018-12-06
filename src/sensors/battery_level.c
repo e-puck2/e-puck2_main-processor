@@ -63,7 +63,7 @@ static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n)
     adc_value /= n;
 
     chSysLockFromISR();
-    adcStartConversionI(&ADCD1, &group, adc_samples, DMA_BUFFER_SIZE);
+    adcStartConversionI(&ADCD3, &group, adc_samples, DMA_BUFFER_SIZE);
     chBSemSignalI(&measurement_ready);
     chSysUnlockFromISR();
 }
@@ -84,8 +84,8 @@ static THD_FUNCTION(battery_thd, arg)
     uint8_t first_value = 1;
 
     //we never release it
-    adcAcquireBus(&ADCD1);
-    adcStartConversion(&ADCD1, &group, adc_samples, DMA_BUFFER_SIZE);
+    adcAcquireBus(&ADCD3);
+    adcStartConversion(&ADCD3, &group, adc_samples, DMA_BUFFER_SIZE);
 
     /* Starts a measurement and waits for it to complete. */
     while (true) {
@@ -119,7 +119,7 @@ static THD_FUNCTION(battery_thd, arg)
 
 void battery_level_start(void)
 {
-    adcStart(&ADCD1, NULL);
+    adcStart(&ADCD3, NULL);
     static THD_WORKING_AREA(battery_thd_wa, 256);
     chThdCreateStatic(battery_thd_wa, sizeof(battery_thd_wa), NORMALPRIO, battery_thd, NULL);
 }

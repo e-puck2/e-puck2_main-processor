@@ -115,7 +115,7 @@ static THD_FUNCTION(spi_thread, p) {
 		spiUnselect(&SPID1);
 
 		// A little pause between transactions is needed for the communication to work, 5000 NOP loops last about 350-500 us.
-		for(delay=0; delay<SPI_DELAY; delay++) {
+		for(delay=0; delay<SPI_DELAY*2; delay++) {
 			__NOP();
 		}
 
@@ -199,6 +199,10 @@ void spi_rgb_setting_enable(void) {
 
 void spi_rgb_setting_disable(void) {
 	rgb_setting_enabled = 0;
+}
+
+uint8_t spi_rgb_setting_is_enabled(void) {
+	return rgb_setting_enabled;
 }
 
 void spi_comm_suspend(void) {

@@ -12,6 +12,7 @@ void spi_image_transfer_enable(void);
 void spi_image_transfer_disable(void);
 void spi_rgb_setting_enable(void);
 void spi_rgb_setting_disable(void);
+uint8_t spi_rgb_setting_is_enabled(void);
 void spi_comm_suspend(void);
 void spi_comm_resume(void);
 

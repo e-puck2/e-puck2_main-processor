@@ -1,6 +1,7 @@
 #include <hal.h>
 #include "leds.h"
 #include <string.h>
+#include "spi_comm.h"
 
 static uint8_t rgb_led[NUM_RGB_LED][NUM_COLOR_LED];
 
@@ -42,12 +43,18 @@ void set_led(led_name_t led_number, unsigned int value) {
 }
 
 void set_rgb_led(rgb_led_name_t led_number, uint8_t red_val, uint8_t green_val, uint8_t blue_val) {
+	if(!spi_rgb_setting_is_enabled()) {
+		spi_rgb_setting_enable();
+	}
 	rgb_led[led_number][RED_LED] = red_val;
 	rgb_led[led_number][GREEN_LED] = green_val;
 	rgb_led[led_number][BLUE_LED] = blue_val;
 }
 
 void toggle_rgb_led(rgb_led_name_t led_number, color_led_name_t led, uint8_t intensity) {
+	if(!spi_rgb_setting_is_enabled()) {
+		spi_rgb_setting_enable();
+	}
 	if(rgb_led[led_number][led] > 0) {
 		rgb_led[led_number][led] = 0;
 	} else {

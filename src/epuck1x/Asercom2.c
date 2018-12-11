@@ -546,6 +546,21 @@ int run_asercom2(void) {
                     		set_front_led(0);
                     	}
 
+                    	// RGBs setting.
+                    	for(j=0; j<12; j++) {
+                    		if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                    		} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                    			while (e_getchar_uart1(&rgb_value[j]) == 0);
+                    		} else { // Communicate with the pc (usb).
+                    			while (e_getchar_uart2(&rgb_value[j]) == 0);
+                    		}
+                    	}
+                    	set_rgb_led(0, rgb_value[0], rgb_value[1], rgb_value[2]);
+                    	set_rgb_led(1, rgb_value[3], rgb_value[4], rgb_value[5]);
+                    	set_rgb_led(2, rgb_value[6], rgb_value[7], rgb_value[8]);
+                    	set_rgb_led(3, rgb_value[9], rgb_value[10], rgb_value[11]);
+
                     	// Play sound.
                     	if(gumstix_connected) { // Communicate with gumstix (i2c).
 

@@ -208,6 +208,7 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 3: // Asercom protocol v2 (BT).
+				spi_image_transfer_disable(); // Image is transferred via uart channel.
 				run_asercom2();
 				stop_loop = 1;
 				break;
@@ -413,11 +414,13 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 8: // Asercom protocol v2 (USB).
+				spi_image_transfer_disable(); // Image is transferred via uart channel.
 				run_asercom2();
 				stop_loop = 1;
 				break;
 
 			case 9: // Asercom protocol.
+				spi_image_transfer_disable(); // Image is transferred via uart channel.
 				run_asercom();
 				stop_loop = 1;
 				break;
@@ -496,7 +499,7 @@ static THD_FUNCTION(selector_thd, arg)
 						right_motor_set_speed(150);
 
 						// Init camera.
-						po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 160, SUBSAMPLING_X4, SUBSAMPLING_X4);
+						po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 120, SUBSAMPLING_X4, SUBSAMPLING_X4);
 						dcmi_disable_double_buffering();
 						dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 						dcmi_prepare();
@@ -580,8 +583,10 @@ static THD_FUNCTION(selector_thd, arg)
 				    	chprintf((BaseSequentialStream *)&SDU1, "%d\r\n\n", VL53L0X_get_dist_mm());
 
 						// Read camera.
+				    	spi_comm_suspend();
 				    	dcmi_capture_start();
 						wait_image_ready();
+						spi_comm_resume();
 						img_buff_ptr = dcmi_get_last_image_ptr();
 						r = (int)img_buff_ptr[0]&0xF8;
 			            g = (int)(img_buff_ptr[0]&0x07)<<5 | (img_buff_ptr[1]&0xE0)>>3;
@@ -656,7 +661,6 @@ static THD_FUNCTION(selector_thd, arg)
 			case 15:
 				switch(demo15_state) {
 					case 0:
-						spi_rgb_setting_disable();
 						spi_image_transfer_enable();
 						if(po8030_advanced_config(FORMAT_RGB565, 0, 0, 640, 480, SUBSAMPLING_X4, SUBSAMPLING_X4) != MSG_OK) {
 							set_led(LED1, 1);

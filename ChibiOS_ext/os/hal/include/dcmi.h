@@ -160,6 +160,7 @@ extern "C" {
     void dcmiStartOneShot(DCMIDriver *dcmip);
     void dcmiStartStream(DCMIDriver *dcmip);
     msg_t dcmiStopStream(DCMIDriver *dcmip);
+    void dcmiRelease(DCMIDriver *dcmip);
 
 #ifdef __cplusplus
 }

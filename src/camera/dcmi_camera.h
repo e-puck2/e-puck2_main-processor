@@ -6,7 +6,8 @@
 #include "dcmi.h"
 #include "po8030.h"
 
-#define MAX_BUFF_SIZE 19200 //76800 // This means 2 color QQVGA images: (160x120x2)x2; or a single greyscale QVGA image: 320x240.
+#define MAX_BUFF_SIZE 38400 // Single buffer mode supporting up to a QQVGA color image.
+//#define MAX_BUFF_SIZE 76800 // When using double-buffering: this means 2 color QQVGA images: (160x120x2)x2; or a single greyscale QVGA image: 320x240.
 
 typedef enum {
 	CAPTURE_ONE_SHOT = 0,
@@ -109,6 +110,8 @@ void dcmi_set_capture_mode(capture_mode_t mode);
 */
 uint8_t* dcmi_get_last_image_ptr(void);
 
+void dcmi_release_last_image_ptr(void) ;
+
 /**
 * @brief   Get the pointer to the first image buffer.
 *
@@ -141,5 +144,19 @@ void dcmi_capture_start(void);
 */
 msg_t dcmi_capture_stop(void);
 
+/**
+* @brief   Return the last error encountered.
+*
+* @return              The error code.
+*
+*/
+uint8_t dcmi_get_error(void);
+
+/**
+ * @brief Forcedly deactivates the DCMI peripheral (even when there was an error).
+ * @details This function disables the DCMI and related interrupts; also the DMA is released.
+ *
+ */
+void dcmi_release(void);
 
 #endif /* DCMI_CAMERA_H */

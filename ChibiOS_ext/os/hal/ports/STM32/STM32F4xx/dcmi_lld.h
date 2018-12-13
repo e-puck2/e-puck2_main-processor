@@ -180,6 +180,10 @@ typedef struct {
    */
   dcmicallback_t			transfer_complete_cb;
   /**
+   * @brief DMA transfer complete callback or @p NULL.
+   */
+  dcmicallback_t			half_transfer_complete_cb;
+  /**
    * @brief Error callback or @p NULL.
    */
   dcmierrorcallback_t		error_cb;

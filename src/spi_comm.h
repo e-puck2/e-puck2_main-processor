@@ -4,13 +4,16 @@
 #include <stdint.h>
 #include <hal.h>
 
-#define SPI_COMMAND_SIZE 64
-#define SPI_DATA_HEADER_SIZE 4
-#define SPI_DATA_PAYLOAD_SIZE 4092
-#define SPI_DELAY 1200
-
+#define SPI_DELAY 5000
 #define SPI_PACKET_MAX_SIZE 4092
 
 void spi_comm_start(void);
+void spi_image_transfer_enable(void);
+void spi_image_transfer_disable(void);
+void spi_rgb_setting_enable(void);
+void spi_rgb_setting_disable(void);
+uint8_t spi_rgb_setting_is_enabled(void);
+void spi_comm_suspend(void);
+void spi_comm_resume(void);
 
 #endif /* SPI_COMM_H */

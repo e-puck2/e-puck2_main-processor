@@ -402,7 +402,7 @@ int main(void)
 	exti_start();
 //	imu_start();
 	ir_remote_start();
-//	spi_comm_start();
+	spi_comm_start();
 //	VL53L0X_start();
 	serial_start();
 	mic_start(NULL);

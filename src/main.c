@@ -41,6 +41,7 @@
 #include "motors.h"
 #include "sdio.h"
 #include "selector.h"
+#include "serial_comm.h"
 #include "spi_comm.h"
 #include "usbcfg.h"
 #include "communication.h"
@@ -61,18 +62,6 @@ static bool load_config(void)
     extern uint32_t _config_start;
 
     return config_load(&parameter_root, &_config_start);
-}
-
-static void serial_start(void)
-{
-	static SerialConfig ser_cfg = {
-	    115200,
-	    0,
-	    0,
-	    0,
-	};
-
-	sdStart(&SD3, &ser_cfg); // UART3.
 }
 
 static THD_FUNCTION(selector_thd, arg)

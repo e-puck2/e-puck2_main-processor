@@ -51,6 +51,7 @@ CSRC += $(GLOBAL_PATH)/src/sensors/ground.c
 CSRC += $(GLOBAL_PATH)/src/sensors/imu.c
 CSRC += $(GLOBAL_PATH)/src/sensors/mpu9250.c
 CSRC += $(GLOBAL_PATH)/src/sensors/proximity.c
+CSRC += $(GLOBAL_PATH)/src/serial_comm.c
 CSRC += $(GLOBAL_PATH)/src/spi_comm.c
 CSRC += $(GLOBAL_PATH)/src/sdio.c
 CSRC += $(GLOBAL_PATH)/src/usbcfg.c

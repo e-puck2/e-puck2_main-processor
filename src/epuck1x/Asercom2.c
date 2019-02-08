@@ -7,6 +7,9 @@
 #define IMAGE_HEADER_SIZE 3 // mode, width, height
 #define IMAGE_MAX_SIZE (BUFFER_SIZE-IMAGE_HEADER_SIZE)
 
+#include <hal.h>
+#include "../usbcfg.h"
+
 #include <main.h>
 #include "camera/dcmi_camera.h"
 #include "sensors/VL53L0X/VL53L0X.h"
@@ -18,6 +21,7 @@
 #include "button.h"
 #include "leds.h"
 #include "sdio.h"
+#include "serial_comm.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -82,7 +86,6 @@ int run_asercom2(void) {
     unsigned int battValue = 0;
     uint8_t gumstix_connected = 0;
     uint16_t cam_start_index = 0;
-    char cmd = 0;
     float tempf = 0.0;
     uint32_t tempi = 0;
 
@@ -457,49 +460,45 @@ int run_asercom2(void) {
 
 						// Additional empty byte for future use.
 						buffer[i++] = 0;
-
 						break;
 
 					case 0x9: // Set all actuators.
-                        // Handle behaviors and others commands.
+
                         if(gumstix_connected) { // Communicate with gumstix (i2c).
 
                         } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-                        	while (e_getchar_uart1(&cmd) == 0);
+                        	chSequentialStreamRead(&SD3, (uint8_t*)buffer, 19);
                         } else { // Communicate with the pc (usb).
-                        	while (e_getchar_uart2(&cmd) == 0);
+                        	if (SDU1.config->usbp->state == USB_ACTIVE) {
+                        		chSequentialStreamRead(&SDU1, (uint8_t*)buffer, 19);
+                        	}
+                        	//otherwise there is no wait state, this means the other threads can not be processed
+                        	chThdSleepMilliseconds(10);
                         }
-                        if(cmd & 0x01) { // Calibrate proximity.
+
+                        // In case of errors, skip the packet.
+                        if(serial_get_last_errors() != 0) {
+                        	//sprintf(buffer, "skip packet\r\n");
+                        	//uart2_send_text(buffer);
+                        	serial_clear_last_errors();
+                        	break;
+                        }
+
+                        // Handle behaviors and others commands.
+                        if(buffer[0] & 0x01) { // Calibrate proximity.
                         	calibrate_ir();
                         }
-                        if(cmd & 0x02) { // Enable obastacle avoidance.
+                        if(buffer[0] & 0x02) { // Enable obastacle avoidance.
 
                         } else { // Disable obstacle avoidance
 
                         }
 
 						// Set motor speed or motor position.
-                    	if(gumstix_connected) { // Communicate with gumstix (i2c).
+                        speedl = (unsigned char) buffer[1] + ((unsigned int) buffer[2] << 8);
+                        speedr = (unsigned char) buffer[3] + ((unsigned int) buffer[4] << 8);
 
-                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-                            while (e_getchar_uart1(&c1) == 0);
-                            while (e_getchar_uart1(&c2) == 0);
-                        } else { // Communicate with the pc (usb).
-                            while (e_getchar_uart2(&c1) == 0);
-                            while (e_getchar_uart2(&c2) == 0);
-                        }
-                        speedl = (unsigned char) c1 + ((unsigned int) c2 << 8);
-                        if(gumstix_connected) { // Communicate with gumstix (i2c).
-
-                        } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-                            while (e_getchar_uart1(&c1) == 0);
-                            while (e_getchar_uart1(&c2) == 0);
-                        } else { // Communicate with the pc (usb).
-                            while (e_getchar_uart2(&c1) == 0);
-                            while (e_getchar_uart2(&c2) == 0);
-                        }
-                        speedr = (unsigned char) c1 + ((unsigned int) c2 << 8);
-                        if(cmd & 0x04) { // Set steps.
+                        if(buffer[0] & 0x04) { // Set steps.
                         	e_set_steps_left(speedl);
                         	e_set_steps_right(speedr);
                         } else { // Set speed.
@@ -508,87 +507,63 @@ int run_asercom2(void) {
                         }
 
                         // Set LEDs.
-                    	if(gumstix_connected) { // Communicate with gumstix (i2c).
-
-                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-                            while (e_getchar_uart1(&c1) == 0);
-                        } else { // Communicate with the pc (usb).
-                            while (e_getchar_uart2(&c1) == 0);
-                        }
-                    	if(c1 & 0x01) {
+                    	if(buffer[5] & 0x01) {
                     		set_led(LED1, 1);
                     	} else {
                     		set_led(LED1, 0);
                     	}
-                    	if(c1 & 0x02) {
+                    	if(buffer[5] & 0x02) {
                     		set_led(LED3, 1);
                     	} else {
                     		set_led(LED3, 0);
                     	}
-                    	if(c1 & 0x04) {
+                    	if(buffer[5] & 0x04) {
                     		set_led(LED5, 1);
                     	} else {
                     		set_led(LED5, 0);
                     	}
-                    	if(c1 & 0x08) {
+                    	if(buffer[5] & 0x08) {
                     		set_led(LED7, 1);
                     	} else {
                     		set_led(LED7, 0);
                     	}
-                    	if(c1 & 0x10) {
+                    	if(buffer[5] & 0x10) {
                     		set_body_led(1);
                     	} else {
                     		set_body_led(0);
                     	}
-                    	if(c1 & 0x20) {
+                    	if(buffer[5] & 0x20) {
                     		set_front_led(1);
                     	} else {
                     		set_front_led(0);
                     	}
 
                     	// RGBs setting.
-                    	for(j=0; j<12; j++) {
-                    		if(gumstix_connected) { // Communicate with gumstix (i2c).
-
-                    		} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-                    			while (e_getchar_uart1(&rgb_value[j]) == 0);
-                    		} else { // Communicate with the pc (usb).
-                    			while (e_getchar_uart2(&rgb_value[j]) == 0);
-                    		}
-                    	}
-                    	set_rgb_led(0, rgb_value[0], rgb_value[1], rgb_value[2]);
-                    	set_rgb_led(1, rgb_value[3], rgb_value[4], rgb_value[5]);
-                    	set_rgb_led(2, rgb_value[6], rgb_value[7], rgb_value[8]);
-                    	set_rgb_led(3, rgb_value[9], rgb_value[10], rgb_value[11]);
+                    	set_rgb_led(0, buffer[6], buffer[7], buffer[8]);
+                    	set_rgb_led(1, buffer[9], buffer[10], buffer[11]);
+                    	set_rgb_led(2, buffer[12], buffer[13], buffer[14]);
+                    	set_rgb_led(3, buffer[15], buffer[16], buffer[17]);
 
                     	// Play sound.
-                    	if(gumstix_connected) { // Communicate with gumstix (i2c).
-
-                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-                    		while (e_getchar_uart1(&c1) == 0);
-                    	} else { // Communicate with the pc (usb).
-                    		while (e_getchar_uart2(&c1) == 0);
-                    	}
-                    	if(c1 & 0x01) {
+                    	if(buffer[18] & 0x01) {
                     		playMelody(MARIO, ML_FORCE_CHANGE, NULL);//e_play_sound(0, 2112);
                     	}
-                    	if(c1 & 0x02) {
+                    	if(buffer[18] & 0x02) {
                     		playMelody(UNDERWORLD, ML_FORCE_CHANGE, NULL);//e_play_sound(2116, 1760);
                     	}
-                    	if(c1 & 0x04) {
+                    	if(buffer[18] & 0x04) {
                     		playMelody(STARWARS, ML_FORCE_CHANGE, NULL);//e_play_sound(3878, 3412);
                     	}
-                    	if(c1 & 0x08) {
+                    	if(buffer[18] & 0x08) {
                     		e_play_sound(7294, 3732);
                     	}
-                    	if(c1 & 0x10) {
+                    	if(buffer[18] & 0x10) {
                     		e_play_sound(11028, 8016);
                     	}
-                    	if(c1 & 0x20) {
+                    	if(buffer[18] & 0x20) {
                     		e_close_sound();
                     		stopCurrentMelody();
                     	}
-
 						break;
 
 					case 0xA: // RGB setting => ESP32

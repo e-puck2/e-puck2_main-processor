@@ -49,7 +49,7 @@ static THD_FUNCTION(ground_thd, arg)
     	//chprintf((BaseSequentialStream *)&SDU1, "prox: %d, %d, %d,\r\n", ground_values.delta[0], ground_values.delta[1], ground_values.delta[2]);
     	//chprintf((BaseSequentialStream *)&SDU1, "ambient: %d, %d, %d,\r\n", ground_values.ambient[0], ground_values.ambient[1], ground_values.ambient[2]);
 
-        chThdSleepUntilWindowed(time, time + MS2ST(500)); //reduced the sample rate to 25Hz
+        chThdSleepUntilWindowed(time, time + MS2ST(40)); //reduced the sample rate to 25Hz
 
     }
 }

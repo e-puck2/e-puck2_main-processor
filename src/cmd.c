@@ -12,7 +12,7 @@
 #include "vm/natives.h"
 #include "audio/audio_thread.h"
 #include "audio/microphone.h"
-#include "camera/po8030.h"
+#include "camera/camera.h"
 #include "camera/dcmi_camera.h"
 #include "sensors/battery_level.h"
 #include "config_flash_storage.h"
@@ -22,6 +22,7 @@
 #include <fat.h>
 #include <audio/play_sound_file.h>
 #include <audio/play_melody.h>
+#include "spi_comm.h"
 
 #define TEST_WA_SIZE        THD_WORKING_AREA_SIZE(256)
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
@@ -667,7 +668,7 @@ static void cmd_cam_set_brightness(BaseSequentialStream *chp, int argc, char *ar
                  "Usage: cam_brightness value.\r\nDefault=0, max=127, min=-128.\r\n");
     } else {
         value = (int8_t) atoi(argv[0]);
-        err = po8030_set_brightness(value);
+        err = cam_set_brightness(value);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot write register (%d)\r\n", err);
         } else {
@@ -685,7 +686,7 @@ static void cmd_cam_set_contrast(BaseSequentialStream *chp, int argc, char *argv
                  "Usage: cam_contrast value.\r\nDefault=64, max=255, min=0.\r\n");
     } else {
         value = (int8_t) atoi(argv[0]);
-        err = po8030_set_contrast(value);
+        err = cam_set_contrast(value);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot write register (%d)\r\n", err);
         } else {
@@ -708,10 +709,10 @@ static void cmd_cam_set_conf1(BaseSequentialStream *chp, int argc, char *argv[])
         sy = (uint8_t) atoi(argv[2]);
 
         if(f==0) {
-            cmd_fmt = FORMAT_YCBYCR;
+            cmd_fmt = FORMAT_COLOR;
             chprintf(chp, "Registered color format\r\n");
         } else {
-            cmd_fmt = FORMAT_YYYY;
+            cmd_fmt = FORMAT_GREYSCALE;
             chprintf(chp, "Registered greyscale format\r\n");
         }
 
@@ -750,7 +751,7 @@ static void cmd_cam_set_conf2(BaseSequentialStream *chp, int argc, char *argv[])
     	cmd_width = (uint16_t) atoi(argv[2]);
     	cmd_height = (uint16_t) atoi(argv[3]);
 
-        err = po8030_advanced_config(cmd_fmt, cmd_x1, cmd_y1, cmd_width, cmd_height, cmd_subx, cmd_suby);
+        err = cam_advanced_config(cmd_fmt, cmd_x1, cmd_y1, cmd_width, cmd_height, cmd_subx, cmd_suby);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot set configuration (%d)\r\n", err);
         } else {
@@ -771,7 +772,7 @@ static void cmd_cam_set_mirror(BaseSequentialStream *chp, int argc, char *argv[]
         v = (uint8_t) atoi(argv[0]);
         h = (uint8_t) atoi(argv[1]);
 
-        err = po8030_set_mirror(v, h);
+        err = cam_set_mirror(v, h);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot set mirroring (%d)\r\n", err);
         } else {
@@ -793,7 +794,7 @@ static void cmd_cam_set_gain(BaseSequentialStream *chp, int argc, char *argv[])
         g = (uint8_t) atoi(argv[1]);
         b = (uint8_t) atoi(argv[2]);
 
-        err = po8030_set_rgb_gain(r, g, b);
+        err = cam_set_rgb_gain(r, g, b);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot set gain (%d)\r\n", err);
         } else {
@@ -813,7 +814,7 @@ static void cmd_cam_set_awb(BaseSequentialStream *chp, int argc, char *argv[])
     } else {
         awb = (uint8_t) atoi(argv[0]);
 
-        err = po8030_set_awb(awb);
+        err = cam_set_awb(awb);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot set white balance (%d)\r\n", err);
         } else {
@@ -833,7 +834,7 @@ static void cmd_cam_set_ae(BaseSequentialStream *chp, int argc, char *argv[])
     } else {
         ae = (uint8_t) atoi(argv[0]);
 
-        err = po8030_set_ae(ae);
+        err = cam_set_ae(ae);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot set auto exposure (%d)\r\n", err);
         } else {
@@ -855,7 +856,7 @@ static void cmd_cam_set_exposure(BaseSequentialStream *chp, int argc, char *argv
         integral = (uint16_t) atoi(argv[0]);
         fractional = (uint8_t) atoi(argv[1]);
 
-        err = po8030_set_exposure(integral, fractional);
+        err = cam_set_exposure(integral, fractional);
         if(err != MSG_OK) {
             chprintf(chp, "Cannot set exposure time (%d)\r\n", err);
         } else {
@@ -907,7 +908,10 @@ static void cmd_cam_capture(BaseSequentialStream *chp, int argc, char **argv)
 	(void) chp;
     (void) argc;
     (void) argv;
+    spi_comm_suspend();
     dcmi_capture_start();
+    wait_image_ready();
+    spi_comm_resume();
 }
 
 static void cmd_cam_send(BaseSequentialStream *chp, int argc, char **argv)
@@ -923,15 +927,15 @@ static void cmd_cam_send(BaseSequentialStream *chp, int argc, char **argv)
     		chprintf(chp, "The 2 images will be sent within 5 seconds\r\n");
     		chThdSleepMilliseconds(5000);
     		img_buff_ptr = dcmi_get_first_buffer_ptr();
-    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, po8030_get_image_size());
+    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, cam_get_image_size());
     		chThdSleepMilliseconds(3000);
     		img_buff_ptr = dcmi_get_second_buffer_ptr();
-    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, po8030_get_image_size());
+    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, cam_get_image_size());
     	} else {
     		chprintf(chp, "The image will be sent within 5 seconds\r\n");
     		chThdSleepMilliseconds(5000);
     		img_buff_ptr = dcmi_get_first_buffer_ptr();
-    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, po8030_get_image_size());
+    		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, cam_get_image_size());
     	}
     }
 }

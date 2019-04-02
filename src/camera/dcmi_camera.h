@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <hal.h>
 #include "dcmi.h"
-#include "po8030.h"
+#include "camera.h"
 
 #define MAX_BUFF_SIZE 38400 // Single buffer mode supporting up to a QQVGA color image.
 //#define MAX_BUFF_SIZE 76800 // When using double-buffering: this means 2 color QQVGA images: (160x120x2)x2; or a single greyscale QVGA image: 320x240.
@@ -61,7 +61,7 @@ uint8_t image_is_ready(void);
  * 				until an image is ready
  *
  */
-void wait_image_ready(void);
+int8_t wait_image_ready(void);
 
 /**
  * @brief 		Returns if double buffering is enabled.
@@ -158,5 +158,11 @@ uint8_t dcmi_get_error(void);
  *
  */
 void dcmi_release(void);
+
+/**
+ * @brief Call in sequence dcmi_release and then dcmi_prepare. This need to be called when a DCMI error occurs.
+ *
+ */
+void dcmi_restart(void);
 
 #endif /* DCMI_CAMERA_H */

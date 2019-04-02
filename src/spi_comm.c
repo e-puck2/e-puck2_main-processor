@@ -7,6 +7,8 @@
 #include "leds.h"
 #include "spi_comm.h"
 #include "sensors/proximity.h"
+#include "chprintf.h"
+#include "usbcfg.h"
 
 uint8_t spi_rx_buff[SPI_PACKET_MAX_SIZE];
 uint8_t spi_tx_buff[SPI_PACKET_MAX_SIZE]; //12]; //SPI_PACKET_MAX_SIZE];
@@ -29,6 +31,7 @@ static THD_FUNCTION(spi_thread, p) {
 	uint16_t packetId = 0;
 	uint16_t numPackets = 0;
 	uint32_t remainingBytes = 0;
+	systime_t time;
 
 	chThdSleepMilliseconds(50); // Wait for the camera to be configured.
 	//wait_dcmi_ready(); // To be implemented...
@@ -89,6 +92,7 @@ static THD_FUNCTION(spi_thread, p) {
 #endif
 
 	while (true) {
+		time = chVTGetSystemTime();
 
 		chSysLock();
 		if(spi_suspend_flag == 1) {
@@ -100,7 +104,10 @@ static THD_FUNCTION(spi_thread, p) {
 			// Avoid using DCMI and SPI at the same time because there is an hardware bug with DMA.
 			// Therefore we need to first grab an image and then send it through SPI while the DCMI is stopped.
 			dcmi_capture_start();
-			wait_image_ready();
+			if(wait_image_ready() != MSG_OK) {
+				dcmi_restart();
+				continue;
+			}
 		}
 
 		memset(spi_rx_buff, 0xFF, SPI_PACKET_MAX_SIZE);
@@ -124,8 +131,9 @@ static THD_FUNCTION(spi_thread, p) {
 		if(image_transfer_enabled == 1) {
 			if(spi_rx_buff[1] == 0xB7) { // -'I' => camera image
 
-				numPackets = po8030_get_image_size()/SPI_PACKET_MAX_SIZE;
-				remainingBytes = po8030_get_image_size()%SPI_PACKET_MAX_SIZE;
+				numPackets = cam_get_image_size()/SPI_PACKET_MAX_SIZE;
+				remainingBytes = cam_get_image_size()%SPI_PACKET_MAX_SIZE;
+
 				rx_err = 0;
 
 				last_img_ptr = dcmi_get_last_image_ptr();
@@ -138,14 +146,22 @@ static THD_FUNCTION(spi_thread, p) {
 					spiExchange(&SPID1, SPI_PACKET_MAX_SIZE, &last_img_ptr[packetId*SPI_PACKET_MAX_SIZE], spi_rx_buff);
 					spiUnselect(&SPID1);
 
-					// A little pause between transactions is needed for the communication to work, 5000 NOP loops last about 350-500 us.
-					for(delay=0; delay<SPI_DELAY; delay++) {
-						__NOP();
+					// A bigger delay between transactions for the last transactions increases the robustness of the communication.
+					// This is due to the ESP32 that somehow doesn't support the expected communication speed.
+					if(packetId >= 7) {
+						for(delay=0; delay<(SPI_DELAY*3); delay++) {
+							__NOP();
+						}
+					} else {
+						// A little pause between transactions is needed for the communication to work, 5000 NOP loops last about 350-500 us.
+						for(delay=0; delay<SPI_DELAY; delay++) {
+							__NOP();
+						}
 					}
 
-					if(spi_rx_buff[1] == 0) { // No answer from ESP32...
-						rx_err = 1;
-						break;
+					if(spi_rx_buff[1] == 0) { // No answer from ESP32...restart the sequence.
+					//	rx_err = 1;
+					//	break;
 					}
 				}
 
@@ -155,8 +171,13 @@ static THD_FUNCTION(spi_thread, p) {
 					spiUnselect(&SPID1);
 
 					// A little pause between transactions is needed for the communication to work, 5000 NOP loops last about 350-500 us.
-					for(delay=0; delay<SPI_DELAY; delay++) {
+					for(delay=0; delay<(SPI_DELAY*3); delay++) {
 						__NOP();
+					}
+
+					if(spi_rx_buff[1] == 0) { // No answer from ESP32...restart the sequence.
+					//	rx_err = 1;
+					//	break;
 					}
 				}
 
@@ -165,6 +186,8 @@ static THD_FUNCTION(spi_thread, p) {
 			} else if(spi_rx_buff[1] == 0xB6) { // -'J' => camera settings
 
 			}
+		} else {
+			chThdSleepUntilWindowed(time, time + MS2ST(50));	// RGB LEDs updated at 20 Hz when the image isn't transferred.
 		}
 
 	} // Infinite loop.

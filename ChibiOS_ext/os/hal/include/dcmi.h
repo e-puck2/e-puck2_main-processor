@@ -135,14 +135,14 @@
  *
  * @notapi
  */
-#define _dcmi_isr_error_code(dcmip, err) {								\
-    if((dcmip)->state == DCMI_ACTIVE_STREAM) {							\
-        dcmi_lld_stop_stream(dcmip);									\
-    }																	\
-	(dcmip)->state = DCMI_ERROR;										\
-	if ((dcmip)->config->error_cb != NULL) {							\
-		(dcmip)->config->error_cb(dcmip, err);							\
-	}																	\
+#define _dcmi_isr_error_code(dcmip, err) {												\
+    if((dcmip)->state == DCMI_ACTIVE_STREAM || (dcmip)->state == DCMI_ACTIVE_ONESHOT) {	\
+        dcmi_lld_stop_stream(dcmip);													\
+    }																					\
+	(dcmip)->state = DCMI_ERROR;														\
+	if ((dcmip)->config->error_cb != NULL) {											\
+		(dcmip)->config->error_cb(dcmip, err);											\
+	}																					\
 }
 /** @} */
 

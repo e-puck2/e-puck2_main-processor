@@ -16,7 +16,7 @@
 #include "audio/play_melody.h"
 #include "audio/play_sound_file.h"
 #include "audio/microphone.h"
-#include "camera/po8030.h"
+#include "camera/camera.h"
 #include "epuck1x/Asercom.h"
 #include "epuck1x/Asercom2.h"
 #include "epuck1x/a_d/advance_ad_scan/e_acc.h"
@@ -488,7 +488,7 @@ static THD_FUNCTION(selector_thd, arg)
 						right_motor_set_speed(150);
 
 						// Init camera.
-						po8030_advanced_config(FORMAT_RGB565, 240, 160, 160, 120, SUBSAMPLING_X4, SUBSAMPLING_X4);
+						cam_advanced_config(FORMAT_COLOR, 240, 160, 160, 120, SUBSAMPLING_X4, SUBSAMPLING_X4);
 						dcmi_disable_double_buffering();
 						dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 						dcmi_prepare();
@@ -650,17 +650,18 @@ static THD_FUNCTION(selector_thd, arg)
 			case 15:
 				switch(demo15_state) {
 					case 0:
-						spi_image_transfer_enable();
-						if(po8030_advanced_config(FORMAT_RGB565, 0, 0, 640, 480, SUBSAMPLING_X4, SUBSAMPLING_X4) != MSG_OK) {
+						if(cam_advanced_config(FORMAT_COLOR, 0, 0, 640, 480, SUBSAMPLING_X4, SUBSAMPLING_X4) != MSG_OK) {
 							set_led(LED1, 1);
 						}
-						po8030_set_exposure(512, 0); // Fix the exposure to have a stable framerate.
+						cam_set_exposure(512, 0); // Fix the exposure to have a stable framerate.
 
 						dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 
 						if(dcmi_prepare() < 0) {
 							set_led(LED5, 1);
 						}
+
+						spi_image_transfer_enable();
 
 						//mpu9250_magnetometer_setup();
 
@@ -700,7 +701,7 @@ int main(void)
 	set_front_led(0);
 	usb_start();
 	dcmi_start();
-	po8030_start();
+	cam_start();
 	motors_init();
 	proximity_start();
 	battery_level_start();

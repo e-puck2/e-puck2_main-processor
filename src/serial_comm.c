@@ -24,18 +24,18 @@ static THD_FUNCTION(serial_listener_thd, arg) {
 		chEvtWaitAny(EVENT_MASK(0));
 		flags = chEvtGetAndClearFlags(&serial_listener);
 
-		if (flags & (SD_OVERRUN_ERROR)) {
-			chprintf((BaseSequentialStream *)&SDU1, "overrun err\r\n");
-		}
-		if (flags & (SD_PARITY_ERROR)) {
-			chprintf((BaseSequentialStream *)&SDU1, "parity err\r\n");
-		}
-		if (flags & (SD_FRAMING_ERROR)) {
-			chprintf((BaseSequentialStream *)&SDU1, "framing err\r\n");
-		}
-		if (flags & (SD_NOISE_ERROR)) {
-			chprintf((BaseSequentialStream *)&SDU1, "noise err\r\n");
-		}
+//		if (flags & (SD_OVERRUN_ERROR)) {
+//			chprintf((BaseSequentialStream *)&SDU1, "overrun err\r\n");
+//		}
+//		if (flags & (SD_PARITY_ERROR)) {
+//			chprintf((BaseSequentialStream *)&SDU1, "parity err\r\n");
+//		}
+//		if (flags & (SD_FRAMING_ERROR)) {
+//			chprintf((BaseSequentialStream *)&SDU1, "framing err\r\n");
+//		}
+//		if (flags & (SD_NOISE_ERROR)) {
+//			chprintf((BaseSequentialStream *)&SDU1, "noise err\r\n");
+//		}
 
 	}
 }

@@ -37,10 +37,8 @@ static CONDVAR_DECL(dcmi_condvar);
 // This is called when a complete image is received from the DCMI peripheral.
 void frameEndCb(DCMIDriver* dcmip) {
     (void) dcmip;
-    //palTogglePad(GPIOD, 13) ; // Orange.
-    //signals an image has been captured
-    image_ready = 1;
     chSysLockFromISR();
+    image_ready = 1; //signals an image has been captured
 	chCondBroadcastI(&dcmi_condvar);
 	chSysUnlockFromISR();
 }
@@ -115,7 +113,9 @@ void dmaHalfTransferEndCb(DCMIDriver* dcmip) {
 void dcmiErrorCb(DCMIDriver* dcmip, dcmierror_t err) {
    (void) dcmip;
     dcmiError = err;
-	//chSysHalt("DCMI error");
+    chSysLockFromISR();
+	chCondBroadcastI(&dcmi_condvar); // Signal an error has been occurred in order to reset the DCMI peripheral.
+	chSysUnlockFromISR();
 }
 
 /**
@@ -184,7 +184,7 @@ int8_t dcmi_prepare(void) {
 		dcmiUnprepare(&DCMID);
 	}
 	// Check if image size fit in the available memory.
-	uint32_t image_size = po8030_get_image_size();
+	uint32_t image_size = cam_get_image_size();
 	if(double_buffering == 0) {
 		if(image_size > MAX_BUFF_SIZE) {
 			return -1;
@@ -215,10 +215,15 @@ uint8_t image_is_ready(void) {
 	return image_ready;
 }
 
-void wait_image_ready(void) {
+int8_t wait_image_ready(void) {
 	//waits until an image has been captured
     chMtxLock(&dcmi_lock);
     chCondWait(&dcmi_condvar);
+    if(image_ready == 0) { // If a DCMI or DMA error occurs then return an error code.
+    	return -1;
+    } else {
+    	return MSG_OK;
+    }
     chMtxUnlock(&dcmi_lock);
 }
 
@@ -379,9 +384,16 @@ uint8_t dcmi_get_error(void) {
 }
 
 void dcmi_release(void) {
-	dcmiError = 0;
-	dcmi_prepared = 0;
-	dcmiRelease(&DCMID);
+	if(dcmi_prepared == 1) {
+		dcmiError = 0;
+		dcmi_prepared = 0;
+		dcmiRelease(&DCMID);
+	}
+}
+
+void dcmi_restart(void) {
+	dcmi_release();
+	dcmi_prepare();
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

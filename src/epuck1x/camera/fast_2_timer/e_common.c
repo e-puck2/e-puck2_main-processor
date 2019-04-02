@@ -1,6 +1,6 @@
 #include "e_poxxxx.h"
 #include "../camera/dcmi_camera.h"
-#include "../camera/po8030.h"
+#include "../camera/camera.h"
 #include "../spi_comm.h"
 #include <stdlib.h>
 
@@ -16,11 +16,11 @@ int e_poxxxx_config_cam(unsigned int sensor_x1,unsigned int sensor_y1,
 	sensor_height = sensor_height/zoom_fact_height;
 
 	if(color_mode == GREY_SCALE_MODE) {
-		fmt = FORMAT_YYYY;
+		fmt = FORMAT_GREYSCALE;
 	} else if(color_mode == RGB_565_MODE) {
-		fmt = FORMAT_RGB565;
+		fmt = FORMAT_COLOR;
 	} else {
-		fmt = FORMAT_YCBYCR;
+		fmt = FORMAT_COLOR;
 	}
 
 	switch(zoom_fact_width) {
@@ -36,6 +36,7 @@ int e_poxxxx_config_cam(unsigned int sensor_x1,unsigned int sensor_y1,
 		default:
 			subx = SUBSAMPLING_X4;
 			zoom_fact_width = 4;
+			sensor_x1 = (ARRAY_WIDTH-sensor_width*zoom_fact_width)/2;
 			break;
 	}
 
@@ -52,10 +53,11 @@ int e_poxxxx_config_cam(unsigned int sensor_x1,unsigned int sensor_y1,
 		default:
 			suby = SUBSAMPLING_X4;
 			zoom_fact_height = 4;
+			sensor_y1 = (ARRAY_HEIGHT-sensor_height*zoom_fact_height)/2;
 			break;
 	}
 
-	po8030_advanced_config(fmt, sensor_x1, sensor_y1, sensor_width*zoom_fact_width, sensor_height*zoom_fact_height, subx, suby);
+	cam_advanced_config(fmt, sensor_x1, sensor_y1, sensor_width*zoom_fact_width, sensor_height*zoom_fact_height, subx, suby);
 	dcmi_disable_double_buffering();
 	dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
 	dcmi_prepare();
@@ -65,8 +67,7 @@ int e_poxxxx_config_cam(unsigned int sensor_x1,unsigned int sensor_y1,
 
 
 void e_poxxxx_set_mirror(int vertical, int horizontal) {
-	(void)vertical;
-	(void)horizontal;
+	cam_set_mirror(vertical, horizontal);
 	return;
 }
 
@@ -75,11 +76,11 @@ void e_poxxxx_write_cam_registers(void) {
 }
 
 /**
- * Initalize the camera, return the version in hexa, 0x3030 or 0x6030
+ * Initalize the camera, return the version in hex, 0x8030 or 0x6030
  */
 int e_poxxxx_init_cam(void) {
 	// The camera is already initialized.
-	return 0x8030; // Only one camera mounted on e-puck2 so return its id.
+	return cam_get_id();
 }
 
 /**
@@ -95,8 +96,8 @@ int e_poxxxx_get_orientation(void) {
  * \param ae 1 means AE enabled, 0 means disabled
  */
 void e_poxxxx_set_awb_ae(int awb, int ae) {
-	(void)awb;
-	(void)ae;
+	cam_set_awb(awb);
+	cam_set_ae(ae);
 	return;
 }
 
@@ -107,9 +108,7 @@ void e_poxxxx_set_awb_ae(int awb, int ae) {
  * \warning Only meaningful if AWB is disabled 
  */
 void e_poxxxx_set_rgb_gain(unsigned char r, unsigned char g, unsigned char b) {
-	(void)r;
-	(void)g;
-	(void)b;
+	cam_set_rgb_gain(r, g, b);
 	return;
 }
 
@@ -118,11 +117,11 @@ void e_poxxxx_set_rgb_gain(unsigned char r, unsigned char g, unsigned char b) {
  * \warning Only meaningful if AE is disabled 
  */
 void e_poxxxx_set_exposure(unsigned long exp) {
-	(void)exp;
+	cam_set_exposure((exp>>8), (exp&0xFF));
 	return;
 }
 unsigned int getCameraVersion(void) {
-	return 0x8030;
+	return cam_get_id();
 }
 
 /*! Launch a capture in the \a buf buffer

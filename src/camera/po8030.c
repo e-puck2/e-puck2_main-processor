@@ -80,29 +80,29 @@ static struct po8030_configuration po8030_conf;
 static bool cam_configured = false;
 
 /***************************INTERNAL FUNCTIONS************************************/
- /**
- * @brief   Reads the id of the camera
- *
- * @param[out] id     pointer to store the value
- * 
- * @return              The operation status.
- * @retval MSG_OK       if the function succeeded.
- * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
- *
- */
+/**
+* @brief   Reads the id of the camera
+*
+* @param[out] id     pointer to store the value
+*
+* @return              The operation status.
+* @retval MSG_OK       if the function succeeded.
+* @retval MSG_TIMEOUT  if a timeout occurred before operation end.
+*
+*/
 int8_t po8030_read_id(uint16_t *id) {
-    uint8_t regValue[2] = {0};
-    int8_t err = 0;
+   uint8_t regValue[2] = {0};
+   int8_t err = 0;
 
-    if((err = read_reg(PO8030_ADDR, REG_DEVICE_ID_H, &regValue[0])) != MSG_OK) {
-        return err;
-    }
-    if((err = read_reg(PO8030_ADDR, REG_DEVICE_ID_L, &regValue[1])) != MSG_OK) {
-        return err;
-    }
-    *id = regValue[0]|regValue[1];
+   if((err = read_reg(PO8030_ADDR, REG_DEVICE_ID_H, &regValue[0])) != MSG_OK) {
+       return err;
+   }
+   if((err = read_reg(PO8030_ADDR, REG_DEVICE_ID_L, &regValue[1])) != MSG_OK) {
+       return err;
+   }
+   *id = (((uint16_t)regValue[0])<<8)|regValue[1];
 
-    return MSG_OK;
+   return MSG_OK;
 }
 
  /**
@@ -122,14 +122,14 @@ int8_t po8030_set_bank(uint8_t bank) {
  /**
  * @brief   Sets the format of the camera
  *
- * @param[in] fmt     format chosen. See format_t
+ * @param[in] fmt     format chosen. See po8030_format_t
  * 
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end.
  *
  */
-int8_t po8030_set_format(format_t fmt) {
+int8_t po8030_set_format(po8030_format_t fmt) {
     int8_t err = 0;
 
     if((err = po8030_set_bank(BANK_B)) != MSG_OK) {
@@ -140,7 +140,7 @@ int8_t po8030_set_format(format_t fmt) {
         return err;
     }
 
-    if(fmt == FORMAT_YYYY) {
+    if(fmt == PO8030_FORMAT_YYYY) {
         if((err = write_reg(PO8030_ADDR, PO8030_REG_SYNC_CONTROL0, 0x01)) != MSG_OK) {
             return err;
         }
@@ -379,8 +379,8 @@ int8_t po8030_set_qvga(void) {
 	
 	po8030_conf.width = 320;
 	po8030_conf.height = 240;
-	po8030_conf.curr_subsampling_x = SUBSAMPLING_X1;
-	po8030_conf.curr_subsampling_y = SUBSAMPLING_X1;
+	po8030_conf.curr_subsampling_x = SUBSAMPLING_X2;
+	po8030_conf.curr_subsampling_y = SUBSAMPLING_X2;
 
     return MSG_OK;
 }
@@ -488,8 +488,8 @@ int8_t po8030_set_qqvga(void) {
 
 	po8030_conf.width = 160;
 	po8030_conf.height = 120;
-	po8030_conf.curr_subsampling_x = SUBSAMPLING_X1;
-	po8030_conf.curr_subsampling_y = SUBSAMPLING_X1;
+	po8030_conf.curr_subsampling_x = SUBSAMPLING_X4;
+	po8030_conf.curr_subsampling_y = SUBSAMPLING_X4;
 	
     return MSG_OK;
 }
@@ -519,7 +519,7 @@ int8_t po8030_set_size(image_size_t imgsize) {
  /**
  * @brief   Scales buffer size depending on both format and size
  * 
- * @param fmt           format of the image. See format_t
+ * @param fmt           format of the image. See po8030_format_t
  * @param imgsize       size of the image. See image_size_t
  *
  * @return              The operation status.
@@ -527,14 +527,14 @@ int8_t po8030_set_size(image_size_t imgsize) {
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end or if wrong imgsize
  *
  */
-int8_t po8030_set_scale_buffer_size(format_t fmt, image_size_t imgsize) {
+int8_t po8030_set_scale_buffer_size(po8030_format_t fmt, image_size_t imgsize) {
     int8_t err = 0;
 
     if((err = po8030_set_bank(BANK_B)) != MSG_OK) {
         return err;
     }
 
-    if(fmt == FORMAT_YYYY) {
+    if(fmt == PO8030_FORMAT_YYYY) {
         switch(imgsize) {
             case SIZE_VGA:
                 if((err = write_reg(PO8030_ADDR, PO8030_REG_SCALE_TH_H, 0x00)) != MSG_OK) {
@@ -603,33 +603,11 @@ int8_t po8030_set_scale_buffer_size(format_t fmt, image_size_t imgsize) {
 /****************************PUBLIC FUNCTIONS*************************************/
 
 void po8030_start(void) {
-
-	i2c_start();
-
-    /* timer init */
-    static const PWMConfig pwmcfg_cam = {
-        .frequency = 42000000,  //42MHz
-        .period = 0x02,         //PWM period = 42MHz/2 => 21MHz
-        .cr2 = 0,
-        .callback = NULL,
-        .channels = {
-            // Channel 1 is used as master clock for the camera.
-            {.mode = PWM_OUTPUT_ACTIVE_HIGH, .callback = NULL},
-            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
-            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
-            {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
-        },
-    };
-    pwmStart(&PWMD5, &pwmcfg_cam);
-    // Enables channel 1 to clock the camera.
-    pwmEnableChannel(&PWMD5, 0, 1); //1 is half the period set => duty cycle = 50%
-    chThdSleepMilliseconds(1000); // Give time for the clock to be stable and the camera to wake-up.
-
     // Default camera configuration.
-	po8030_advanced_config(FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);
+	po8030_advanced_config(PO8030_FORMAT_YCBYCR, 240, 180, 160, 120, SUBSAMPLING_X1, SUBSAMPLING_X1);
 }
 
-int8_t po8030_config(format_t fmt, image_size_t imgsize) {
+int8_t po8030_config(po8030_format_t fmt, image_size_t imgsize) {
 
     int8_t err = 0;
 
@@ -655,7 +633,7 @@ int8_t po8030_config(format_t fmt, image_size_t imgsize) {
     return MSG_OK;
 }
 
-int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1, 
+int8_t po8030_advanced_config(  po8030_format_t fmt, unsigned int x1, unsigned int y1,
                                 unsigned int width, unsigned int height, 
                                 subsampling_t subsampling_x, subsampling_t subsampling_y) {
     int8_t err = MSG_OK;
@@ -854,7 +832,7 @@ int8_t po8030_advanced_config(  format_t fmt, unsigned int x1, unsigned int y1,
         return err;
     }
 
-    if(fmt == FORMAT_YYYY) {
+    if(fmt == PO8030_FORMAT_YYYY) {
 		scale_th_f = (648.0-(float)(x2-x1+1))*((float)(x2-x1+1)+8.0)/(656.0);
 		scale_th = (unsigned int)scale_th_f;
 	} else {
@@ -952,9 +930,9 @@ int8_t po8030_set_awb(uint8_t awb) {
 
 /*! Sets white balance red, green, blue gain. 
  *  These values are considered only when auto white balance is disabled, so this function also disables auto white balance.
- * \param r: red gain: bit7=x2, bit6=x1, bit5=1/2, bit4=1/4, bit3=1/8, bit2=1/16, bit1=1/32, bit0=1/64. Default is 0x5E.
- * \param g: green gain: bit7=x2, bit6=x1, bit5=1/2, bit4=1/4, bit3=1/8, bit2=1/16, bit1=1/32, bit0=1/64. Default is 0x40.
- * \param b: blue gain: bit7=x2, bit6=x1, bit5=1/2, bit4=1/4, bit3=1/8, bit2=1/16, bit1=1/32, bit0=1/64. Default is 0x5D.
+ * \param r: red gain: value/64 (max=4, min=0). Default is 0x5E.
+ * \param g: green gain: value/64 (max=4, min=0). Default is 0x40.
+ * \param b: blue gain: value/64 (max=4, min=0). Default is 0x5D.
  */
 int8_t po8030_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
     int8_t err = 0;
@@ -1036,14 +1014,22 @@ int8_t po8030_set_exposure(uint16_t integral, uint8_t fractional) {
 /*! Returns the current image size in bytes.
  */
 uint32_t po8030_get_image_size(void) {
-    if(po8030_conf.curr_format == FORMAT_YYYY) {
+    if(po8030_conf.curr_format == PO8030_FORMAT_YYYY) {
         return (uint32_t)po8030_conf.width * (uint32_t)po8030_conf.height;
     } else {
         return (uint32_t)po8030_conf.width * (uint32_t)po8030_conf.height * 2;
     }
 }
 
-
+uint8_t po8030_is_connected(void) {
+	uint16_t id = 0;
+	int8_t res = po8030_read_id(&id);
+	if((res==MSG_OK) && (id==0x8030)) {
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 /**************************END PUBLIC FUNCTIONS***********************************/
 

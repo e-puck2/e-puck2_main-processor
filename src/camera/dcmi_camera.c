@@ -184,7 +184,7 @@ int8_t dcmi_prepare(void) {
 		dcmiUnprepare(&DCMID);
 	}
 	// Check if image size fit in the available memory.
-	uint32_t image_size = cam_get_image_size();
+	uint32_t image_size = cam_get_mem_required();
 	if(double_buffering == 0) {
 		if(image_size > MAX_BUFF_SIZE) {
 			return -1;

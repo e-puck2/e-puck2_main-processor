@@ -40,7 +40,7 @@ static THD_FUNCTION(spi_thread, p) {
 // Test single SPI transaction with ESP32. Trigger the transmission by "touching" the prox0.
 	uint8_t btn_state = 0;
 	uint8_t pack_id = 0;
-	last_img_ptr = dcmi_get_last_image_ptr();
+	last_img_ptr = cam_get_last_image_ptr();
 	while (true) {
 		set_led(LED1, 2);
 
@@ -136,7 +136,7 @@ static THD_FUNCTION(spi_thread, p) {
 
 				rx_err = 0;
 
-				last_img_ptr = dcmi_get_last_image_ptr();
+				last_img_ptr = cam_get_last_image_ptr();
 
 	//			memset(spi_tx_buff, 0xFF, SPI_PACKET_MAX_SIZE);
 	//			memset(last_img_ptr, 0xFF, SPI_PACKET_MAX_SIZE);

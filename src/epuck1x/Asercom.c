@@ -583,7 +583,7 @@ int run_asercom(void) {
                     if (wait_cam) {
                         wait_cam = 0;
                         while (!e_poxxxx_is_img_ready());
-                        memcpy(&buffer[i-cam_size], dcmi_get_last_image_ptr(), cam_size);
+                        memcpy(&buffer[i-cam_size], cam_get_last_image_ptr(), cam_size);
                     }
                 }
 

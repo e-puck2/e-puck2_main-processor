@@ -15,8 +15,8 @@ extern "C" {
 #define OV7670_MAX_HEIGHT 480
 
 typedef enum {
-	OV7670_FORMAT_RGB565 = 0x08,
-	OV7670_FORMAT_Y8 = 0x40
+	OV7670_FORMAT_RGB565 = 0x01,
+	OV7670_FORMAT_GREYSCALE = 0x02	// Actually this format is not supported, but in case it is requested a conversion will be performed.
 } ov7670_format_t;
 
 struct ov7670_configuration {

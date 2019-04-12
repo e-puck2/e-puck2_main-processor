@@ -538,6 +538,19 @@ int8_t ov7670_advanced_config(  ov7670_format_t fmt, unsigned int x1, unsigned i
     	return err;
     }
 
+//	// The following code is an initial step to use the YUYV format to get the greyscale image, but unfortunately it doesn't work.
+//  // The idea is to have a sequence of YUYV and then keep only 1 byte over 2 to get only the greyscale information.
+//	if((err = ov7670_read_reg(OV7670_ADDR, REG_COM7, &regValue[0])) != MSG_OK) { // Read common control 7 register.
+//		return err;
+//	}
+//	regValue[0] &= ~(0x05);	// Clear output format bits.
+//	if(fmt == OV7670_FORMAT_RGB565) {
+//		regValue[0] |= COM7_RGB;
+//	}
+//    if((err = ov7670_write_reg(OV7670_ADDR, REG_COM7, regValue[0])) != MSG_OK) { // Set output format: either RGB565 or YUV (used for conversion to greyscale).
+//    	return err;
+//    }
+
 	ov7670_conf.curr_format = fmt;
 	ov7670_conf.curr_subsampling_x = subsampling_x;
 	ov7670_conf.curr_subsampling_y = subsampling_y;
@@ -617,7 +630,7 @@ int8_t ov760_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
 /*! Returns the current image size in bytes.
  */
 uint32_t ov7670_get_image_size(void) {
-    if(ov7670_conf.curr_format == OV7670_FORMAT_Y8) {
+    if(ov7670_conf.curr_format == OV7670_FORMAT_GREYSCALE) {
         return (uint32_t)ov7670_conf.width * (uint32_t)ov7670_conf.height;
     } else {
         return (uint32_t)ov7670_conf.width * (uint32_t)ov7670_conf.height * 2;

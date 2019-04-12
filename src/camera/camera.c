@@ -7,13 +7,14 @@
 #include "po8030.h"
 #include "po6030.h"
 #include "ov7670.h"
+#include "dcmi_camera.h"
 
 #define CAM_PO8030 0
 #define CAM_PO6030 1
 #define CAM_OV7670 2
 
 int8_t curr_cam = -1;
-
+format_t curr_format = FORMAT_COLOR;
 
 /***************************INTERNAL FUNCTIONS************************************/
 
@@ -69,6 +70,7 @@ void cam_start(void) {
 }
 
 int8_t cam_config(format_t fmt, image_size_t imgsize) {
+	curr_format = fmt;
 	if(curr_cam == CAM_PO8030) {
 		if(fmt == FORMAT_GREYSCALE) {
 			return po8030_config(PO8030_FORMAT_YYYY, imgsize);
@@ -82,7 +84,11 @@ int8_t cam_config(format_t fmt, image_size_t imgsize) {
 			return po6030_config(PO6030_FORMAT_RGB565, imgsize);
 		}
 	} else if(curr_cam == CAM_OV7670) {
-		return ov7670_config(OV7670_FORMAT_RGB565, imgsize);
+		if(fmt == FORMAT_GREYSCALE) {
+			return ov7670_config(OV7670_FORMAT_GREYSCALE, imgsize);
+		} else {
+			return ov7670_config(OV7670_FORMAT_RGB565, imgsize);
+		}
 	}
 	return -1;
 }
@@ -99,9 +105,28 @@ uint32_t cam_get_image_size(void) {
 	}
 }
 
+uint32_t cam_get_mem_required(void) {
+	if(curr_cam == CAM_PO8030) {
+		return po8030_get_image_size();
+	} else if(curr_cam == CAM_PO6030) {
+		return po6030_get_image_size();
+	} else if(curr_cam == CAM_OV7670) {
+		if(curr_format == FORMAT_GREYSCALE) {
+			return ov7670_get_image_size()*2; 	// The OV7670 doesn't support greyscale images, thus colors format are used instead.
+												// This means that the actual memory required to capture one frame is twice as bigger than
+												// the final image size.
+		} else {
+			return ov7670_get_image_size();
+		}
+	} else {
+		return 0;
+	}
+}
+
 int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
                                 unsigned int width, unsigned int height,
 								subsampling_t subsampling_x, subsampling_t subsampling_y) {
+	curr_format = fmt;
 	if(curr_cam == CAM_PO8030) {
 		if(fmt == FORMAT_GREYSCALE) {
 			return po8030_advanced_config(PO8030_FORMAT_YYYY, x1, y1, width, height, subsampling_x, subsampling_y);
@@ -115,7 +140,11 @@ int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
 			return po6030_advanced_config(PO6030_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
 		}
 	} else if(curr_cam == CAM_OV7670) {
-		return ov7670_advanced_config(OV7670_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
+		if(fmt == FORMAT_GREYSCALE) {
+			return ov7670_advanced_config(OV7670_FORMAT_GREYSCALE, x1, y1, width, height, subsampling_x, subsampling_y);
+		} else {
+			return ov7670_advanced_config(OV7670_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
+		}
 	}
 	return -1;
 }
@@ -200,6 +229,20 @@ uint16_t cam_get_id(void) {
 	} else {
 		return 0;
 	}
+}
+
+uint8_t* cam_get_last_image_ptr(void) {
+	uint8_t *last_img_ptr = dcmi_get_last_image_ptr();
+	uint16_t i = 0, j = 0;
+	if((curr_cam == CAM_OV7670) && (curr_format==FORMAT_GREYSCALE)) {
+		// Manually perform RGB565 to greyscale conversion because the OV7670 camera doesn't support this format.
+		// It is actually kind of a hack, not an actual conversion, it simply takes 1 byte out of 2, that is only R5G3 are used for
+		// greyscale representation.
+		for(i=0, j=0; i<cam_get_mem_required(); i+=2, j++) {
+			last_img_ptr[j] = last_img_ptr[i];
+		}
+	}
+	return last_img_ptr;
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

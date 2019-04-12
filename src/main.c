@@ -576,7 +576,7 @@ static THD_FUNCTION(selector_thd, arg)
 				    	dcmi_capture_start();
 						wait_image_ready();
 						spi_comm_resume();
-						img_buff_ptr = dcmi_get_last_image_ptr();
+						img_buff_ptr = cam_get_last_image_ptr();
 						r = (int)img_buff_ptr[0]&0xF8;
 			            g = (int)(img_buff_ptr[0]&0x07)<<5 | (img_buff_ptr[1]&0xE0)>>3;
 			            b = (int)(img_buff_ptr[1]&0x1F)<<3;

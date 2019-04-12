@@ -25,6 +25,7 @@ typedef enum {
 void cam_start(void);
 int8_t cam_config(format_t fmt, image_size_t imgsize);
 uint32_t cam_get_image_size(void);
+uint32_t cam_get_mem_required(void);
 int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
                                 unsigned int width, unsigned int height,
 								subsampling_t subsampling_x, subsampling_t subsampling_y);
@@ -37,6 +38,14 @@ int8_t cam_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b);
 int8_t cam_set_ae(uint8_t ae);
 int8_t cam_set_exposure(uint16_t integral, uint8_t fractional);
 uint16_t cam_get_id(void);
+
+/**
+* @brief   Get the pointer to the last filled image buffer.
+*
+* @return	the buffer pointer.
+*
+*/
+uint8_t* cam_get_last_image_ptr(void);
 
 #ifdef __cplusplus
 }

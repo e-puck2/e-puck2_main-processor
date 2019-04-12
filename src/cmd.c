@@ -934,7 +934,7 @@ static void cmd_cam_send(BaseSequentialStream *chp, int argc, char **argv)
     	} else {
     		chprintf(chp, "The image will be sent within 5 seconds\r\n");
     		chThdSleepMilliseconds(5000);
-    		img_buff_ptr = dcmi_get_first_buffer_ptr();
+    		img_buff_ptr = cam_get_last_image_ptr();
     		chnWrite((BaseSequentialStream *)&SDU1, img_buff_ptr, cam_get_image_size());
     	}
     }

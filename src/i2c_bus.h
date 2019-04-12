@@ -58,6 +58,9 @@ int8_t write_reg(uint8_t addr, uint8_t reg, uint8_t value);
  */
 int8_t read_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len);
 
+
+void i2c_update_last_error(void);
+
 #ifdef __cplusplus
 }
 #endif

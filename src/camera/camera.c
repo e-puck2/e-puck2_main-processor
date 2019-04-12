@@ -6,9 +6,11 @@
 #include "chprintf.h"
 #include "po8030.h"
 #include "po6030.h"
+#include "ov7670.h"
 
 #define CAM_PO8030 0
 #define CAM_PO6030 1
+#define CAM_OV7670 2
 
 int8_t curr_cam = -1;
 
@@ -53,12 +55,15 @@ void cam_start(void) {
     	po6030_start();
     	po6030_set_mirror(1, 1);
     	//chprintf((BaseSequentialStream *)&SDU1, "po6030 detected\r\n");
+    } else if(ov7670_is_connected() == 1) {
+    	curr_cam = CAM_OV7670;
+    	ov7670_start();
     } else {
-//    	write_reg(0x30, 0xFF, 0x01);
 //    	uint8_t regValue[2] = {0};
 //    	read_reg(0x30, 0x0A, &regValue[0]);
 //    	read_reg(0x30, 0x0B, &regValue[1]);
 //    	chprintf((BaseSequentialStream *)&SDU1, "H=%x, L=%x\r\n", regValue[0], regValue[1]);
+//    	ov2640_start();
     }
 
 }
@@ -76,6 +81,8 @@ int8_t cam_config(format_t fmt, image_size_t imgsize) {
 		} else {
 			return po6030_config(PO6030_FORMAT_RGB565, imgsize);
 		}
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_config(OV7670_FORMAT_RGB565, imgsize);
 	}
 	return -1;
 }
@@ -85,6 +92,8 @@ uint32_t cam_get_image_size(void) {
 		return po8030_get_image_size();
 	} else if(curr_cam == CAM_PO6030) {
 		return po6030_get_image_size();
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_get_image_size();
 	} else {
 		return 0;
 	}
@@ -105,6 +114,8 @@ int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
 		} else {
 			return po6030_advanced_config(PO6030_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
 		}
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_advanced_config(OV7670_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
 	}
 	return -1;
 }
@@ -184,6 +195,8 @@ uint16_t cam_get_id(void) {
 		return 0x8030;
 	} else if(curr_cam == CAM_PO6030) {
 		return 0x6030;
+	} else if(curr_cam == CAM_OV7670) {
+		return 0x7670;
 	} else {
 		return 0;
 	}

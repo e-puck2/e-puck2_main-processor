@@ -17,8 +17,8 @@ void i2c_start(void) {
      */
     static const I2CConfig i2c_cfg1 = {
         .op_mode = OPMODE_I2C,
-        .clock_speed = 200000,
-        .duty_cycle = FAST_DUTY_CYCLE_2
+        .clock_speed = 200000, //100000,
+        .duty_cycle = FAST_DUTY_CYCLE_2 //STD_DUTY_CYCLE
     };
 
     //simulate 16 clock pulses to unblock potential I2C periph blocked
@@ -38,6 +38,10 @@ void i2c_start(void) {
 
 void i2c_stop(void) {
 	i2cStop(&I2CD1);
+}
+
+void i2c_update_last_error(void) {
+	errors = i2cGetErrors(&I2CD1);
 }
 
 i2cflags_t get_last_i2c_error(void) {

@@ -79,12 +79,13 @@ int8_t po6030_advanced_config(  po6030_format_t fmt, unsigned int x1, unsigned i
  /**
  * @brief   Sets the brigthness of the camera
  * 
- * @param value         Brightness. [7] = sign (positive if 0) and [6:0] the value. => from -128 to 127
+ * @param value         2's complement => from -128 to 127
+ * 						Y reault = Y * (Ycontrast / 64) + Brightness
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
- * @retval others        see in the implementation for details
+ * @retval others       see in the implementation for details
  *
  */
 int8_t po6030_set_brightness(uint8_t value);
@@ -92,7 +93,8 @@ int8_t po6030_set_brightness(uint8_t value);
  /**
  * @brief   Sets the contrast of the camera
  * 
- * @param value         Contrast
+ * @param value         Contrast (0..255)
+ * 						Y reault = Y * (Ycontrast / 64) + Brightness
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
@@ -128,13 +130,12 @@ int8_t po6030_set_awb(uint8_t awb);
 
  /**
  * @brief   Sets the white balance for the red, green and blue gains. 
- *          Writes the values to the camera but has no effect if auto white balance is enabled
- * 
+ *          These values are considered only when auto white balance is disabled, so this function also disables auto white balance.
  *          The resulting gain is the value divided by 64 (max resulting gain = 4).
  *          
- * @param r             red gain. Default is 0x5E.
- * @param g             green gain. Default is 0x40.
- * @param b             blue gain. Default is 0x5D.
+ * @param r             red gain: value/64 (max=4, min=0). Default is 64.
+ * @param g             green gain: value/64 (max=4, min=0). Default is 64.
+ * @param b             blue gain: value/64 (max=4, min=0). Default is 64.
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
@@ -157,7 +158,8 @@ int8_t po6030_set_ae(uint8_t ae);
 
  /**
  * @brief   Sets integration time, aka the exposure.
- *          Total integration time is: (integral + fractional/256) line time. 
+ * 			These values are considered only when auto exposure is disabled, so this function also disables auto exposure.
+ *          Total integration time is: (integral + fractional/256) * line time.
  * 
  * @param integral      unit is line time. Default is 0x0080 (128).
  * @param fractional    unit is 1/256 line time. Default is 0x00 (0).

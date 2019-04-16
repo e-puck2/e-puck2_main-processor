@@ -68,27 +68,27 @@ int8_t ov7670_advanced_config(  ov7670_format_t fmt, unsigned int x1, unsigned i
  /**
  * @brief   Sets the brigthness of the camera
  * 
- * @param value         Brightness. [7] = sign (positive if 0) and [6:0] the value. => from -128 to 127
+ * @param value         Brightness. [7] = sign (positive if 0) and [6:0] the magnitude. => from -127 to 127
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
- * @retval others        see in the implementation for details
+ * @retval others       see in the implementation for details
  *
  */
-//int8_t ov7670_set_brightness(uint8_t value);
+int8_t ov7670_set_brightness(uint8_t value);
 
  /**
  * @brief   Sets the contrast of the camera
  * 
- * @param value         Contrast
+ * @param value         Contrast (0..255)
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
-//int8_t ov7670_set_contrast(uint8_t value);
+int8_t ov7670_set_contrast(uint8_t value);
 
  /**
  * @brief   Sets mirroring for both vertical and horizontal orientations.
@@ -101,7 +101,7 @@ int8_t ov7670_advanced_config(  ov7670_format_t fmt, unsigned int x1, unsigned i
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
-//int8_t ov7670_set_mirror(uint8_t vertical, uint8_t horizontal);
+int8_t ov7670_set_mirror(uint8_t vertical, uint8_t horizontal);
 
  /**
  * @brief   Enables/disables auto white balance.
@@ -113,24 +113,23 @@ int8_t ov7670_advanced_config(  ov7670_format_t fmt, unsigned int x1, unsigned i
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
-//int8_t ov7670_set_awb(uint8_t awb);
+int8_t ov7670_set_awb(uint8_t awb);
 
  /**
  * @brief   Sets the white balance for the red, green and blue gains. 
- *          Writes the values to the camera but has no effect if auto white balance is enabled
- * 
+ *          These values are considered only when auto white balance is disabled, so this function also disables auto white balance.
  *          The resulting gain is the value divided by 64 (max resulting gain = 4).
  *          
- * @param r             red gain. Default is 0x5E.
- * @param g             green gain. Default is 0x40.
- * @param b             blue gain. Default is 0x5D.
+ * @param r             red gain. Default is 128 (2x).
+ * @param g             green gain. Default is 0.
+ * @param b             blue gain. Default is 128 (2x).
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
-//int8_t ov7670_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b);
+int8_t ov7670_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b);
 
  /**
  * @brief   Enables/disables auto exposure.
@@ -142,21 +141,20 @@ int8_t ov7670_advanced_config(  ov7670_format_t fmt, unsigned int x1, unsigned i
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
-//int8_t ov7670_set_ae(uint8_t ae);
+int8_t ov7670_set_ae(uint8_t ae);
 
  /**
  * @brief   Sets integration time, aka the exposure.
- *          Total integration time is: (integral + fractional/256) line time. 
+ *          Total integration time is: integral * line time.
  * 
- * @param integral      unit is line time. Default is 0x0080 (128).
- * @param fractional    unit is 1/256 line time. Default is 0x00 (0).
+ * @param integral      unit is line time.
  *
  * @return              The operation status.
  * @retval MSG_OK       if the function succeeded.
  * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  *
  */
-//int8_t ov7670_set_exposure(uint16_t integral, uint8_t fractional);
+int8_t ov7670_set_exposure(uint16_t integral);
 
  /**
  * @brief   Returns the current image size in bytes.

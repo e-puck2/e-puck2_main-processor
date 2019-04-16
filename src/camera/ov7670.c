@@ -15,6 +15,7 @@ static bool cam_configured = false;
 #define REG_GAIN	0x00			/* Gain lower 8 bits (rest in vref) */
 #define REG_BLUE	0x01			/* blue gain */
 #define REG_RED		0x02			/* red gain */
+#define REG_GREEN	0x6a			/* green gain */
 #define REG_VREF	0x03			/* Pieces of GAIN, VSTART, VSTOP */
 #define REG_COM1	0x04			/* Control 1 */
 #define  COM1_CCIR656	  0x40 		/* CCIR656 enable */
@@ -564,68 +565,120 @@ int8_t ov7670_advanced_config(  ov7670_format_t fmt, unsigned int x1, unsigned i
 }
 
 int8_t ov7670_set_brightness(uint8_t value) {
-    int8_t err = 0;
-    //return ov7670_write_reg(OV7670_ADDR, 0x55, ...);
-    return MSG_OK;
+    return ov7670_write_reg(OV7670_ADDR, REG_BRIGHT, value);
 }
 
 int8_t ov7670_set_contrast(uint8_t value) {
+    //ov7670_write_reg(OV7670_ADDR, 0x57, ...);	//CONTRAS_CENTER
+    //ov7670_write_reg(OV7670_ADDR, 0x58, 0x9e); // MTXS
+    return ov7670_write_reg(OV7670_ADDR, 0x56, value);
+}
+
+int8_t ov7670_set_mirror(uint8_t vertical, uint8_t horizontal) {
     int8_t err = 0;
+    uint8_t value = 0;
 
-    ov7670_write_reg(OV7670_ADDR, 0x56, 0x40);
-    //ov7670_write_reg(OV7670_ADDR, 0x57, ...);
-    //ov7670_write_reg(OV7670_ADDR, 0x58, 0x9e);
+	if((err = ov7670_read_reg(OV7670_ADDR, REG_MVFP, &value)) != MSG_OK) {
+		return err;
+	}
 
-    return MSG_OK;
+    if(vertical == 1) {
+        value |= 0x10;
+    } else {
+    	value &= ~0x10;
+    }
+
+    if(horizontal == 1) {
+        value |= 0x20;
+    } else {
+    	value &= ~0x20;
+    }
+
+    return ov7670_write_reg(OV7670_ADDR, REG_MVFP, value);
 }
 
 int8_t ov7670_set_awb(uint8_t awb) {
     int8_t err = 0;
     uint8_t value = 0;
 
-    ov7670_write_reg(OV7670_ADDR, 0x59, 0x88);
-    ov7670_write_reg(OV7670_ADDR, 0x5a, 0x88);
-    ov7670_write_reg(OV7670_ADDR, 0x5b, 0x44);
-    ov7670_write_reg(OV7670_ADDR, 0x5c, 0x67);
-    ov7670_write_reg(OV7670_ADDR, 0x5d, 0x49);
-    ov7670_write_reg(OV7670_ADDR, 0x5e, 0x0e);
+	if((err = ov7670_read_reg(OV7670_ADDR, REG_COM8, &value)) != MSG_OK) {
+		return err;
+	}
 
-    ov7670_write_reg(OV7670_ADDR, 0x6c, 0x0a);
-    ov7670_write_reg(OV7670_ADDR, 0x6d, 0x55);
-    ov7670_write_reg(OV7670_ADDR, 0x6e, 0x11);
-    ov7670_write_reg(OV7670_ADDR, 0x6f, 0x9f);
+    if(awb == 1) {
+    	value |= COM8_AWB;
+    } else {
+    	value &= ~(COM8_AWB);
+    }
+
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_COM8, value)) != MSG_OK) {
+    	return err;
+    }
 
     return MSG_OK;
 }
 
-
-
-/*! Sets mirroring for both vertical and horizontal orientations.
- * \param vertical: 1 to enable vertical mirroring
- * \param horizontal: 1 to enable horizontal mirroring
- */
-int8_t ov7670_set_mirror(uint8_t vertical, uint8_t horizontal) {
-    int8_t err = 0;
-    uint8_t value = 0x35;
-
-    if(vertical == 1) {
-        //value |= 0x80;
-    }
-    if(horizontal == 1) {
-        value |= 0x27;
-    }
-
-    return ov7670_write_reg(OV7670_ADDR, REG_MVFP, value);
-}
-
-int8_t ov760_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
+int8_t ov7670_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
     int8_t err = 0;
 
-    ov7670_write_reg(OV7670_ADDR, 0x69, 0x00);
-    ov7670_write_reg(OV7670_ADDR, 0x6a, 0x40);
+    if((err = ov7670_set_awb(0)) != MSG_OK) {
+        return err;
+    }
+
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_RED, r)) != MSG_OK) {
+    	return err;
+    }
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_GREEN, g)) != MSG_OK) {
+    	return err;
+    }
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_BLUE, b)) != MSG_OK) {
+    	return err;
+    }
 
     return MSG_OK;
 }
+
+int8_t ov7670_set_ae(uint8_t ae) {
+    int8_t err = 0;
+    uint8_t value = 0;
+
+	if((err = ov7670_read_reg(OV7670_ADDR, REG_COM8, &value)) != MSG_OK) {
+		return err;
+	}
+
+    if(ae == 1) {
+    	value |= COM8_AEC;
+    } else {
+    	value &= ~(COM8_AEC);
+    }
+
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_COM8, value)) != MSG_OK) {
+    	return err;
+    }
+
+    return MSG_OK;
+}
+
+int8_t ov7670_set_exposure(uint16_t integral) {
+    int8_t err = 0;
+
+    if((err = ov7670_set_ae(0)) != MSG_OK) {
+        return err;
+    }
+
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_AECHH, (integral>>10)&0x001F)) != MSG_OK) {	// AEC[15:10]
+    	return err;
+    }
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_AECH, (integral>>2)&0x00FF)) != MSG_OK) {	// AEC[9:2]
+    	return err;
+    }
+    if((err = ov7670_write_reg(OV7670_ADDR, REG_COM1, (integral&0x0003))) != MSG_OK) {		// AEC[1:0]
+    	return err;
+    }
+
+    return MSG_OK;
+}
+
 
 /*! Returns the current image size in bytes.
  */

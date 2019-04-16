@@ -126,7 +126,6 @@
 
 
 static struct ov2640_configuration ov2640_conf;
-static bool cam_configured = false;
 
 /* Initialization sequence for QQVGA resolution (160x120) */
 const char OV2640_QQVGA[][2]=
@@ -406,9 +405,11 @@ int8_t ov2640_read_id(uint16_t *id) {
  */
 int8_t ov2640_set_qqvga(void) {
     int8_t err = 0;
-    uint32_t i=0;
+    uint32_t i = 0;
 	for(i=0; i<(sizeof(OV2640_QQVGA)/2); i++) {
-		write_reg(OV2640_ADDR, OV2640_QQVGA[i][0], OV2640_QQVGA[i][1]);
+		if((err = write_reg(OV2640_ADDR, OV2640_QQVGA[i][0], OV2640_QQVGA[i][1])) != MSG_OK) {
+			return err;
+		}
 	}
 
     ov2640_conf.width = 160;

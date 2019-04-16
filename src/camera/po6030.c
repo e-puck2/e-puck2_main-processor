@@ -903,9 +903,6 @@ int8_t po6030_advanced_config(  po6030_format_t fmt, unsigned int x1, unsigned i
     return MSG_OK;
 }
 
-/*! Sets brightness.
- * \param value Brightness => [7]:[6:0] = Sign:Magnitude: luminance = Y*contrast + brightness. Default=1, max=127, min=-128.
- */
 int8_t po6030_set_brightness(uint8_t value) {
     int8_t err = 0;
     if((err = po6030_set_bank(BANK_B)) != MSG_OK) {
@@ -914,9 +911,6 @@ int8_t po6030_set_brightness(uint8_t value) {
     return write_reg(PO6030_ADDR, PO6030_REG_BRIGHTNESS, value);
 }
 
-/*! Sets contrast.
- * \param value Contrast => [7:0] = Magnitude: luminance = Y*contrast + brightness. Default=64, max=255, min=0.
- */
 int8_t po6030_set_contrast(uint8_t value) {
     int8_t err = 0;
     if((err = po6030_set_bank(BANK_B)) != MSG_OK) {
@@ -925,10 +919,6 @@ int8_t po6030_set_contrast(uint8_t value) {
     return write_reg(PO6030_ADDR, PO6030_REG_CONTRAST, value);
 }
 
-/*! Sets mirroring for both vertical and horizontal orientations.
- * \param vertical: 1 to enable vertical mirroring
- * \param horizontal: 1 to enable horizontal mirroring
- */
 int8_t po6030_set_mirror(uint8_t vertical, uint8_t horizontal) {
     int8_t err = 0;
     uint8_t value = 0x35;
@@ -947,9 +937,6 @@ int8_t po6030_set_mirror(uint8_t vertical, uint8_t horizontal) {
     return write_reg(PO6030_ADDR, PO6030_REG_BAYER_CONTROL_01, value);
 }
 
-/*! Enable/disable auto white balance.
- * \param awb: 1 to enable auto white balance.
- */
 int8_t po6030_set_awb(uint8_t awb) {
     int8_t err = 0;
     uint8_t value = 0;
@@ -971,12 +958,6 @@ int8_t po6030_set_awb(uint8_t awb) {
     return write_reg(PO6030_ADDR, PO6030_REG_AUTO_CONTROL_1, value);
 }
 
-/*! Sets white balance red, green, blue gain. 
- *  These values are considered only when auto white balance is disabled, so this function also disables auto white balance.
- * \param r: red gain: value/64 (max=4, min=0). Default is 0x5E.
- * \param g: green gain: value/64 (max=4, min=0). Default is 0x40.
- * \param b: blue gain: value/64 (max=4, min=0). Default is 0x5D.
- */
 int8_t po6030_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
     int8_t err = 0;
     
@@ -1001,9 +982,6 @@ int8_t po6030_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
     return MSG_OK;
 }
 
-/*! Enables/disables auto exposure.
- * \param ae: 1 to enable auto exposure.
- */
 int8_t po6030_set_ae(uint8_t ae) {
     int8_t err = 0;
     uint8_t value = 0;
@@ -1025,11 +1003,6 @@ int8_t po6030_set_ae(uint8_t ae) {
     return write_reg(PO6030_ADDR, PO6030_REG_AUTO_CONTROL_1, value);
 }
 
-/*! Sets integration time. Total integration time is: (integral + fractional/256) line time. 
- *  These values are considered only when auto exposure is disabled, so this function also disables auto exposure.
- * \param integral: unit is line time. Default is 0x0080 (128).
- * \param fractional: unit is 1/256 line time. Default is 0x00 (0).
- */
 int8_t po6030_set_exposure(uint16_t integral, uint8_t fractional) {
     int8_t err = 0;
     
@@ -1070,8 +1043,6 @@ int8_t po6030_set_exposure(uint16_t integral, uint8_t fractional) {
     return MSG_OK;
 }
 
-/*! Returns the current image size in bytes.
- */
 uint32_t po6030_get_image_size(void) {
     if(po6030_conf.curr_format == PO6030_FORMAT_YYYY) {
         return (uint32_t)po6030_conf.width * (uint32_t)po6030_conf.height;

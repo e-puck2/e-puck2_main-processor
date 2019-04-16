@@ -149,11 +149,22 @@ int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
 	return -1;
 }
 
-int8_t cam_set_brightness(uint8_t value) {
+int8_t cam_set_brightness(int8_t value) {
+	uint8_t actual_value = value;
 	if(curr_cam == CAM_PO8030) {
-		return po8030_set_brightness(value);
+		if(value < 0) {
+			actual_value = (-value);
+			actual_value |= 0x80;
+		}
+		return po8030_set_brightness(actual_value);
 	} else if(curr_cam == CAM_PO6030) {
-		return po6030_set_brightness(value);
+		return po6030_set_brightness(actual_value);
+	} else if(curr_cam == CAM_OV7670) {
+		if(value < 0) {
+			actual_value = (-value);
+			actual_value |= 0x80;
+		}
+		return ov7670_set_brightness(actual_value);
 	} else {
 		return -1;
 	}
@@ -164,6 +175,8 @@ int8_t cam_set_contrast(uint8_t value) {
 		return po8030_set_contrast(value);
 	} else if(curr_cam == CAM_PO6030) {
 		return po6030_set_contrast(value);
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_set_contrast(value);
 	} else {
 		return -1;
 	}
@@ -174,6 +187,8 @@ int8_t cam_set_mirror(uint8_t vertical, uint8_t horizontal) {
 		return po8030_set_mirror(vertical, horizontal);
 	} else if(curr_cam == CAM_PO6030) {
 		return po6030_set_mirror(vertical, horizontal);
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_set_mirror(vertical, horizontal);
 	} else {
 		return -1;
 	}
@@ -184,6 +199,8 @@ int8_t cam_set_awb(uint8_t awb) {
 		return po8030_set_awb(awb);
 	} else if(curr_cam == CAM_PO6030) {
 		return po6030_set_awb(awb);
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_set_awb(awb);
 	} else {
 		return -1;
 	}
@@ -194,6 +211,8 @@ int8_t cam_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
 		return po8030_set_rgb_gain(r, g, b);
 	} else if(curr_cam == CAM_PO6030) {
 		return po6030_set_rgb_gain(r, g, b);
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_set_rgb_gain(r, g, b);
 	} else {
 		return -1;
 	}
@@ -204,6 +223,8 @@ int8_t cam_set_ae(uint8_t ae) {
 		return po8030_set_ae(ae);
 	} else if(curr_cam == CAM_PO6030) {
 		return po6030_set_ae(ae);
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_set_ae(ae);
 	} else {
 		return -1;
 	}
@@ -214,6 +235,8 @@ int8_t cam_set_exposure(uint16_t integral, uint8_t fractional) {
 		return po8030_set_exposure(integral, fractional);
 	} else if(curr_cam == CAM_PO6030) {
 		return po6030_set_exposure(integral, fractional);
+	} else if(curr_cam == CAM_OV7670) {
+		return ov7670_set_exposure(integral);
 	} else {
 		return -1;
 	}

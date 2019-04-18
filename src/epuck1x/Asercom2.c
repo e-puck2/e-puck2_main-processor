@@ -88,6 +88,7 @@ int run_asercom2(void) {
     uint16_t cam_start_index = 0;
     float tempf = 0.0;
     uint32_t tempi = 0;
+    uint8_t rx_buff[19] = {0};
 
     //e_init_port();    // configure port pins
     //e_start_agendas_processing();
@@ -467,10 +468,10 @@ int run_asercom2(void) {
                         if(gumstix_connected) { // Communicate with gumstix (i2c).
 
                         } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-                        	chSequentialStreamRead(&SD3, (uint8_t*)buffer, 19);
+                        	chSequentialStreamRead(&SD3, (uint8_t*)rx_buff, 19);
                         } else { // Communicate with the pc (usb).
                         	if (SDU1.config->usbp->state == USB_ACTIVE) {
-                        		chSequentialStreamRead(&SDU1, (uint8_t*)buffer, 19);
+                        		chSequentialStreamRead(&SDU1, (uint8_t*)rx_buff, 19);
                         	}
                         	//otherwise there is no wait state, this means the other threads can not be processed
                         	chThdSleepMilliseconds(10);
@@ -485,20 +486,20 @@ int run_asercom2(void) {
                         }
 
                         // Handle behaviors and others commands.
-                        if(buffer[0] & 0x01) { // Calibrate proximity.
+                        if(rx_buff[0] & 0x01) { // Calibrate proximity.
                         	calibrate_ir();
                         }
-                        if(buffer[0] & 0x02) { // Enable obastacle avoidance.
+                        if(rx_buff[0] & 0x02) { // Enable obastacle avoidance.
 
                         } else { // Disable obstacle avoidance
 
                         }
 
 						// Set motor speed or motor position.
-                        speedl = (unsigned char) buffer[1] + ((unsigned int) buffer[2] << 8);
-                        speedr = (unsigned char) buffer[3] + ((unsigned int) buffer[4] << 8);
+                        speedl = (unsigned char) rx_buff[1] + ((unsigned int) rx_buff[2] << 8);
+                        speedr = (unsigned char) rx_buff[3] + ((unsigned int) rx_buff[4] << 8);
 
-                        if(buffer[0] & 0x04) { // Set steps.
+                        if(rx_buff[0] & 0x04) { // Set steps.
                         	e_set_steps_left(speedl);
                         	e_set_steps_right(speedr);
                         } else { // Set speed.
@@ -507,60 +508,60 @@ int run_asercom2(void) {
                         }
 
                         // Set LEDs.
-                    	if(buffer[5] & 0x01) {
+                    	if(rx_buff[5] & 0x01) {
                     		set_led(LED1, 1);
                     	} else {
                     		set_led(LED1, 0);
                     	}
-                    	if(buffer[5] & 0x02) {
+                    	if(rx_buff[5] & 0x02) {
                     		set_led(LED3, 1);
                     	} else {
                     		set_led(LED3, 0);
                     	}
-                    	if(buffer[5] & 0x04) {
+                    	if(rx_buff[5] & 0x04) {
                     		set_led(LED5, 1);
                     	} else {
                     		set_led(LED5, 0);
                     	}
-                    	if(buffer[5] & 0x08) {
+                    	if(rx_buff[5] & 0x08) {
                     		set_led(LED7, 1);
                     	} else {
                     		set_led(LED7, 0);
                     	}
-                    	if(buffer[5] & 0x10) {
+                    	if(rx_buff[5] & 0x10) {
                     		set_body_led(1);
                     	} else {
                     		set_body_led(0);
                     	}
-                    	if(buffer[5] & 0x20) {
+                    	if(rx_buff[5] & 0x20) {
                     		set_front_led(1);
                     	} else {
                     		set_front_led(0);
                     	}
 
                     	// RGBs setting.
-                    	set_rgb_led(0, buffer[6], buffer[7], buffer[8]);
-                    	set_rgb_led(1, buffer[9], buffer[10], buffer[11]);
-                    	set_rgb_led(2, buffer[12], buffer[13], buffer[14]);
-                    	set_rgb_led(3, buffer[15], buffer[16], buffer[17]);
+                    	set_rgb_led(0, rx_buff[6], rx_buff[7], rx_buff[8]);
+                    	set_rgb_led(1, rx_buff[9], rx_buff[10], rx_buff[11]);
+                    	set_rgb_led(2, rx_buff[12], rx_buff[13], rx_buff[14]);
+                    	set_rgb_led(3, rx_buff[15], rx_buff[16], rx_buff[17]);
 
                     	// Play sound.
-                    	if(buffer[18] & 0x01) {
+                    	if(rx_buff[18] & 0x01) {
                     		playMelody(MARIO, ML_FORCE_CHANGE, NULL);//e_play_sound(0, 2112);
                     	}
-                    	if(buffer[18] & 0x02) {
+                    	if(rx_buff[18] & 0x02) {
                     		playMelody(UNDERWORLD, ML_FORCE_CHANGE, NULL);//e_play_sound(2116, 1760);
                     	}
-                    	if(buffer[18] & 0x04) {
+                    	if(rx_buff[18] & 0x04) {
                     		playMelody(STARWARS, ML_FORCE_CHANGE, NULL);//e_play_sound(3878, 3412);
                     	}
-                    	if(buffer[18] & 0x08) {
+                    	if(rx_buff[18] & 0x08) {
                     		e_play_sound(7294, 3732);
                     	}
-                    	if(buffer[18] & 0x10) {
+                    	if(rx_buff[18] & 0x10) {
                     		e_play_sound(11028, 8016);
                     	}
-                    	if(buffer[18] & 0x20) {
+                    	if(rx_buff[18] & 0x20) {
                     		e_close_sound();
                     		stopCurrentMelody();
                     	}

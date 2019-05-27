@@ -253,7 +253,7 @@ ULIBS = $(GLOBAL_PATH)/libPDMFilter_CM4F_GCC.a $(GLOBAL_PATH)/libarm_cortexM4lf_
 ##############################################################################
 
 RULESPATH = $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC
-include $(RULESPATH)/rules.mk
+include $(GLOBAL_PATH)/rules.mk
 
 # Empty libraries, required by stack smashing protection
 PRE_MAKE_ALL_RULE_HOOK: libssp.a libssp_nonshared.a

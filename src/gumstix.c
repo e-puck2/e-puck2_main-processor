@@ -11,6 +11,7 @@
 #include "audio/microphone.h"
 #include "audio/play_melody.h"
 #include "ir_remote.h"
+#include "button.h"
 
 /**
  * I2C slave test routine.
@@ -27,10 +28,11 @@
 #define slaveI2cPort    I2CD1
 #define slaveI2Caddress  0x3E	// 8 bits address (0x1F is the 7-bit address).
 
-#define ACTUATORS_SIZE 19
-#define SENSORS_SIZE 30
+#define ACTUATORS_SIZE (19+1) // Data + checksum.
+#define SENSORS_SIZE (46+1) // Data + checksum.
 
-uint8_t rx_flag = 0;
+static BSEMAPHORE_DECL(i2c_rx_ready, true);
+binary_semaphore_t *sem = &i2c_rx_ready;
 
 I2CSlaveMsgCB messageProcessor, clearAfterSend, catchError;
 
@@ -42,18 +44,16 @@ static const I2CConfig slaveI2Cconfig = {
 	STD_DUTY_CYCLE
 };
 
-uint8_t i2c_rx_buff[ACTUATORS_SIZE];	// Stores last message master sent us.
+/* Last message received from the master:
+ * | Left speed (2) | Right speed (2) | Speaker (1) | LED1, LED3, LED5, LED7 (1) | LED2 RGB (3) | LED4 RGB (3) | LED6 RGB (3) | LED8 RGB (3) | Settings (1) |
+ */
+uint8_t i2c_rx_buff[ACTUATORS_SIZE];
 uint8_t work_buffer[ACTUATORS_SIZE];
 
-/* Return message buffer for computed replies */
-uint8_t i2c_tx_buff[SENSORS_SIZE] = {
-	// Sensors
-	0,100, 0,101, 0,102, 0,103, 0,104, 0,105, 0,106, 0,107, // Proximity (16 bytes)
-	0,200, 0,201, 0,202, 0,203, // Mic (8 bytes)
-	10, // Selector (1 byte)
-	0,150, 0,151, // Mot steps (4 bytes)
-	5, // Tv remote (1 byte)
-};
+/* Message to send to the master:
+ * | 8 x Prox (16) | 8 x Amb (16) |	4 x Mic (8) | Selector + button (1) | Left steps (2) | Right steps (2) | TV remote (1) |
+ */
+uint8_t i2c_tx_buff[SENSORS_SIZE] = {0};
 
 BaseSequentialStream *chp = NULL;           // Used for serial logging
 
@@ -71,7 +71,7 @@ I2CSlaveMsg i2c_tx_msg = { 	/* this is in RAM so size may be updated */
 	SENSORS_SIZE,			/* filled in with the length of the message to send */
 	i2c_tx_buff,			/* Response message */
 	NULL,					/* do nothing special on address match */
-	clearAfterSend,       /* Clear receive buffer once replied */
+	NULL, //clearAfterSend,       /* Clear receive buffer once replied */
 	catchError				/* Error hook */
 };
 
@@ -109,42 +109,23 @@ void catchError(I2CDriver *i2cp)
  *  Note: Called in interrupt context, so need to be quick!
  */
 void messageProcessor(I2CDriver *i2cp) {
-
+	(void)i2cp;
 	uint8_t j, i=0;
 	int16_t n;
-//  uint8_t *txPtr = txBody + 8;
-//  uint8_t txLen;
-//  uint32_t curCount;
-//
-//  size_t len = i2cSlaveBytes(i2cp);         // Number of bytes received
-//  if (len >= sizeof(rxBody))
-//      len = sizeof(rxBody)-1;
-//  rxBody[len]=0;                            // String termination sometimes useful
-//
-//  /* A real-world application would read and decode the message in rxBody, then generate an appropriate reply in txBody */
-//
-//  curCount = ++messageCounter;
-//  txLen = len + 11;                         // Add in the overhead
-//
-//  for (i = 0; i < 8; i++)
-//  {
-//    *--txPtr = hexString[curCount & 0xf];
-//    curCount = curCount >> 4;
-//  }
-//
-//  txPtr = txBody + 8;
-//  *txPtr++ = ' ';
-//  *txPtr++ = '[';
-//  memcpy(txPtr, rxBody, len);               // Echo received message
-//  txPtr += len;
-//  *txPtr++ = ']';
-//  *txPtr = '\0';
+	uint8_t checksum = 0;
 
 	memcpy(work_buffer, i2c_rx_buff, ACTUATORS_SIZE);
-	rx_flag = 1;
+    chSysLockFromISR();
+    chBSemSignalI(sem);
+    chSysUnlockFromISR();
 
-    for (j=0; j<8; j++) {
+    for(j=0; j<8; j++) {
         n = get_calibrated_prox(j);
+        i2c_tx_buff[i++] = n & 0xff;
+        i2c_tx_buff[i++] = n >> 8;
+    }
+    for(j=0; j<8; j++) {
+        n = get_ambient_light(j);
         i2c_tx_buff[i++] = n & 0xff;
         i2c_tx_buff[i++] = n >> 8;
     }
@@ -153,7 +134,12 @@ void messageProcessor(I2CDriver *i2cp) {
         i2c_tx_buff[i++] = n & 0xff;
         i2c_tx_buff[i++] = n >> 8;
     }
-    i2c_tx_buff[i++] = get_selector();
+    i2c_tx_buff[i++] = get_selector(); // First 4 bits used for the selector.
+    if(button_is_pressed()) {	// 5th bit used for the button state.
+    	i2c_tx_buff[i-1] |= 0x10;
+    } else {
+    	i2c_tx_buff[i-1] &= 0xEF;
+    }
     n = left_motor_get_pos();
     i2c_tx_buff[i++] = n & 0xff;
     i2c_tx_buff[i++] = n >> 8;
@@ -162,11 +148,15 @@ void messageProcessor(I2CDriver *i2cp) {
     i2c_tx_buff[i++] = n >> 8;
     i2c_tx_buff[i++] = ir_remote_get_data();
 
-	/** Message ready to go here */
-	i2c_tx_msg.size = SENSORS_SIZE;
-	chSysLockFromISR();
-	i2cSlaveReplyI(i2cp, &i2c_tx_msg);
-	chSysUnlockFromISR();
+    // Construct a cheksum (Longitudinal Redundancy Check) to put at the end of the message.
+    checksum = 0;
+    for(j=0; j<(SENSORS_SIZE-1); j++) {
+    	checksum ^= i2c_tx_buff[j];
+    }
+    i2c_tx_buff[SENSORS_SIZE-1] = checksum;
+
+    i2c_tx_msg.size = SENSORS_SIZE;
+    i2cSlaveReplyI(&I2CD1, &i2c_tx_msg);
 }
 
 /**
@@ -175,7 +165,7 @@ void messageProcessor(I2CDriver *i2cp) {
 void clearAfterSend(I2CDriver *i2cp)
 {
 	(void)i2cp;
-	i2c_tx_msg.size = 0;
+	//i2c_tx_msg.size = 0;
 }
 
 
@@ -189,74 +179,79 @@ void start_gumstix_comm(BaseSequentialStream *serport)
   chp = serport;
 
   int16_t speedl, speedr;
-
-//  //simulate 16 clock pulses to unblock potential I2C periph blocked
-//  //take control of the pin
-//  palSetPadMode(GPIOB, GPIOB_SCL , PAL_MODE_OUTPUT_OPENDRAIN );
-//  //16 clock pulses
-//  for(uint8_t i = 0 ; i < 32 ; i++){
-//  	palTogglePad(GPIOB, GPIOB_SCL);
-//  	chThdSleepMilliseconds(1);
-//  }
-//  //make sure the output is high
-//  palSetPad(GPIOB, GPIOB_SCL);
-//  //give the control of the pin to the I2C machine
-//  palSetPadMode(GPIOB, GPIOB_SCL , PAL_MODE_ALTERNATE(4) | PAL_STM32_OTYPE_OPENDRAIN);
+  uint8_t checksum = 0;
 
   i2cStart(&slaveI2cPort, &slaveI2Cconfig);
 #if HAL_USE_I2C1_MS_SLAVE
-  slaveI2cPort.slaveTimeout = MS2ST(100);       // Time for complete message
+  slaveI2cPort.slaveTimeout = MS2ST(100);       // Time for complete message.
 #endif
 
-  i2cSlaveConfigure(&slaveI2cPort, &i2c_rx_msg, &i2c_tx_msg); //&initialReply);
+  i2cSlaveConfigure(&slaveI2cPort, &i2c_rx_msg, &i2c_tx_msg); // Initial reply.
 
-  // Enable match address after everything else set up
+  // Enable match address after everything else set up.
   i2cMatchAddress(&slaveI2cPort, slaveI2Caddress/2);
-//  i2cMatchAddress(&slaveI2cPort, myOtherI2Caddress/2);
 //  i2cMatchAddress(&slaveI2cPort, 0);  /* "all call" */
 
-//  chprintf(chp, "Slave I2C started\n\r");
 
-  /**
-   * Just loop checking the error flag here.
-   *
-   * A real-world application might do the more heavyweight processing on received messages
-   */
-  while(true)
-  {
-    chThdSleepMilliseconds(10);
-    if (gotI2cError)
-    {
-      gotI2cError = 0;
-        chprintf(chp, "I2cError: %04x\r\n", lastI2cErrorFlags);
-    }
+  // Prepare the reply for a "write+read" transaction.
+  i2c_tx_msg.size = SENSORS_SIZE;
+  i2cSlaveReplyI(&I2CD1, &i2c_tx_msg);
 
-    if(rx_flag) {
-    	rx_flag = 0;
+  while(true) {
+    chBSemWait(&i2c_rx_ready);
 
-		speedl = (unsigned char)work_buffer[0] + ((unsigned int)work_buffer[1] << 8);
-    	speedr = (unsigned char)work_buffer[2] + ((unsigned int)work_buffer[3] << 8);
-    	left_motor_set_speed(speedl);
-    	right_motor_set_speed(speedr);
+    if (gotI2cError) {
+    	gotI2cError = 0;
+        //chprintf(chp, "I2cError: %04x\r\n", lastI2cErrorFlags);
+    } else {
 
-    	if(work_buffer[4]<=2) {
-    		play_melody(work_buffer[4]);
+    	// Verify the checksum (Longitudinal Redundancy Check) before applying the received command.
+    	checksum = 0;
+    	for(int k=0; k<(ACTUATORS_SIZE-1); k++) {
+    		checksum ^= work_buffer[k];
     	}
+    	if(checksum == work_buffer[ACTUATORS_SIZE-1]) {
+    		speedl = (unsigned char)work_buffer[0] + ((unsigned int)work_buffer[1] << 8);
+    		speedr = (unsigned char)work_buffer[2] + ((unsigned int)work_buffer[3] << 8);
 
-    	set_led(LED1, (work_buffer[5])&0x01);
-    	set_led(LED3, (work_buffer[5]>>1)&0x01);
-    	set_led(LED5, (work_buffer[5]>>2)&0x01);
-    	set_led(LED7, (work_buffer[5]>>3)&0x01);
+    		if(work_buffer[4]>=1 && work_buffer[4]<=3) {
+    			play_melody(work_buffer[4]-1);
+    		}
 
-		set_rgb_led(0, work_buffer[6], work_buffer[7], work_buffer[8]);
-		set_rgb_led(1, work_buffer[9], work_buffer[10], work_buffer[11]);
-		set_rgb_led(2, work_buffer[12], work_buffer[13], work_buffer[14]);
-		set_rgb_led(3, work_buffer[15], work_buffer[16], work_buffer[17]);
+    		set_led(LED1, (work_buffer[5])&0x01);
+    		set_led(LED3, (work_buffer[5]>>1)&0x01);
+    		set_led(LED5, (work_buffer[5]>>2)&0x01);
+    		set_led(LED7, (work_buffer[5]>>3)&0x01);
 
-		// work_buffer[18] ==> Additional future usage
+    		set_rgb_led(0, work_buffer[6], work_buffer[7], work_buffer[8]);
+    		set_rgb_led(1, work_buffer[9], work_buffer[10], work_buffer[11]);
+    		set_rgb_led(2, work_buffer[12], work_buffer[13], work_buffer[14]);
+    		set_rgb_led(3, work_buffer[15], work_buffer[16], work_buffer[17]);
+
+    		// Handle behaviors and others commands.
+    		if(work_buffer[18] & 0x01) { // Calibrate proximity.
+    			calibrate_ir();
+    		}
+    		if(work_buffer[18] & 0x02) { // Enable obastacle avoidance.
+
+    		} else { // Disable obstacle avoidance
+
+    		}
+    		if(work_buffer[18] & 0x04) { // Set steps.
+    			left_motor_set_pos(speedl);
+    			right_motor_set_pos(speedr);
+    		} else { // Set speed.
+    			left_motor_set_speed(speedl);
+    			right_motor_set_speed(speedr);
+    		}
+
+		} else {
+			chprintf(chp, "wrong checksum (%02x != %02x)\r\n", work_buffer[ACTUATORS_SIZE-1], checksum);
+    	}
 
     	//chprintf(chp, "SR2: %04x\r\n", (&slaveI2cPort)->i2c->SR2);
     }
 
   }
+
 }

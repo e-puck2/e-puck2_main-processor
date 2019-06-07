@@ -246,7 +246,7 @@ void start_gumstix_comm(BaseSequentialStream *serport)
     		}
 
 		} else {
-			chprintf(chp, "wrong checksum (%02x != %02x)\r\n", work_buffer[ACTUATORS_SIZE-1], checksum);
+			//chprintf(chp, "wrong checksum (%02x != %02x)\r\n", work_buffer[ACTUATORS_SIZE-1], checksum);
     	}
 
     	//chprintf(chp, "SR2: %04x\r\n", (&slaveI2cPort)->i2c->SR2);

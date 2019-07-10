@@ -3,7 +3,7 @@
 	url = https://github.com/aseba-community/aseba.git
 [submodule "ChibiOS"]
 	path = ChibiOS
-	url = https://git.wise-robotics.com/epuck2/ChibiOS.git
+	url = https://github.com/e-puck2/ChibiOS_3.1.0.git
 [submodule "src/chibios-syscalls"]
 	path = src/chibios-syscalls
 	url = https://github.com/cvra/chibios-syscalls

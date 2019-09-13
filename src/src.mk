@@ -84,3 +84,4 @@ CSRC += $(GLOBAL_PATH)/src/parameter/parameter_msgpack.c
 CSRC += $(GLOBAL_PATH)/src/parameter/parameter_print.c
 CSRC += $(GLOBAL_PATH)/src/fat.c
 CSRC += $(GLOBAL_PATH)/src/audio/play_sound_file.c
+CSRC += $(GLOBAL_PATH)/src/behaviors.c

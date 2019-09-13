@@ -5,7 +5,7 @@
 extern "C" {
 #endif
 
-#define GROUND_NB_CHANNELS 3
+#define GROUND_NB_CHANNELS 5 // 3 from gound + 2 from cliff
 
 /** Struct containing a ground measurement message. */
 typedef struct {
@@ -31,7 +31,7 @@ void ground_stop(void);
  /**
  * @brief   Returns the last value measured by the chosen sensor
  * 
- * @param sensor_number		0-2
+ * @param sensor_number		0-4: 0=ground left, 1=ground center, 2=ground right, 3=cliff right, 4=cliff left
  * 
  * @return					Last value measured by the sensor
  */
@@ -41,7 +41,7 @@ int get_ground_prox(unsigned int sensor_number);
  /**
  * @brief   Returns the last ambiant light value measured by the chosen sensor
  * 
- * @param sensor_number		0-2
+ * @param sensor_number		0-4: 0=ground left, 1=ground center, 2=ground right, 3=cliff right, 4=cliff left
  * 
  * @return					Last ambiant light value measured by the sensor
  */

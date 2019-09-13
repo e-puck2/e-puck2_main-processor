@@ -33,6 +33,7 @@ struct stepper_motor_s {
     void (*enable_power_save)(void);
     void (*disable_power_save)(void);
     PWMDriver *timer;
+    int desired_speed;
 };
 
 struct stepper_motor_s right_motor;
@@ -198,6 +199,7 @@ void motor_set_speed(struct stepper_motor_s *m, int speed)
     } else if (speed < -MOTOR_SPEED_LIMIT) {
         speed = -MOTOR_SPEED_LIMIT;
     }
+    m->desired_speed = speed;
     //twice the speed because we are doing microsteps, 
     //which doubles the steps necessary to do one real step of the motor
     speed *=2;
@@ -313,6 +315,14 @@ void motors_init(void)
     pwmStart(&PWMD4, &pwmcfg_left_motor);
     pwmEnablePeriodicNotification(&PWMD4); // PWM general interrupt at the beginning of the period to handle motor steps.
 
+}
+
+int left_motor_get_desired_speed(void) {
+	return left_motor.desired_speed;
+}
+
+int right_motor_get_desired_speed(void) {
+	return right_motor.desired_speed;
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

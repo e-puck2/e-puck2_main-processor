@@ -31,18 +31,24 @@ static THD_FUNCTION(ground_thd, arg)
     messagebus_topic_init(&ground_topic, &ground_topic_lock, &ground_topic_condvar, &ground_values, sizeof(ground_values));
     messagebus_advertise_topic(&bus, &ground_topic, "/ground");
     systime_t time;
-	uint8_t temp[12];
+	uint8_t temp[21]; // 3 x ground proximity (6 bytes) + 3 x ground ambient (6 bytes) + software revision (1 byte) + 2 x cliff proximity (4 bytes) + 2 x cliff ambient (4 bytes)
 
     while (chThdShouldTerminateX() == false) {
     	time = chVTGetSystemTime();
 
-    	read_reg_multi(GROUND_ADDR, 0, temp, 12);
+    	read_reg_multi(GROUND_ADDR, 0, temp, 21);
+    	// Ground
         ground_values.delta[0] = (uint16_t)(temp[1] & 0xff) + ((uint16_t)temp[0] << 8);
         ground_values.delta[1] = (uint16_t)(temp[3] & 0xff) + ((uint16_t)temp[2] << 8);
         ground_values.delta[2] = (uint16_t)(temp[5] & 0xff) + ((uint16_t)temp[4] << 8);
         ground_values.ambient[0] = (uint16_t)(temp[7] & 0xff) + ((uint16_t)temp[6] << 8);
         ground_values.ambient[1] = (uint16_t)(temp[9] & 0xff) + ((uint16_t)temp[8] << 8);
         ground_values.ambient[2] = (uint16_t)(temp[11] & 0xff) + ((uint16_t)temp[10] << 8);
+        // Cliff
+        ground_values.delta[3] = (uint16_t)(temp[14] & 0xff) + ((uint16_t)temp[13] << 8);
+        ground_values.delta[4] = (uint16_t)(temp[16] & 0xff) + ((uint16_t)temp[15] << 8);
+        ground_values.ambient[3] = (uint16_t)(temp[18] & 0xff) + ((uint16_t)temp[17] << 8);
+        ground_values.ambient[4] = (uint16_t)(temp[20] & 0xff) + ((uint16_t)temp[19] << 8);
 
         messagebus_topic_publish(&ground_topic, &ground_values, sizeof(ground_values));
 
@@ -61,7 +67,7 @@ static THD_FUNCTION(ground_thd, arg)
 
 void ground_start(void)
 {
-	uint8_t temp[12];
+	uint8_t temp[21];
 	uint8_t i = 0;
 	int8_t err = 0;
 
@@ -69,22 +75,28 @@ void ground_start(void)
 		return;
 	}
 
-	for(i=0; i<3; i++) {
+	for(i=0; i<GROUND_NB_CHANNELS; i++) {
 		ground_values.delta[i] = 0;
 		ground_values.ambient[i] = 0;
 	}
 
 	i2c_start();
 
-	if((err=read_reg_multi(GROUND_ADDR, 0, temp, 12)) != MSG_OK) {
+	if((err=read_reg_multi(GROUND_ADDR, 0, temp, 21)) != MSG_OK) {
 		return;
 	}
+	// Ground
     ground_values.delta[0] = (uint16_t)(temp[1] & 0xff) + ((uint16_t)temp[0] << 8);
     ground_values.delta[1] = (uint16_t)(temp[3] & 0xff) + ((uint16_t)temp[2] << 8);
     ground_values.delta[2] = (uint16_t)(temp[5] & 0xff) + ((uint16_t)temp[4] << 8);
     ground_values.ambient[0] = (uint16_t)(temp[7] & 0xff) + ((uint16_t)temp[6] << 8);
     ground_values.ambient[1] = (uint16_t)(temp[9] & 0xff) + ((uint16_t)temp[8] << 8);
     ground_values.ambient[2] = (uint16_t)(temp[11] & 0xff) + ((uint16_t)temp[10] << 8);
+    // Cliff
+    ground_values.delta[3] = (uint16_t)(temp[14] & 0xff) + ((uint16_t)temp[13] << 8);
+    ground_values.delta[4] = (uint16_t)(temp[16] & 0xff) + ((uint16_t)temp[15] << 8);
+    ground_values.ambient[3] = (uint16_t)(temp[18] & 0xff) + ((uint16_t)temp[17] << 8);
+    ground_values.ambient[4] = (uint16_t)(temp[20] & 0xff) + ((uint16_t)temp[19] << 8);
 
     ground_configured = true;
     groundThd = chThdCreateStatic(ground_thd_wa, sizeof(ground_thd_wa), NORMALPRIO, ground_thd, NULL);

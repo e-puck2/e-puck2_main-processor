@@ -53,4 +53,18 @@ void right_motor_set_pos(int32_t counter_value);
  */
 void motors_init(void);
 
+/**
+* @brief	Get the last desired speed set for the left motor
+*
+* @return	speed desired in step/s
+*/
+int left_motor_get_desired_speed(void);
+
+/**
+* @brief	Get the last desired speed set for the right motor
+*
+* @return	speed desired in step/s
+*/
+int right_motor_get_desired_speed(void);
+
 #endif /* MOTOR_H */

@@ -1,6 +1,7 @@
 //#include "p30F6014A.h"
 // Advanced Sercom B
 
+#define CLIFF_SENSORS
 #define FLOOR_SENSORS	// define to enable floor sensors
 #define IR_RECEIVER
 
@@ -42,8 +43,10 @@
 #include <codec/e_sound.h>
 #include <utility/utility.h>
 #include <acc_gyro/e_lsm330.h>
+#ifdef CLIFF_SENSORS
 #ifndef FLOOR_SENSORS
 #define FLOOR_SENSORS
+#endif
 #endif
 #ifdef FLOOR_SENSORS
 #include <I2C/e_I2C_protocol.h>
@@ -781,10 +784,18 @@ int run_asercom2(void) {
                         		buffer[i++] = n & 0xff;
                         		buffer[i++] = n >> 8;
                         	}
+#ifdef CLIFF_SENSORS
+                        	for (j=3; j<4; j++) {
+                        		n = get_ground_prox(j);
+                        		buffer[i++] = n & 0xff;
+                        		buffer[i++] = n >> 8;
+                        	}
+#endif // CLIFF_SENSORS
                         }
 #else
                         for (j = 0; j < 6; j++) buffer[i++] = 0;
-#endif
+#endif // FLOOR_SENSORS
+
                         break;
                     case 'N': // read proximity sensors
                     	for (j = 0; j < 8; j++) {
@@ -1267,6 +1278,16 @@ int run_asercom2(void) {
                     break;
                 case 'M': // read floor sensors (optional)
 #ifdef FLOOR_SENSORS
+#ifdef CLIFF_SENSORS
+                    if (gumstix_connected == 0) {
+                        sprintf(buffer, "m,%d,%d,%d,%d,%d\r\n", get_ground_prox(0), get_ground_prox(1), get_ground_prox(2), get_ground_prox(3), get_ground_prox(4));
+                        if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                        	uart1_send_text(buffer);
+                        } else { // Communicate with the pc (usb).
+                        	uart2_send_text(buffer);
+                        }
+                    }
+#else
                     if (gumstix_connected == 0) {
                         sprintf(buffer, "m,%d,%d,%d\r\n", get_ground_prox(0), get_ground_prox(1), get_ground_prox(2));
                         if (use_bt) { // Communicate with ESP32 (uart) => BT.
@@ -1275,6 +1296,7 @@ int run_asercom2(void) {
                         	uart2_send_text(buffer);
                         }
                     }
+#endif // CLIFF_SENSORS
 #else
                     if (gumstix_connected) { // Communicate with gumstix (i2c).
 
@@ -1283,7 +1305,7 @@ int run_asercom2(void) {
                     } else { // Communicate with the pc (usb).
                     	uart2_send_static_text("m,0,0,0\r\n");
                     }
-#endif
+#endif // FLOOR_SENSORS
                     break;
                 case 'N': // read proximity sensors
                 	sprintf(buffer, "n,%d,%d,%d,%d,%d,%d,%d,%d\r\n",

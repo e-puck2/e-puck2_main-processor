@@ -28,6 +28,7 @@
 #include "sensors/mpu9250.h"
 #include "sensors/proximity.h"
 #include "sensors/VL53L0X/VL53L0X.h"
+#include "behaviors.h"
 #include "button.h"
 #include "cmd.h"
 #include "config_flash_storage.h"
@@ -717,6 +718,7 @@ int main(void)
 	playMelodyStart();
 	playSoundFileStart();
 	ground_start();
+	behaviors_start();
 
 	// Initialise Aseba system, declaring parameters
     parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");

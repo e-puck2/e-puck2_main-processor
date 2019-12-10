@@ -47,6 +47,11 @@
 #include "usbcfg.h"
 #include "communication.h"
 #include "uc_usage.h"
+#include "ircom/ircom.h"
+#include "ircom/ircomReceive.h"
+#include "ircom/ircomMessages.h"
+#include "ircom/ircomSend.h"
+#include "ircom/transceiver.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
@@ -409,9 +414,9 @@ static THD_FUNCTION(selector_thd, arg)
 				stop_loop = 1;
 				break;
 
-			case 9: // Asercom protocol.
-				spi_image_transfer_disable(); // Image is transferred via uart channel.
-				run_asercom();
+			case 9: // Local communication: synchronize direction with other robots.
+				proximity_stop();
+				startTransceiver();
 				stop_loop = 1;
 				break;
 

@@ -25,11 +25,16 @@ typedef struct {
 } proximity_msg_t;
 
  /**
- * @brief   Starts the proximity measurement module
+ * @brief   Starts the proximity measurement module. Make sure that the "ircom" module wasn't started when using this function otherwise there will be conflicts.
  * 			This module also broadcasts the measures through a proximity_msg_t message
  * 			on the /proximity topic
  */
 void proximity_start(void);
+
+/**
+* @brief   Stop the proximity measurement module
+*/
+void proximity_stop(void);
 
  /**
  * @brief   Runs the IR sensor calibration process

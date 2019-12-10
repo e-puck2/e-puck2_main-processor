@@ -50,6 +50,7 @@ static uint8_t calibrationState = 0;
 static uint8_t calibrationNumSamples = 0;
 static int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
 static proximity_msg_t prox_values;
+static thread_t *prox_thd_handle = NULL;
 
 /***************************INTERNAL FUNCTIONS************************************/
 
@@ -167,7 +168,7 @@ static THD_FUNCTION(proximity_thd, arg)
     messagebus_topic_init(&proximity_topic, &prox_topic_lock, &prox_topic_condvar, &prox_values, sizeof(prox_values));
     messagebus_advertise_topic(&bus, &proximity_topic, "/proximity");
 
-    while (true) {
+    while(chThdShouldTerminateX() == false) {
 
     	chBSemWait(&adc2_ready);
 
@@ -315,7 +316,7 @@ void proximity_start(void)
     };
 	
     adcStart(&ADCD1, NULL);
-    adcAcquireBus(&ADCD1);
+    //adcAcquireBus(&ADCD1);
     // ADC waiting for the trigger from the timer.
     adcStartConversion(&ADCD1, &adcgrpcfg2, adc2_proximity_samples, DMA_BUFFER_SIZE);
 
@@ -327,8 +328,20 @@ void proximity_start(void)
     pwmEnablePeriodicNotification(&PWMD2); // PWM general interrupt at the beginning of the period to handle pulse ignition.
     pwmEnableChannel(&PWMD2, 1, (pwmcnt_t) (PWM_CYCLE * ON_MEASUREMENT_POS)); // Enable channel 2 to trigger the measures.
 
-    chThdCreateStatic(proximity_thd_wa, sizeof(proximity_thd_wa), NORMALPRIO, proximity_thd, NULL);
-	
+    prox_thd_handle = chThdCreateStatic(proximity_thd_wa, sizeof(proximity_thd_wa), NORMALPRIO, proximity_thd, NULL);
+}
+
+void proximity_stop(void) {
+	if(ADCD1.state == ADC_STOP) {
+		return;
+	}
+    chThdTerminate(prox_thd_handle);
+    chThdWait(prox_thd_handle);
+    prox_thd_handle = NULL;
+	pwmStop(&PWMD2);
+	adcStopConversion(&ADCD1);
+	adcStop(&ADCD1);
+	//adcReleaseBus(&ADCD1);
 }
 
 void calibrate_ir(void) {

@@ -18,7 +18,7 @@ void disable_obstacle_avoidance(void) {
 	oa_enabled = 0;
 }
 
-static THD_WORKING_AREA(behaviors_thd_wa, 512);
+static THD_WORKING_AREA(behaviors_thd_wa, 128);
 static THD_FUNCTION(behaviors_thd, arg) {
     (void) arg;
     chRegSetThreadName(__FUNCTION__);

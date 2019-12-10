@@ -85,3 +85,10 @@ CSRC += $(GLOBAL_PATH)/src/parameter/parameter_print.c
 CSRC += $(GLOBAL_PATH)/src/fat.c
 CSRC += $(GLOBAL_PATH)/src/audio/play_sound_file.c
 CSRC += $(GLOBAL_PATH)/src/behaviors.c
+CSRC += $(GLOBAL_PATH)/src/ircom/ircom.c
+CSRC += $(GLOBAL_PATH)/src/ircom/ircomReceive.c
+CSRC += $(GLOBAL_PATH)/src/ircom/ircomTools.c
+CSRC += $(GLOBAL_PATH)/src/ircom/ircomMessages.c
+CSRC += $(GLOBAL_PATH)/src/ircom/ircomSend.c
+CSRC += $(GLOBAL_PATH)/src/ircom/transceiver.c
+

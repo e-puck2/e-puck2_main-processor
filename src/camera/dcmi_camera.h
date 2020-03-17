@@ -165,4 +165,6 @@ void dcmi_release(void);
  */
 void dcmi_restart(void);
 
+void dcmi_reset_error(void);
+
 #endif /* DCMI_CAMERA_H */

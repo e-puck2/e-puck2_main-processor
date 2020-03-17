@@ -93,6 +93,7 @@ static THD_FUNCTION(selector_thd, arg)
     uint16_t r = 0, g = 0, b = 0;
     uint8_t rgb_state = 0, rgb_counter = 0;
     uint16_t melody_state = 0, melody_counter = 0;
+    int8_t cam_error = 0;
 
     uint8_t magneto_state = 0;
     
@@ -494,10 +495,14 @@ static THD_FUNCTION(selector_thd, arg)
 						right_motor_set_speed(150);
 
 						// Init camera.
-						cam_advanced_config(FORMAT_COLOR, 240, 160, 160, 120, SUBSAMPLING_X4, SUBSAMPLING_X4);
+						if(cam_advanced_config(FORMAT_COLOR, 240, 160, 160, 120, SUBSAMPLING_X4, SUBSAMPLING_X4) < 0) {
+							cam_error = -1;
+						}
 						dcmi_disable_double_buffering();
 						dcmi_set_capture_mode(CAPTURE_ONE_SHOT);
-						dcmi_prepare();
+						if(dcmi_prepare() < 0) {
+							cam_error = -2;
+						}
 
 						// Calibrate IMU.
 						calibrate_acc();
@@ -578,16 +583,22 @@ static THD_FUNCTION(selector_thd, arg)
 				    	chprintf((BaseSequentialStream *)&SDU1, "%d\r\n\n", VL53L0X_get_dist_mm());
 
 						// Read camera.
-				    	spi_comm_suspend();
-				    	dcmi_capture_start();
-						wait_image_ready();
-						spi_comm_resume();
-						img_buff_ptr = cam_get_last_image_ptr();
-						r = (int)img_buff_ptr[0]&0xF8;
-			            g = (int)(img_buff_ptr[0]&0x07)<<5 | (img_buff_ptr[1]&0xE0)>>3;
-			            b = (int)(img_buff_ptr[1]&0x1F)<<3;
-			            chprintf((BaseSequentialStream *)&SDU1, "CAMERA\r\n");
-			            chprintf((BaseSequentialStream *)&SDU1, "R=%3d, G=%3d, B=%3d\r\n\n", r, g, b);
+				    	if(cam_error == 0) {
+				    		chprintf((BaseSequentialStream *)&SDU1, "CAMERA (%x)\r\n", cam_get_id());
+							spi_comm_suspend();
+							dcmi_capture_start();
+							wait_image_ready();
+							img_buff_ptr = cam_get_last_image_ptr();
+							r = (int)img_buff_ptr[0]&0xF8;
+							g = (int)(img_buff_ptr[0]&0x07)<<5 | (img_buff_ptr[1]&0xE0)>>3;
+							b = (int)(img_buff_ptr[1]&0x1F)<<3;
+							chprintf((BaseSequentialStream *)&SDU1, "R=%3d, G=%3d, B=%3d\r\n", r, g, b);
+							chprintf((BaseSequentialStream *)&SDU1, "DCMI err = %d\r\n\n", dcmi_get_error());
+							dcmi_reset_error();
+							spi_comm_resume();
+				    	} else {
+				    		chprintf((BaseSequentialStream *)&SDU1, "Camera conf err = %d, id=%x\r\n", cam_error, cam_get_id());
+				    	}
 
 			            printUcUsage((BaseSequentialStream *)&SDU1);
 

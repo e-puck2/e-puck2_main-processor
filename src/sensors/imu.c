@@ -216,13 +216,15 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
 /****************************PUBLIC FUNCTIONS*************************************/
 
-void imu_start(void)
+int8_t imu_start(void)
 {
 	int8_t status = MSG_OK;
 
 	if(imu_configured) {
-		return;
+		return status;
 	}
+
+	chThdSleepMilliseconds(100); // IMU startup time.
 
 	i2c_start();
 
@@ -239,9 +241,10 @@ void imu_start(void)
 
     if(status == MSG_OK){
     	imu_configured = true;
+    	imuThd = chThdCreateStatic(imu_reader_thd_wa, sizeof(imu_reader_thd_wa), NORMALPRIO, imu_reader_thd, NULL);
     }
 
-    imuThd = chThdCreateStatic(imu_reader_thd_wa, sizeof(imu_reader_thd_wa), NORMALPRIO, imu_reader_thd, NULL);
+    return status;
 }
 
 void imu_stop(void) {

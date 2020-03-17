@@ -220,11 +220,13 @@ int8_t wait_image_ready(void) {
     chMtxLock(&dcmi_lock);
     chCondWait(&dcmi_condvar);
     if(image_ready == 0) { // If a DCMI or DMA error occurs then return an error code.
+    	chMtxUnlock(&dcmi_lock);
     	return -1;
     } else {
+    	chMtxUnlock(&dcmi_lock);
     	return MSG_OK;
     }
-    chMtxUnlock(&dcmi_lock);
+
 }
 
 uint8_t dcmi_double_buffering_enabled(void) {
@@ -394,6 +396,10 @@ void dcmi_release(void) {
 void dcmi_restart(void) {
 	dcmi_release();
 	dcmi_prepare();
+}
+
+void dcmi_reset_error(void) {
+	dcmiError = 0;
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

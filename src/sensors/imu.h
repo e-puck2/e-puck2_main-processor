@@ -30,8 +30,12 @@ typedef struct {
  /**
  * @brief   Starts the Inertial Motion Unit (IMU) publisher.
  *          Broadcasts a imu_msg_t message on the /imu topic
+ *
+ * @return              The operation status.
+ * @retval MSG_OK       if the function succeeded.
+ * @retval MSG_TIMEOUT  if a timeout occurred before operation end
  */
-void imu_start(void);
+int8_t imu_start(void);
 
 /**
 * @brief   Stop the Inertial Motion Unit (IMU) publisher.

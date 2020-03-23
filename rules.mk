@@ -238,10 +238,10 @@ endif
 %.elf: $(OBJS) $(LDSCRIPT)
 ifeq ($(USE_VERBOSE_COMPILE),yes)
 	@echo
-	$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
+	$(LD) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
 else
 	@$(COLOR_PRINTF) "Linking $@"
-	@$(LD) $(OBJS) $(LDFLAGS) $(LIBS) -o $@
+	@$(LD) $(OBJS) $(LIBS) $(LDFLAGS) -o $@
 endif
 
 %.hex: %.elf $(LDSCRIPT)

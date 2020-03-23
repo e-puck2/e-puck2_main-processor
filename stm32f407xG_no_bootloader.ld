@@ -25,6 +25,7 @@ MEMORY
     flash : org = 0x08000000, len = 768k
     aseba_bytecode : org = 0x080c0000, len = 128k
     config : org = 0x080e0000, len = 128k
+    py_flash_rw : org = 0x080c0000, len = 128k
     ram : org = 0x20000000, len = 112k
     ethram : org = 0x2001C000, len = 16k
     ccmram : org = 0x10000000, len = 64k
@@ -37,6 +38,10 @@ MEMORY
     ram6  : org = 0x00000000, len = 0
     ram7  : org = 0x00000000, len = 0
  }
+
+REGION_ALIAS("PY_FLASH", py_flash_rw);
+_py_flash_rw_start = ORIGIN(py_flash_rw);
+_py_flash_rw_end   = ORIGIN(py_flash_rw) + LENGTH(py_flash_rw);
 
 /* RAM region to be used for Main stack. This stack accommodates the processing
    of all exceptions and interrupts*/
@@ -57,5 +62,13 @@ _aseba_bytecode_end = ORIGIN(aseba_bytecode) + LENGTH(aseba_bytecode);
 
 _config_start = ORIGIN(config);
 _config_end = ORIGIN(config) + LENGTH(config);
+
+SECTIONS
+{
+    .py_flash :
+    {
+        *(.py_flash*);
+    } > PY_FLASH
+}
 
 INCLUDE rules.ld

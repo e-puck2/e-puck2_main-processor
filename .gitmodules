@@ -28,3 +28,6 @@
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
 	url = https://github.com/cvra/serial-datagram.git
+[submodule "micropython"]
+	path = micropython
+	url = https://github.com/e-puck3/micropython.git

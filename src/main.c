@@ -40,6 +40,7 @@
 #include "usbcfg.h"
 #include "communication.h"
 #include "uc_usage.h"
+#include "mp_platform.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 
@@ -112,8 +113,9 @@ static THD_FUNCTION(selector_thd, arg)
     	time = chVTGetSystemTime();
 
 		switch(get_selector()) {
-			case 0: // Aseba.
-				aseba_vm_start();
+			case 0: // micropython.
+				// aseba_vm_start();
+				micropythonStart();
 				stop_loop = 1;
 				break;
 
@@ -469,16 +471,16 @@ int main(void)
 	playSoundFileStart();
 
 	// Initialise Aseba system, declaring parameters
-    parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
-    aseba_declare_parameters(&aseba_ns);
+    // parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
+    // aseba_declare_parameters(&aseba_ns);
 
     /* Load parameter tree from flash. */
     load_config();
 
     /* Start AsebaCAN. Must be after config was loaded because the CAN id
      * cannot be changed at runtime. */
-    aseba_vm_init();
-    aseba_can_start(&vmState);
+    // aseba_vm_init();
+    // aseba_can_start(&vmState);
 
     chThdCreateStatic(selector_thd_wa, sizeof(selector_thd_wa), NORMALPRIO, selector_thd, NULL);
 

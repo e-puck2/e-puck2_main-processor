@@ -144,7 +144,8 @@ CSRC += $(STARTUPSRC) \
         $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
         $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
         $(FATFSSRC) \
-        $(ASEBASRC)
+        $(ASEBASRC) \
+        $(ALLCSRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -180,7 +181,12 @@ INCDIR += $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
           $(ASEBAINC) \
           $(FATFSINC) \
           $(GLOBAL_PATH)/src \
+          $(ALLINC)
 
+MPTOP = micropython
+MPTOP_FOR_MP_MAKEFILE = ../../micropython
+MPTOP_CHIBIOS = src/Micropython_ChibiOS
+include $(MPTOP_CHIBIOS)/micropython_chibios.mk
 #
 # Project, sources and paths
 ##############################################################################
@@ -228,7 +234,7 @@ CPPWARN = -Wall -Wextra -Wundef -Wno-implicit-fallthrough
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS =
+UDEFS = $(ALLDEFS)
 
 UDEFS += -DSTDOUT_SD=SDU1 -DSTDIN_SD=SDU1 -DARM_MATH_CM4 -D__FPU_PRESENT
 
@@ -246,7 +252,7 @@ UINCDIR =
 ULIBDIR =
 
 # List all user libraries here
-ULIBS = $(GLOBAL_PATH)/libPDMFilter_CM4F_GCC.a $(GLOBAL_PATH)/libarm_cortexM4lf_math.a
+ULIBS = $(GLOBAL_PATH)/libPDMFilter_CM4F_GCC.a $(GLOBAL_PATH)/libarm_cortexM4lf_math.a $(MPTOP_CHIBIOS)/libmicropython.a
 
 #
 # End of user defines

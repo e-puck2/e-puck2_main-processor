@@ -17,7 +17,7 @@ INC += -I$(TOP)
 INC += -I$(BUILD)
 INC += -Ipython_flash_code/
 
-CFLAGS_CORTEX_M7 = -mthumb -mtune=cortex-m7 -mcpu=cortex-m7 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -fsingle-precision-constant -Wdouble-promotion
+CFLAGS_CORTEX_M7 = -mthumb -mtune=cortex-m4 -mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv5-sp-d16 -fsingle-precision-constant -Wdouble-promotion
 CFLAGS = $(INC) -Wall -Werror -std=c99 -nostdlib $(CFLAGS_CORTEX_M7) $(COPT)
 
 CFLAGS += -Os -DNDEBUG -ggdb

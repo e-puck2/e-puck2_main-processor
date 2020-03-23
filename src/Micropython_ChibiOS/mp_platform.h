@@ -10,10 +10,10 @@
 #define MP_PLATFORM_H
 
 
-#define MICROPYTHON_HEAP_SIZE	120000
-#define MICROPYTHON_PORT		USB_SERIAL
+#define MICROPYTHON_HEAP_SIZE	50000
+#define MICROPYTHON_PORT		SDU1
 
-#define MICROPYTHON_FLASH_CODE_SECTOR	7	//must be coherent with the address set in the .ld file
+#define MICROPYTHON_FLASH_CODE_SECTOR	10	//must be coherent with the address set in the .ld file
 
 
 /**

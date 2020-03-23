@@ -184,13 +184,13 @@ void gc_collect(void) {
 }
 
 int mp_is_terminal_connected(void){
-	return isUSBConfigured();
+	return (SDU1.config->usbp->state == USB_ACTIVE);
 }
 
 //flushes the input buffer
 void mp_hal_stdin_rx_flush(void){
 	static uint8_t c[1] = {0};
-	while(chnReadTimeout((BaseChannel*)&MICROPYTHON_PORT, c, 1,TIME_MS2I(100)) > 0);
+	while(chnReadTimeout((BaseChannel*)&MICROPYTHON_PORT, c, 1,MS2ST(100)) > 0);
 }
 
 // Receive single character

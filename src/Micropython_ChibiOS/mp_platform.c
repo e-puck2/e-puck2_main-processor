@@ -118,7 +118,7 @@ void mpStoreCodeToFlash(void){
 	}
 }
 
-static THD_WORKING_AREA(waMicropythonThd,1024);
+static THD_WORKING_AREA(waMicropythonThd,4096);
 static THD_FUNCTION(MicropythonThd,arg) {
   	(void)arg;
   	chRegSetThreadName("Micropython Thd");
@@ -133,18 +133,24 @@ soft_reset:
 	gc_init(heap, heap + sizeof(heap));
 #endif
 	mp_init();
+
+#ifdef FROZEN_PYTHON
+	//executes the precompiled boot.py file if exist
+	pyexec_frozen_module("boot.py");
+#endif
+
 #if MICROPY_ENABLE_COMPILER
 
 	//Waits to be connected to the terminal
 	while(!mp_is_terminal_connected()){
 		chThdSleepMilliseconds(500);
 	}
-
+#ifdef PYTHON_FLASH_CODE
 	//compiles and eecutes the python script stored in flash
 	micropython_parse_compile_execute_from_str(py_flash_code);
 	// Main script is finished, so now go into REPL mode.
 	// The REPL mode can change, or it can request a soft reset.
-
+#endif
 	for (;;) {
 
 	    if (pyexec_mode_kind == PYEXEC_MODE_RAW_REPL) {
@@ -157,18 +163,16 @@ soft_reset:
 	        }
 	    }
 	}
+#ifdef PYTHON_FLASH_CODE
 	//receives python code to store to the flash if wanted
 	mpStoreCodeToFlash();
-
+#endif
 	chprintf((BaseSequentialStream *)&MICROPYTHON_PORT,"MPY: soft reboot\r\n");
 	//resets the VM
 	gc_sweep_all();
 
 	goto soft_reset;
-#else
-	pyexec_frozen_module("frozentest.py");
 #endif
-	mp_deinit();
 }
 
 /////////////////////////////////////////PUBLIC FUNCTIONS/////////////////////////////////////////

@@ -186,6 +186,8 @@ INCDIR += $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
 MPTOP = micropython
 MPTOP_FOR_MP_MAKEFILE = ../../micropython
 MPTOP_CHIBIOS = src/Micropython_ChibiOS
+MP_FROZEN_PYTHON = yes
+MP_PYTHON_FLASH_CODE = yes
 include $(MPTOP_CHIBIOS)/micropython_chibios.mk
 #
 # Project, sources and paths

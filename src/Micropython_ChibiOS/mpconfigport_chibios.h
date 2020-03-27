@@ -3,6 +3,7 @@
 // options to control how MicroPython is built
 
 // c modules put in /c_modules/name_of_the_module/
+#define MODULE_EPUCK_ENABLED		(1)
 #define MODULE_EXAMPLE_ENABLED		(1)
 
 // You can disable the built-in MicroPython compiler by setting the following

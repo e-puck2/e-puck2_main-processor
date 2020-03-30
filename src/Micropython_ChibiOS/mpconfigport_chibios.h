@@ -135,7 +135,7 @@ typedef long mp_off_t;
 #include <alloca.h>
 
 #define MICROPY_PY_SYS_PLATFORM     "ChibiOS"
-#define MICROPY_HW_BOARD_NAME 		"Nucleo"
+#define MICROPY_HW_BOARD_NAME 		"e-puck2"
 #define MICROPY_HW_MCU_NAME 		"STM32f407"
 
 #define MP_STATE_PORT MP_STATE_VM

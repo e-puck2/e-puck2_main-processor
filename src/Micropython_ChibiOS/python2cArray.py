@@ -5,7 +5,7 @@
 #    ;
 # This script simply prints the escaped string straight to stdout
 
-# Use with python3 pytgon3cArray.py file_input.py > file_output.c
+# Use with python3 python3cArray.py file_input.py > file_output.c
 
 from __future__ import print_function
 

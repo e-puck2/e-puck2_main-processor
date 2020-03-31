@@ -26,7 +26,7 @@
 #include "mpport.h"
 #include "py_flash.h" 
 #include "lib/mp-readline/readline.h"
-#include "flash/mp_flash.h"
+#include "mp_flash.h"
 
 /////////////////////////////////////////PRIVATE FUNCTIONS/////////////////////////////////////////
 
@@ -146,7 +146,7 @@ soft_reset:
 		chThdSleepMilliseconds(500);
 	}
 #ifdef PYTHON_FLASH_CODE
-	//compiles and eecutes the python script stored in flash
+	//compiles and executes the python script stored in flash
 	micropython_parse_compile_execute_from_str(py_flash_code);
 	// Main script is finished, so now go into REPL mode.
 	// The REPL mode can change, or it can request a soft reset.

@@ -105,6 +105,7 @@ void dac_start(void)  {
 void dac_play(uint16_t freq) {
 	if(dac_state == STATE_STOPPED) {
 		dac_state = STATE_PLAYING;
+    dac_conversion.end_cb = NULL;
 		dac_power_speaker(true); // Turn on audio.
 		dacStartConversion(&DAC_USED, &dac_conversion, sinus_buffer, SINUS_BUFFER_SIZE);
 		gptStartContinuous(&TIMER_DAC, STM32_TIMCLK1 / (freq*SINUS_BUFFER_SIZE));

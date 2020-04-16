@@ -435,12 +435,16 @@
         /* Add threads finalization code here.*/                                  \
 }
 
+#define TIMESTAMPS_INCLUDE
+#include "threads_utilities_chconf.h"
+
 /**
  * @brief   Context switch hook.
  * @details This hook is invoked just before switching between threads.
  */
 #define CH_CFG_CONTEXT_SWITCH_HOOK(ntp, otp) {                              \
         /* Context switch code here.*/                                            \
+        fillThreadsTimestamps(ntp, otp);                                        \
 }
 
 /**

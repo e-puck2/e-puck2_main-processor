@@ -39,6 +39,7 @@
 #include "spi_comm.h"
 #include "usbcfg.h"
 #include "communication.h"
+#include "threads_utilities.h"
 
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
 

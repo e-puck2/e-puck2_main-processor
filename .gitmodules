@@ -28,3 +28,6 @@
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
 	url = https://github.com/cvra/serial-datagram.git
+[submodule "threads_utilities_ChibiOS"]
+	path = threads_utilities_ChibiOS
+	url = https://github.com/e-puck3/threads_utilities_ChibiOS.git

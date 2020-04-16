@@ -129,6 +129,11 @@ else
 	LDSCRIPT= $(GLOBAL_PATH)/stm32f407xG_no_bootloader.ld
 endif
 
+THDULIB = threads_utilities_ChibiOS
+USE_THREADS_TIMESTAMPS = yes
+THREADS_TIMESTAMPS_LOG_SIZE = 3000
+include $(THDULIB)/threads_utilities.mk
+
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -144,7 +149,8 @@ CSRC += $(STARTUPSRC) \
         $(CHIBIOS)/os/hal/lib/streams/memstreams.c \
         $(CHIBIOS)/os/hal/lib/streams/chprintf.c \
         $(FATFSSRC) \
-        $(ASEBASRC)
+        $(ASEBASRC) \
+        $(ALLCSRC)
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -180,6 +186,7 @@ INCDIR += $(STARTUPINC) $(KERNINC) $(PORTINC) $(OSALINC) \
           $(ASEBAINC) \
           $(FATFSINC) \
           $(GLOBAL_PATH)/src \
+          $(ALLINC)
 
 #
 # Project, sources and paths
@@ -228,7 +235,7 @@ CPPWARN = -Wall -Wextra -Wundef -Wno-implicit-fallthrough
 #
 
 # List all user C define here, like -D_DEBUG=1
-UDEFS =
+UDEFS = $(ALLDEFS)
 
 UDEFS += -DSTDOUT_SD=SDU1 -DSTDIN_SD=SDU1 -DARM_MATH_CM4 -D__FPU_PRESENT
 

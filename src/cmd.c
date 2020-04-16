@@ -22,6 +22,7 @@
 #include <fat.h>
 #include <audio/play_sound_file.h>
 #include <audio/play_melody.h>
+#include "threads_utilities.h"
 
 #define TEST_WA_SIZE        THD_WORKING_AREA_SIZE(256)
 #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
@@ -1257,6 +1258,7 @@ const ShellCommand shell_commands[] = {
     {"ml_stop",cmd_melody_stop},
     {"mem", cmd_mem},
     {"threads", cmd_threads},
+    THREADS_UTILITIES_SHELL_CMD
     {"test", cmd_test},
     {"clock", cmd_readclock},
     {"sqrt", cmd_sqrt},

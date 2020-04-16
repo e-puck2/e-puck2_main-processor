@@ -680,7 +680,7 @@ static THD_FUNCTION(selector_thd, arg)
 
 						spi_image_transfer_enable();
 
-						//mpu9250_magnetometer_setup();
+						mpu9250_magnetometer_setup();
 
 						// Flush the uart input to avoid interpreting garbage as real commands.
 						while(chnReadTimeout(&SD3, (uint8_t*)&temp_rx, 1, MS2ST(1)>0)) {

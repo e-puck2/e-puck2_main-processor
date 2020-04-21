@@ -437,6 +437,7 @@
 
 #define TIMESTAMPS_INCLUDE
 #include "threads_utilities_chconf.h"
+#define TIMESTAMPS_THREADS_TO_LOG (THREAD_NB(9) | THREAD_NB(11))
 
 /**
  * @brief   Context switch hook.

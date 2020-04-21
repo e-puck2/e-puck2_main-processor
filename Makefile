@@ -131,7 +131,7 @@ endif
 
 THDULIB = threads_utilities_ChibiOS
 USE_THREADS_TIMESTAMPS = yes
-THREADS_TIMESTAMPS_LOG_SIZE = 3000
+THREADS_TIMESTAMPS_LOG_SIZE = 6000
 include $(THDULIB)/threads_utilities.mk
 
 

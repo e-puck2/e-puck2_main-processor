@@ -61,6 +61,30 @@ int8_t read_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len);
 
 void i2c_update_last_error(void);
 
+/**
+ * @brief 		Reads a 16-bit register over I2C
+ *
+ * @param addr	8bits address of the peripherical to read from
+ * @param reg	16bits address of the register to read
+ * @param value	Pointer used to store the value read
+ * @param len	Number of bytes to read from the register
+ *
+ * @return		The error code. msg_t format
+ */
+int8_t read_reg_16(uint8_t addr, uint16_t reg, uint8_t *value, uint8_t len);
+
+/**
+ * @brief 		Writes a 16-bit register over I2C
+ *
+ * @param addr	8bits address of the peripherical to write to
+ * @param reg	16bits address of the register to write
+ * @param value	Pointer to the value to write
+ * @param len	Number of bytes to write in the register
+ *
+ * @return		The error code. msg_t format
+ */
+int8_t write_reg_16(uint8_t addr, uint16_t reg, uint8_t *value, uint8_t len);
+
 #ifdef __cplusplus
 }
 #endif

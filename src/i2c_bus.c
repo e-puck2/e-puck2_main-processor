@@ -1,3 +1,4 @@
+#include <string.h>
 #include <hal.h>
 #include <ch.h>
 #include "i2c_bus.h"
@@ -115,4 +116,56 @@ int8_t read_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len) {
 	i2cReleaseBus(&I2CD1);
 
 	return MSG_OK;
+}
+
+int8_t read_reg_16(uint8_t addr, uint16_t reg, uint8_t *value, uint8_t len) {
+
+	uint8_t txbuf[2] = {(reg>>8), (reg&0xff)};
+	uint8_t rxbuf[len];
+
+	i2cAcquireBus(&I2CD1);
+	if(I2CD1.state != I2C_STOP) {
+		msg_t status = i2cMasterTransmitTimeout(&I2CD1, addr, txbuf, 2, rxbuf, len, timeout);
+		if (status != MSG_OK){
+			errors = i2cGetErrors(&I2CD1);
+			if(I2CD1.state == I2C_LOCKED){
+				i2c_stop();
+				i2c_start();
+			}
+			i2cReleaseBus(&I2CD1);
+			return status;
+		}
+	}
+	i2cReleaseBus(&I2CD1);
+
+	memcpy(value, rxbuf, len);
+
+    return MSG_OK;
+}
+
+
+int8_t write_reg_16(uint8_t addr, uint16_t reg, uint8_t *value, uint8_t len) {
+
+	uint8_t txbuf[2+len];
+	txbuf[0] = (reg>>8);
+	txbuf[1] = (reg&0xff);
+	memcpy(&txbuf[2], value, len);
+	uint8_t rxbuf[1] = {0};
+
+	i2cAcquireBus(&I2CD1);
+	if(I2CD1.state != I2C_STOP) {
+		msg_t status = i2cMasterTransmitTimeout(&I2CD1, addr, txbuf, 2+len, rxbuf, 0, timeout);
+		if (status != MSG_OK){
+			errors = i2cGetErrors(&I2CD1);
+			if(I2CD1.state == I2C_LOCKED){
+				i2c_stop();
+				i2c_start();
+			}
+			i2cReleaseBus(&I2CD1);
+			return status;
+		}
+	}
+	i2cReleaseBus(&I2CD1);
+
+    return MSG_OK;
 }

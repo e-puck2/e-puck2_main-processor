@@ -59,7 +59,7 @@
 #include "DataEEPROM.h"
 
 #include "memory.h"
-extern char buffer[BUFFER_SIZE];
+extern char buffer[BUFFER_SIZE]; //[19203];
 //extern int e_mic_scan[3][MIC_SAMP_NB];
 //extern unsigned int e_last_mic_scan_id;
 extern int selector; //extern int selector;
@@ -129,12 +129,12 @@ int run_asercom2(void) {
     ReadEE(0x7F, 0xFFFE, &HWversion, 1);
 
     /*Cam default parameter*/
-    cam_mode = RGB_565_MODE;
-    //cam_mode=GREY_SCALE_MODE;
-    cam_width = 40; // DEFAULT_WIDTH;
-    cam_heigth = 40; // DEFAULT_HEIGHT;
+    //cam_mode = RGB_565_MODE;
+    cam_mode=GREY_SCALE_MODE;
+    cam_width = 40; //40; // DEFAULT_WIDTH;
+    cam_heigth = 40; //40; // DEFAULT_HEIGHT;
     cam_zoom = 8;
-    cam_size = cam_width * cam_heigth * 2;
+    cam_size = cam_width * cam_heigth; // * 2;
 
     if (gumstix_connected == 0 && selector != 15) {
         e_poxxxx_init_cam();

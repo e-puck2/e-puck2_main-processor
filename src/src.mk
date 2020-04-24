@@ -22,6 +22,7 @@ CSRC += $(GLOBAL_PATH)/src/camera/ov2640.c
 CSRC += $(GLOBAL_PATH)/src/camera/ov7670.c
 CSRC += $(GLOBAL_PATH)/src/camera/po6030.c
 CSRC += $(GLOBAL_PATH)/src/camera/po8030.c
+CSRC += $(GLOBAL_PATH)/src/camera/ar0144.c
 CSRC += $(GLOBAL_PATH)/src/cmd.c
 CSRC += $(GLOBAL_PATH)/src/epuck1x/Asercom.c
 CSRC += $(GLOBAL_PATH)/src/epuck1x/Asercom2.c

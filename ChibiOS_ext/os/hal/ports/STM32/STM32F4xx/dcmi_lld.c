@@ -180,6 +180,7 @@ void dcmi_lld_prepare(DCMIDriver *dcmip, uint32_t transactionSize, void* rxbuf0,
 			dcmip->dcmi->IER |= DCMI_IER_OVF_IE; // Overrun (by DMA).
 			// Control Regsiter.
 			dcmip->dcmi->CR  = (dcmip->config->cr & ~(DCMI_CR_CAPTURE | DCMI_CR_ENABLE)); // Do not enable here because we don't still know the capture mode that will be used.
+			dcmip->dcmi->CR  &= ~DCMI_CR_VSPOL;
 		}
 	}
 

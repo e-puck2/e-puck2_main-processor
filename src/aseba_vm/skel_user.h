@@ -13,12 +13,12 @@ extern "C" {
 #include "leds.h"
 
 /** Number of variables usable by the Aseba script. */
-#define VM_VARIABLES_FREE_SPACE 256
+#define VM_VARIABLES_FREE_SPACE 1 //256
 
 /** Maximum number of args an Aseba event can use. */
-#define VM_VARIABLES_ARG_SIZE 32
+#define VM_VARIABLES_ARG_SIZE 1 //32
 
-#define SETTINGS_COUNT 32
+#define SETTINGS_COUNT 1 //32
 
 /** Enum containing all the possible events. */
 enum AsebaLocalEvents {

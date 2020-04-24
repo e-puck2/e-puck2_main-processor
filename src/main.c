@@ -727,7 +727,7 @@ int main(void)
 	imu_start();
 	ir_remote_start();
 	spi_comm_start();
-	VL53L0X_start();
+	//VL53L0X_start();
 	serial_start();
 	mic_start(NULL);
 	sdio_start();
@@ -737,16 +737,16 @@ int main(void)
 	behaviors_start();
 
 	// Initialise Aseba system, declaring parameters
-    parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
-    aseba_declare_parameters(&aseba_ns);
+    //parameter_namespace_declare(&aseba_ns, &parameter_root, "aseba");
+    //aseba_declare_parameters(&aseba_ns);
 
     /* Load parameter tree from flash. */
-    load_config();
+    //load_config();
 
     /* Start AsebaCAN. Must be after config was loaded because the CAN id
      * cannot be changed at runtime. */
-    aseba_vm_init();
-    aseba_can_start(&vmState);
+    //aseba_vm_init();
+    //aseba_can_start(&vmState);
 
     chThdCreateStatic(selector_thd_wa, sizeof(selector_thd_wa), NORMALPRIO, selector_thd, NULL);
 

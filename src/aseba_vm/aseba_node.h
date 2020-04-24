@@ -12,8 +12,8 @@ extern "C" {
 /** Number of opcodes in an aseba bytecode script.
  *
  * @note Should be a multiple of (766 + 768). */
-#define VM_BYTECODE_SIZE (766 + 768)
-#define VM_STACK_SIZE 128
+#define VM_BYTECODE_SIZE 1 //(766 + 768)
+#define VM_STACK_SIZE 1 //128
 
 /*
  * In your code, put "SET_EVENT(EVENT_NUMBER)" when you want to trigger an

@@ -7,11 +7,15 @@
 #include "po8030.h"
 #include "po6030.h"
 #include "ov7670.h"
+#include "ar0144.h"
 #include "dcmi_camera.h"
 
 #define CAM_PO8030 0
 #define CAM_PO6030 1
 #define CAM_OV7670 2
+#define CAM_AR0144 3
+
+#define AR0144_SIZE 40*40 //80*50 //160*120
 
 int8_t curr_cam = -1;
 format_t curr_format = FORMAT_COLOR;
@@ -31,7 +35,7 @@ void cam_start(void) {
 	// Need to be configured here in order to read the camera registers.
     static const PWMConfig pwmcfg_cam = {
         .frequency = 42000000,  //42MHz
-        .period = 0x02,         //PWM period = 42MHz/2 => 21MHz
+        .period = 0x02, //0x07, //0x02,         //PWM period = 42MHz/2 => 21MHz
         .cr2 = 0,
         .callback = NULL,
         .channels = {
@@ -45,7 +49,7 @@ void cam_start(void) {
     pwmStart(&PWMD5, &pwmcfg_cam);
     // Enables channel 1 to clock the camera.
     pwmEnableChannel(&PWMD5, 0, 1); //1 is half the period set => duty cycle = 50%
-    chThdSleepMilliseconds(1000); // Give time for the clock to be stable and the camera to wake-up.
+    chThdSleepMilliseconds(3000); // Give time for the clock to be stable and the camera to wake-up.
 
     if(po8030_is_connected() == 1) {
     	curr_cam = CAM_PO8030;
@@ -60,6 +64,9 @@ void cam_start(void) {
     	curr_cam = CAM_OV7670;
     	ov7670_start();
     } else {
+    	curr_cam = CAM_AR0144;
+    	ar0144_start();
+
 //    	uint8_t regValue[2] = {0};
 //    	read_reg(0x30, 0x0A, &regValue[0]);
 //    	read_reg(0x30, 0x0B, &regValue[1]);
@@ -89,6 +96,8 @@ int8_t cam_config(format_t fmt, image_size_t imgsize) {
 		} else {
 			return ov7670_config(OV7670_FORMAT_RGB565, imgsize);
 		}
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	}
 	return -1;
 }
@@ -100,6 +109,8 @@ uint32_t cam_get_image_size(void) {
 		return po6030_get_image_size();
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_get_image_size();
+	} else if(curr_cam == CAM_AR0144) {
+		return AR0144_SIZE;
 	} else {
 		return 0;
 	}
@@ -118,6 +129,8 @@ uint32_t cam_get_mem_required(void) {
 		} else {
 			return ov7670_get_image_size();
 		}
+	} else if(curr_cam == CAM_AR0144) {
+		return AR0144_SIZE;
 	} else {
 		return 0;
 	}
@@ -145,6 +158,8 @@ int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
 		} else {
 			return ov7670_advanced_config(OV7670_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
 		}
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	}
 	return -1;
 }

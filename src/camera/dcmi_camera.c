@@ -2,6 +2,7 @@
 #include <hal.h>
 #include <stdlib.h>
 #include "dcmi_camera.h"
+#include "leds.h"
 
 void frameEndCb(DCMIDriver* dcmip);
 void dmaTransferEndCb(DCMIDriver* dcmip);
@@ -13,7 +14,7 @@ const DCMIConfig dcmicfg = {
     dmaTransferEndCb,
     dmaHalfTransferEndCb,
 	dcmiErrorCb,
-    DCMI_CR_PCKPOL
+    DCMI_CR_PCKPOL //|DCMI_CR_VSPOL
 };
 
 static uint8_t image_buff[MAX_BUFF_SIZE];
@@ -41,6 +42,7 @@ void frameEndCb(DCMIDriver* dcmip) {
     image_ready = 1; //signals an image has been captured
 	chCondBroadcastI(&dcmi_condvar);
 	chSysUnlockFromISR();
+	set_led(LED1, 2);
 }
 
 // This is called at each DMA transfer completion that correspond to a frame end.
@@ -49,11 +51,12 @@ void dmaTransferEndCb(DCMIDriver* dcmip) {
     //palTogglePad(GPIOD, 15); // Blue.
 	//osalEventBroadcastFlagsI(&ss_event, 0);
    half_transfer_complete = 0;
+   set_led(LED3, 2);
 }
 
 void dmaHalfTransferEndCb(DCMIDriver* dcmip) {
 	(void) dcmip;
-
+	set_led(LED5, 2);
 	half_transfer_complete = 1;
 
 	// At the "half transfer callback" we can change the destination memory for the next frame based on the current state.
@@ -112,6 +115,7 @@ void dmaHalfTransferEndCb(DCMIDriver* dcmip) {
 
 void dcmiErrorCb(DCMIDriver* dcmip, dcmierror_t err) {
    (void) dcmip;
+   set_led(LED7, 2);
     dcmiError = err;
     chSysLockFromISR();
 	chCondBroadcastI(&dcmi_condvar); // Signal an error has been occurred in order to reset the DCMI peripheral.
@@ -358,6 +362,8 @@ void dcmi_capture_start(void) {
 	if(dcmi_prepared == 0) {
 		return;
 	}
+
+	//set_led(LED1, 1);
 
 	buff0_busy = 0;
 	buff1_busy = 0;

@@ -131,16 +131,16 @@ int run_asercom2(void) {
     /*Cam default parameter*/
     //cam_mode = RGB_565_MODE;
     cam_mode=GREY_SCALE_MODE;
-    cam_width = 40; //40; // DEFAULT_WIDTH;
-    cam_heigth = 40; //40; // DEFAULT_HEIGHT;
+    cam_width = 40; // DEFAULT_WIDTH;
+    cam_heigth = 40; // DEFAULT_HEIGHT;
     cam_zoom = 8;
-    cam_size = cam_width * cam_heigth; // * 2;
 
     if (gumstix_connected == 0 && selector != 15) {
         e_poxxxx_init_cam();
         e_poxxxx_config_cam((ARRAY_WIDTH - cam_width * cam_zoom) / 2, (ARRAY_HEIGHT - cam_heigth * cam_zoom) / 2, cam_width*cam_zoom, cam_heigth*cam_zoom, cam_zoom, cam_zoom, cam_mode);
         e_poxxxx_write_cam_registers();
     }
+    cam_size = cam_get_image_size();
 
     if(gumstix_connected) { // Communicate with gumstix (i2c).
     	// Send the following text through I2C to the gumstix.

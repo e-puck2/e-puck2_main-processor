@@ -19,13 +19,30 @@ typedef enum {
 
 typedef enum {
     FORMAT_GREYSCALE = 0x00,
-	FORMAT_COLOR = 0x01
+	FORMAT_COLOR = 0x01,
+	FORMAT_BAYER = 0x02
 } format_t;
 
 void cam_start(void);
 int8_t cam_config(format_t fmt, image_size_t imgsize);
 uint32_t cam_get_image_size(void);
 uint32_t cam_get_mem_required(void);
+
+/**
+* @brief   	Advanced camera configuration.
+* 			The frame coordinates are (x1,y1), (x1+width, y1+height).
+* 			The resulting image width=width/subsampling_x and height=height/subsampling_y.
+*
+* @param fmt				desired image format (e.g. bayer, rgb565, greyscale)
+* @param x1, y1				horizontal and vertical offsets: the image will start at (x1, y1)
+* @param width, height		frame size (beware that this is not the resulting image size that depends also on subsampling factors)
+* @param subsampling_x|y	horizontal and vertical subsampling factors (e.g. x1, x2, x4)
+*
+* @return              The operation status.
+* @retval MSG_OK       if the function succeeded.
+* @retval MSG_TIMEOUT  if a timeout occurred before operation end
+*
+*/
 int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
                                 unsigned int width, unsigned int height,
 								subsampling_t subsampling_x, subsampling_t subsampling_y);

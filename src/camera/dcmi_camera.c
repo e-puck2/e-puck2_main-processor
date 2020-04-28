@@ -14,7 +14,7 @@ const DCMIConfig dcmicfg = {
     dmaTransferEndCb,
     dmaHalfTransferEndCb,
 	dcmiErrorCb,
-    DCMI_CR_PCKPOL //|DCMI_CR_VSPOL
+    DCMI_CR_PCKPOL
 };
 
 static uint8_t image_buff[MAX_BUFF_SIZE];

@@ -15,8 +15,6 @@
 #define CAM_OV7670 2
 #define CAM_AR0144 3
 
-#define AR0144_SIZE 40*40 //80*50 //160*120
-
 int8_t curr_cam = -1;
 format_t curr_format = FORMAT_COLOR;
 
@@ -49,7 +47,7 @@ void cam_start(void) {
     pwmStart(&PWMD5, &pwmcfg_cam);
     // Enables channel 1 to clock the camera.
     pwmEnableChannel(&PWMD5, 0, 1); //1 is half the period set => duty cycle = 50%
-    chThdSleepMilliseconds(3000); // Give time for the clock to be stable and the camera to wake-up.
+    chThdSleepMilliseconds(1000); // Give time for the clock to be stable and the camera to wake-up.
 
     if(po8030_is_connected() == 1) {
     	curr_cam = CAM_PO8030;
@@ -63,10 +61,10 @@ void cam_start(void) {
     } else if(ov7670_is_connected() == 1) {
     	curr_cam = CAM_OV7670;
     	ov7670_start();
-    } else {
+    } else if(ar0144_is_connected() == 1) {
     	curr_cam = CAM_AR0144;
     	ar0144_start();
-
+    } else {
 //    	uint8_t regValue[2] = {0};
 //    	read_reg(0x30, 0x0A, &regValue[0]);
 //    	read_reg(0x30, 0x0B, &regValue[1]);
@@ -110,7 +108,7 @@ uint32_t cam_get_image_size(void) {
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_get_image_size();
 	} else if(curr_cam == CAM_AR0144) {
-		return AR0144_SIZE;
+		return ar0144_get_image_size();
 	} else {
 		return 0;
 	}
@@ -130,7 +128,7 @@ uint32_t cam_get_mem_required(void) {
 			return ov7670_get_image_size();
 		}
 	} else if(curr_cam == CAM_AR0144) {
-		return AR0144_SIZE;
+		return ar0144_get_image_size();
 	} else {
 		return 0;
 	}
@@ -159,7 +157,13 @@ int8_t cam_advanced_config(format_t fmt, unsigned int x1, unsigned int y1,
 			return ov7670_advanced_config(OV7670_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
 		}
 	} else if(curr_cam == CAM_AR0144) {
-		return 0;
+		if(fmt == FORMAT_GREYSCALE) {
+			return ar0144_advanced_config(AR0144_FORMAT_GREYSCALE, x1, y1, width, height, subsampling_x, subsampling_y);
+		} else if (fmt == FORMAT_COLOR) {
+			return ar0144_advanced_config(AR0144_FORMAT_RGB565, x1, y1, width, height, subsampling_x, subsampling_y);
+		} else if (fmt == FORMAT_BAYER) {
+			return ar0144_advanced_config(AR0144_FORMAT_BAYER, x1, y1, width, height, subsampling_x, subsampling_y);
+		}
 	}
 	return -1;
 }
@@ -180,6 +184,8 @@ int8_t cam_set_brightness(int8_t value) {
 			actual_value |= 0x80;
 		}
 		return ov7670_set_brightness(actual_value);
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	} else {
 		return -1;
 	}
@@ -192,6 +198,8 @@ int8_t cam_set_contrast(uint8_t value) {
 		return po6030_set_contrast(value);
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_set_contrast(value);
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	} else {
 		return -1;
 	}
@@ -204,6 +212,8 @@ int8_t cam_set_mirror(uint8_t vertical, uint8_t horizontal) {
 		return po6030_set_mirror(vertical, horizontal);
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_set_mirror(vertical, horizontal);
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	} else {
 		return -1;
 	}
@@ -216,6 +226,8 @@ int8_t cam_set_awb(uint8_t awb) {
 		return po6030_set_awb(awb);
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_set_awb(awb);
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	} else {
 		return -1;
 	}
@@ -228,6 +240,8 @@ int8_t cam_set_rgb_gain(uint8_t r, uint8_t g, uint8_t b) {
 		return po6030_set_rgb_gain(r, g, b);
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_set_rgb_gain(r, g, b);
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	} else {
 		return -1;
 	}
@@ -240,6 +254,8 @@ int8_t cam_set_ae(uint8_t ae) {
 		return po6030_set_ae(ae);
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_set_ae(ae);
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	} else {
 		return -1;
 	}
@@ -252,6 +268,8 @@ int8_t cam_set_exposure(uint16_t integral, uint8_t fractional) {
 		return po6030_set_exposure(integral, fractional);
 	} else if(curr_cam == CAM_OV7670) {
 		return ov7670_set_exposure(integral);
+	} else if(curr_cam == CAM_AR0144) {
+		return 0;
 	} else {
 		return -1;
 	}
@@ -264,6 +282,8 @@ uint16_t cam_get_id(void) {
 		return 0x6030;
 	} else if(curr_cam == CAM_OV7670) {
 		return 0x7670;
+	} else if(curr_cam == CAM_AR0144) {
+		return 0x0356;
 	} else {
 		return 0;
 	}

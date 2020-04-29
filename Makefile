@@ -129,7 +129,7 @@ else
 	LDSCRIPT= $(GLOBAL_PATH)/stm32f407xG_no_bootloader.ld
 endif
 
-THDULIB = threads_utilities_ChibiOS
+THDULIB = $(GLOBAL_PATH)/threads_utilities_ChibiOS
 USE_THREADS_TIMESTAMPS = yes
 THREADS_TIMESTAMPS_LOG_SIZE = 6000
 include $(THDULIB)/threads_utilities.mk

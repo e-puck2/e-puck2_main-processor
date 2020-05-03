@@ -1,0 +1,7 @@
+/.cproject
+/.project
+/libssp.a
+/libssp_nonshared.a
+/build
+/.dep
+src/Micropython_ChibiOS/build

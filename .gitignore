@@ -5,3 +5,4 @@
 /build
 /.dep
 src/Micropython_ChibiOS/build
+/src/Micropython_ChibiOS/libmicropython.a

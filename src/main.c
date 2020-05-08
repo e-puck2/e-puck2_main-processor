@@ -118,6 +118,7 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 1: // Shell.
+				setTriggerTimestamps();
 				shell_start();
 				stop_loop = 1;
 				break;
@@ -437,9 +438,14 @@ static THD_FUNCTION(selector_thd, arg)
 int main(void)
 {
 
+	//logNextCreatedThreadsTimestamps();
+
     halInit();
     chSysInit();
     mpu_init();
+    logThisThreadTimestamps();
+
+    //dontLogNextCreatedThreadsTimestamps();
 
     /** Inits the Inter Process Communication bus. */
     messagebus_init(&bus, &bus_lock, &bus_condvar);

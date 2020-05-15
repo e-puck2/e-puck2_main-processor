@@ -485,7 +485,7 @@ int8_t ar0144_start(void) {
     }
 
     // No flip/mirroring, no binning
-    regValue[0] = 0;
+    regValue[0] = 3 << 6;
     regValue[1] = 0;
     if((err = write_reg_16(AR0144_ADDR, AR0144_REG_READ_MODE, &regValue[0], 2)) != MSG_OK) {
     	return err;

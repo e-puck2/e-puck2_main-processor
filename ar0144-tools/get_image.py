@@ -7,7 +7,7 @@ import numpy as np
 width = 160
 height = 120
 
-ser = serial.Serial('COM181', 2000000, timeout=0.1)
+ser = serial.Serial('/dev/cu.usbmodem3011', 2000000, timeout=0.1)
 
 # flush input and output buffers
 ser.reset_input_buffer()

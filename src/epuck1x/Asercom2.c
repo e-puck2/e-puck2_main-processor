@@ -131,8 +131,8 @@ int run_asercom2(void) {
     /*Cam default parameter*/
     //cam_mode = RGB_565_MODE;
     cam_mode=GREY_SCALE_MODE;
-    cam_width = 40; // DEFAULT_WIDTH;
-    cam_heigth = 40; // DEFAULT_HEIGHT;
+    cam_width = DEFAULT_WIDTH;
+    cam_heigth = DEFAULT_HEIGHT;
     cam_zoom = 8;
 
     if (gumstix_connected == 0 && selector != 15) {

@@ -6,6 +6,9 @@
 
 #define MOTOR_SPEED_LIMIT 1100 // [step/s]
 
+extern struct stepper_motor_s right_motor;
+extern struct stepper_motor_s left_motor;
+
  /**
  * @brief   Sets the speed of the left motor
  * 
@@ -66,5 +69,13 @@ int left_motor_get_desired_speed(void);
 * @return	speed desired in step/s
 */
 int right_motor_get_desired_speed(void);
+
+/**
+* @brief   Sets the speed of the chosen motor (low level).
+*
+* @param m         pointer to the motor. See stepper_motor_s
+* @param speed     speed desired in step/s
+*/
+void motor_set_speed(struct stepper_motor_s *m, int speed);
 
 #endif /* MOTOR_H */

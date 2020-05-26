@@ -2,6 +2,7 @@
 #include <hal.h>
 #include "motors.h"
 #include "leds.h"
+#include "behaviors.h"
 
 #define MOTOR_TIMER_FREQ 100000 // [Hz]
 #define THRESV 650 // This is the speed under which the power save feature is active.
@@ -185,62 +186,25 @@ void left_motor_disable_power_save(void) {
 	pwmDisableChannel(&PWMD4, 0);
 }
 
- /**
- * @brief   Sets the speed of the chosen motor
- * 
- * @param m         pointer to the motor. See stepper_motor_s
- * @param speed     speed desired in step/s
- */
-void motor_set_speed(struct stepper_motor_s *m, int speed)
-{
-    /* limit motor speed */
-    if (speed > MOTOR_SPEED_LIMIT) {
-        speed = MOTOR_SPEED_LIMIT;
-    } else if (speed < -MOTOR_SPEED_LIMIT) {
-        speed = -MOTOR_SPEED_LIMIT;
-    }
-    m->desired_speed = speed;
-    //twice the speed because we are doing microsteps, 
-    //which doubles the steps necessary to do one real step of the motor
-    speed *=2;
-
-    uint16_t interval;
-    if (speed == 0) {
-        m->direction = HALT;
-        //Resolves a problem when the motors take about 650ms to restart
-        interval = 1000;    //so the motors get updated at 100Hz when not used
-        m->disable_power_save();
-    } else {
-        if (speed > 0) {
-            m->direction = FORWARD;
-        } else {
-            m->direction = BACKWARD;
-            speed = -speed;
-        }
-        interval = MOTOR_TIMER_FREQ / speed;
-
-        if(speed < THRESV) {
-        	m->enable_power_save();
-        } else {
-        	m->disable_power_save();
-        }
-    }
-
-    /* change motor step interval */
-    pwmChangePeriod(m->timer, interval);
-}
-
 /*************************END INTERNAL FUNCTIONS**********************************/
 
 
 /****************************PUBLIC FUNCTIONS*************************************/
 
 void left_motor_set_speed(int speed) {
-    motor_set_speed(&left_motor, speed);
+	if(obstacle_avoidance_enabled()) {
+		obstacle_avoidance_set_speed_left(speed);
+	} else {
+		motor_set_speed(&left_motor, speed);
+	}
 }
 
 void right_motor_set_speed(int speed) {
-	motor_set_speed(&right_motor, speed);
+	if(obstacle_avoidance_enabled()) {
+		obstacle_avoidance_set_speed_right(speed);
+	} else {
+		motor_set_speed(&right_motor, speed);
+	}
 }
 
 int32_t left_motor_get_pos(void) {
@@ -323,6 +287,51 @@ int left_motor_get_desired_speed(void) {
 
 int right_motor_get_desired_speed(void) {
 	return right_motor.desired_speed;
+}
+
+/**
+* @brief   Sets the speed of the chosen motor
+*
+* @param m         pointer to the motor. See stepper_motor_s
+* @param speed     speed desired in step/s
+*/
+void motor_set_speed(struct stepper_motor_s *m, int speed)
+{
+   /* limit motor speed */
+   if (speed > MOTOR_SPEED_LIMIT) {
+       speed = MOTOR_SPEED_LIMIT;
+   } else if (speed < -MOTOR_SPEED_LIMIT) {
+       speed = -MOTOR_SPEED_LIMIT;
+   }
+   m->desired_speed = speed;
+   //twice the speed because we are doing microsteps,
+   //which doubles the steps necessary to do one real step of the motor
+   speed *=2;
+
+   uint16_t interval;
+   if (speed == 0) {
+       m->direction = HALT;
+       //Resolves a problem when the motors take about 650ms to restart
+       interval = 1000;    //so the motors get updated at 100Hz when not used
+       m->disable_power_save();
+   } else {
+       if (speed > 0) {
+           m->direction = FORWARD;
+       } else {
+           m->direction = BACKWARD;
+           speed = -speed;
+       }
+       interval = MOTOR_TIMER_FREQ / speed;
+
+       if(speed < THRESV) {
+       	m->enable_power_save();
+       } else {
+       	m->disable_power_save();
+       }
+   }
+
+   /* change motor step interval */
+   pwmChangePeriod(m->timer, interval);
 }
 
 /**************************END PUBLIC FUNCTIONS***********************************/

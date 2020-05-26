@@ -23,6 +23,7 @@
 #include "leds.h"
 #include "sdio.h"
 #include "serial_comm.h"
+#include "behaviors.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -493,9 +494,9 @@ int run_asercom2(void) {
                         	calibrate_ir();
                         }
                         if(rx_buff[0] & 0x02) { // Enable obastacle avoidance.
-
+                        	enable_obstacle_avoidance();
                         } else { // Disable obstacle avoidance
-
+                        	disable_obstacle_avoidance();
                         }
 
 						// Set motor speed or motor position.

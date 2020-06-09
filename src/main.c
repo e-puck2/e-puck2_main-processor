@@ -118,7 +118,7 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 1: // Shell.
-				setTriggerTimestamps();
+				setTriggerTimestamps(__FUNCTION__);
 				shell_start();
 				stop_loop = 1;
 				break;
@@ -435,15 +435,147 @@ static THD_FUNCTION(selector_thd, arg)
     }
 }
 
+// // static THD_WORKING_AREA(waThd15, 128);
+// #define THD15_WA_SIZE   THD_WORKING_AREA_SIZE(128)
+// static THD_FUNCTION(Thd15, arg) {
+
+//     chRegSetThreadName(__FUNCTION__);
+//     logThisThreadTimestamps();
+//     (void)arg;
+// 	systime_t time;
+// 	time = chVTGetSystemTime() + MS2ST(1000);
+//     while(1){
+//         for(uint32_t i = 0 ; i < 420000 ; i++){
+//             __asm__ volatile ("nop");
+//         }
+//         chThdSleepMilliseconds(80);
+//         if(chVTGetSystemTime() > time){
+//         	break;
+//         }
+//     }
+// }
+
+// static THD_WORKING_AREA(waThd16, 128);
+// static THD_FUNCTION(Thd16, arg) {
+
+//     chRegSetThreadName(__FUNCTION__);
+//     (void)arg;
+// 	systime_t time;
+// 	time = chVTGetSystemTime() + MS2ST(1000);
+//     while(1){
+//         for(uint32_t i = 0 ; i < 420000 ; i++){
+//             __asm__ volatile ("nop");
+//         }
+//         chThdSleepMilliseconds(80);
+//         if(chVTGetSystemTime() > time){
+//         	break;
+//         }
+//     }
+// }
+
+// static THD_WORKING_AREA(waThd17, 128);
+// #define THD17_WA_SIZE   THD_WORKING_AREA_SIZE(128)
+// static THD_FUNCTION(Thd17, arg) {
+
+//     chRegSetThreadName(__FUNCTION__);
+//     (void)arg;
+// 	systime_t time;
+// 	time = chVTGetSystemTime() + MS2ST(1000);
+//     while(1){
+//         for(uint32_t i = 0 ; i < 420000 ; i++){
+//             __asm__ volatile ("nop");
+//         }
+//         chThdSleepMilliseconds(80);
+//         if(chVTGetSystemTime() > time){
+//         	break;
+//         }
+//     }
+// }
+
+// static THD_WORKING_AREA(waThd18, 128);
+// static THD_FUNCTION(Thd18, arg) {
+
+//     chRegSetThreadName(__FUNCTION__);
+//     (void)arg;
+// 	systime_t time;
+// 	time = chVTGetSystemTime() + MS2ST(600);
+//     while(1){
+//         for(uint32_t i = 0 ; i < 420000 ; i++){
+//             __asm__ volatile ("nop");
+//         }
+//         chThdSleepMilliseconds(80);
+//         if(chVTGetSystemTime() > time){
+//         	break;
+//         }
+//     }
+// }
+
+// static THD_WORKING_AREA(waThd19, 128);
+// #define THD19_WA_SIZE   THD_WORKING_AREA_SIZE(128)
+// static THD_FUNCTION(Thd19, arg) {
+
+//     chRegSetThreadName(__FUNCTION__);
+//     (void)arg;
+// 	systime_t time;
+// 	time = chVTGetSystemTime() + MS2ST(100);
+//     while(1){
+//         for(uint32_t i = 0 ; i < 420000 ; i++){
+//             __asm__ volatile ("nop");
+//         }
+//         chThdSleepMilliseconds(80);
+//         if(chVTGetSystemTime() > time){
+//         	break;
+//         }
+//     }
+// }
+
+// static THD_WORKING_AREA(waThd20, 128);
+// static THD_FUNCTION(Thd20, arg) {
+
+//     chRegSetThreadName(__FUNCTION__);
+//     (void)arg;
+// 	systime_t time;
+// 	time = chVTGetSystemTime() + MS2ST(500);
+//     while(1){
+//         for(uint32_t i = 0 ; i < 420000 ; i++){
+//             __asm__ volatile ("nop");
+//         }
+//         chThdSleepMilliseconds(80);
+//         if(chVTGetSystemTime() > time){
+//         	break;
+//         }
+//     }
+// }
+
+// static THD_WORKING_AREA(waThd21, 128);
+// #define THD21_WA_SIZE   THD_WORKING_AREA_SIZE(128)
+// static THD_FUNCTION(Thd21, arg) {
+
+//     chRegSetThreadName(__FUNCTION__);
+//     (void)arg;
+// 	systime_t time;
+// 	time = chVTGetSystemTime() + MS2ST(100);
+//     while(1){
+//         for(uint32_t i = 0 ; i < 420000 ; i++){
+//             __asm__ volatile ("nop");
+//         }
+//         chThdSleepMilliseconds(80);
+//         if(chVTGetSystemTime() > time){
+//         	break;
+//         }
+//     }
+// }
+
 int main(void)
 {
 
-	//logNextCreatedThreadsTimestamps();
+	//setTriggerTimestamps(__FUNCTION__);
+	logNextCreatedThreadsTimestamps();
 
     halInit();
     chSysInit();
     mpu_init();
-    logThisThreadTimestamps();
+    //logThisThreadTimestamps();
 
     //dontLogNextCreatedThreadsTimestamps();
 
@@ -457,6 +589,7 @@ int main(void)
 	set_body_led(0);
 	set_front_led(0);
 	usb_start();
+	// shell_start();
 	dcmi_start();
 	po8030_start();
 	motors_init();
@@ -469,7 +602,9 @@ int main(void)
 	spi_comm_start();
 	VL53L0X_start();
 	serial_start();
+	logNextCreatedThreadsTimestamps();
 	mic_start(NULL);
+	dontLogNextCreatedThreadsTimestamps();
 	sdio_start();
 	playMelodyStart();
 	playSoundFileStart();
@@ -485,11 +620,37 @@ int main(void)
      * cannot be changed at runtime. */
     aseba_vm_init();
     aseba_can_start(&vmState);
-
+	logNextCreatedThreadsTimestamps();
     chThdCreateStatic(selector_thd_wa, sizeof(selector_thd_wa), NORMALPRIO, selector_thd, NULL);
+    // // chThdCreateStatic(waThd15, sizeof(waThd15), NORMALPRIO, Thd15, NULL);
+    // chThdCreateFromHeap(NULL, THD15_WA_SIZE, NORMALPRIO, Thd15, NULL);
+    // chThdSleepMilliseconds(100);
+    // chThdCreateStatic(waThd16, sizeof(waThd16), NORMALPRIO, Thd16, NULL);
+    // chThdSleepMilliseconds(100);
+    // chThdCreateStatic(waThd17, sizeof(waThd17), NORMALPRIO, Thd17, NULL);
+    // // chThdCreateFromHeap(NULL, THD17_WA_SIZE, NORMALPRIO, Thd17, NULL);
+    // chThdSleepMilliseconds(100);
+    // chThdCreateStatic(waThd18, sizeof(waThd18), NORMALPRIO, Thd18, NULL);
+    // chThdSleepMilliseconds(100);
+    // chThdCreateStatic(waThd19, sizeof(waThd19), NORMALPRIO, Thd19, NULL);
+    // // chThdCreateFromHeap(NULL, THD19_WA_SIZE, NORMALPRIO, Thd19, NULL);
+    // chThdSleepMilliseconds(100);
+    // chThdCreateStatic(waThd20, sizeof(waThd20), NORMALPRIO, Thd20, NULL);
+
+    // chThdSleepMilliseconds(2000);
+    // setTriggerTimestamps(__FUNCTION__);
+    // chThdCreateStatic(waThd21, sizeof(waThd21), NORMALPRIO, Thd21, NULL);
+    // // chThdCreateFromHeap(NULL, THD21_WA_SIZE, NORMALPRIO, Thd21, NULL);
+    // chThdCreateFromHeap(NULL, THD15_WA_SIZE, NORMALPRIO, Thd15, NULL);
+
+    // chThdCreateStatic(waThd16, sizeof(waThd16), NORMALPRIO, Thd16, NULL);
 
     /* Infinite loop. */
     while (1) {
+		// if (chThdTerminatedX(thd15_p)) {
+  //           chThdRelease(thd15_p);
+  //           thd15_p = NULL;
+  //       }
         chThdSleepMilliseconds(1000);
     }
 }

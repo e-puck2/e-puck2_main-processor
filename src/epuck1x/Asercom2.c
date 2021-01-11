@@ -630,6 +630,35 @@ int run_asercom2(void) {
 						}
 						break;
 
+					case 0xF: // Enable/disable magnetometer (0=disable, 1=enable)
+                        if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                        } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                        	chSequentialStreamRead(&SD3, (uint8_t*)rx_buff, 1);
+                        } else { // Communicate with the pc (usb).
+                        	if (SDU1.config->usbp->state == USB_ACTIVE) {
+                        		chSequentialStreamRead(&SDU1, (uint8_t*)rx_buff, 1);
+                        	}
+                        	//otherwise there is no wait state, this means the other threads can not be processed
+                        	chThdSleepMilliseconds(10);
+                        }
+
+                        // In case of errors, skip the packet.
+                        if(serial_get_last_errors() != 0) {
+                        	//sprintf(buffer, "skip packet\r\n");
+                        	//uart2_send_text(buffer);
+                        	serial_clear_last_errors();
+                        	break;
+                        }
+
+                        if(rx_buff[0] == 1) {
+                        	mpu9250_magnetometer_setup();
+                        } else {
+                        	// Magnetometer stop not yet implemented.
+                        }
+
+						break;
+
                     case 'a': // Read acceleration sensors in a non filtered way, same as ASCII
                         if(gumstix_connected == 0) {
                             accx = e_get_acc_filtered(0, 1);

@@ -415,17 +415,17 @@ void start_gumstix_comm(BaseSequentialStream *serport)
     	switch(work_buffer[0]) {
     		case 0: // outer leds
 				e_set_led(0, leds_outer&0x01);
-				e_set_led(1, leds_outer&0x02);
-				e_set_led(2, leds_outer&0x04);
-				e_set_led(3, leds_outer&0x08);
-				e_set_led(4, leds_outer&0x10);
-				e_set_led(5, leds_outer&0x20);
-				e_set_led(6, leds_outer&0x40);
-				e_set_led(7, leds_outer&0x80);
+				e_set_led(1, (leds_outer>>1)&0x01);
+				e_set_led(2, (leds_outer>>2)&0x01);
+				e_set_led(3, (leds_outer>>3)&0x01);
+				e_set_led(4, (leds_outer>>4)&0x01);
+				e_set_led(5, (leds_outer>>5)&0x01);
+				e_set_led(6, (leds_outer>>6)&0x01);
+				e_set_led(7, (leds_outer>>7)&0x01);
     			break;
     		case 1: // body, front leds
 				set_front_led(leds_front_body&0x01);
-				set_body_led(leds_front_body&0x02);
+				set_body_led((leds_front_body>>1)&0x01);
     			break;
     		case 2: // left speed
     			left_motor_set_speed(motor_left);

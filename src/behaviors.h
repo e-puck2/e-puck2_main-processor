@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /**
-* @brief   Enable obstacle avoidance (forward motion only).
+* @brief   Enable obstacle avoidance.
 */
 void enable_obstacle_avoidance(void);
 

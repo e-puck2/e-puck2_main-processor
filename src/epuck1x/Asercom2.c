@@ -928,22 +928,22 @@ int run_asercom2(void) {
                         if (gumstix_connected == 0) {
                             e_i2cp_enable();
                             for(j=0; j<24; j++) {
-                                while (e_getchar_uart1(&buffer[j])==0);
+                                while (e_getchar_uart1(&buffer[i+j])==0);
                             }
                             for(j=146; j<149; j++) {
-                                while (e_getchar_uart1(&buffer[j-122])==0);
+                                while (e_getchar_uart1(&buffer[i+j-122])==0);
                             }
                             for(j=164; j<172; j++) {
-                                while (e_getchar_uart1(&buffer[j-137])==0);
+                                while (e_getchar_uart1(&buffer[i+j-137])==0);
                             }
                             for(j=0; j<24; j++) {
-                                e_i2cp_write((unsigned char)176, (unsigned char)j, (unsigned char)buffer[j]);
+                                e_i2cp_write((unsigned char)176, (unsigned char)j, (unsigned char)buffer[i+j]);
                             }
                             for(j=146; j<149; j++) {
-                                e_i2cp_write((unsigned char)176, (unsigned char)j, (unsigned char)buffer[j-122]);
+                                e_i2cp_write((unsigned char)176, (unsigned char)j, (unsigned char)buffer[i+j-122]);
                             }
                             for(j=164; j<172; j++) {
-                                e_i2cp_write((unsigned char)176, (unsigned char)j, (unsigned char)buffer[j-137]);
+                                e_i2cp_write((unsigned char)176, (unsigned char)j, (unsigned char)buffer[i+j-137]);
                             }
                             e_i2cp_write((unsigned char)176, (unsigned char)145, (unsigned char)1);
                             e_i2cp_disable();

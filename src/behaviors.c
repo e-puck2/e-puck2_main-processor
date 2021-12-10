@@ -2,9 +2,17 @@
 #include "behaviors.h"
 #include "motors.h"
 #include "sensors/proximity.h"
+#include "../usbcfg.h"
+#include "chprintf.h"
+#include "ch.h"
+#include <string.h>
+#include <stdio.h>
 
 #define OA_ACTIVE_THRESHOLD 300 // If the proximity is higher than this threshold, then activate obstacles avoidance, otherwise move based on user speed settings.
 #define NOISE_THR 5
+#define DIRECTION_FW 0
+#define DIRECTION_LEFT 1
+#define DIRECTION_RIGHT 2
 
 static thread_t *behaviorsThd;
 uint8_t oa_enabled = 0;
@@ -45,25 +53,6 @@ static THD_FUNCTION(behaviors_thd, arg) {
     while (chThdShouldTerminateX() == false) {
         time = chVTGetSystemTime();
         if(oa_enabled) {
-        	/*
-        	// Simple obstacles avoidance implementation (only for forward motion).
-        	for(i=0; i<8; i++) {
-        		prox_values_temp[i] = get_calibrated_prox(i);
-        	}
-        	if(target_speed_left > 0) {
-        		left_speed = target_speed_left - prox_values_temp[0]*8 - prox_values_temp[1]*4 - prox_values_temp[2]*2;
-        	} else {
-        		left_speed = target_speed_left;
-        	}
-        	if(target_speed_right > 0) {
-        		right_speed = target_speed_right - prox_values_temp[7]*8 - prox_values_temp[6]*4 - prox_values_temp[5]*2;
-        	} else {
-        		right_speed = target_speed_right;
-        	}
-        	motor_set_speed(&left_motor, left_speed);
-        	motor_set_speed(&right_motor, right_speed);
-        	*/
-
 
         	// Obstacle avoidance using all the proximity sensors based on a simplified force field method.
         	// Position of the robot sensors:
@@ -80,7 +69,7 @@ static THD_FUNCTION(behaviors_thd, arg) {
         	// The following table shows the weights (simplified respect to the trigonometry) of all the proximity sensors for the resulting repulsive force:
         	//  Prox	0		1		2		3		4		5		6		7
         	//	x		-1		-0.5	0		0.75	0.75	0		-0.5	-1
-        	//	y		0.25	0.5		1		0.5		-0.5	-1		-0.5	-0.25
+        	//	y		0.5	0.5		1		0.5		-0.5	-1		-0.5	-0.5
 
         	// Consider small values to be noise thus set them to zero in order to not influence the resulting force.
         	for(i=0; i<8; i++) {
@@ -92,24 +81,26 @@ static THD_FUNCTION(behaviors_thd, arg) {
 
         	// Sum the contribution of each sensor (based on the previous weights table).
         	sum_sensors_x = -prox_values_temp[0] - (prox_values_temp[1]>>1) + (prox_values_temp[3]-(prox_values_temp[3]>>2)) + (prox_values_temp[4]-(prox_values_temp[4]>>2)) - (prox_values_temp[6]>>1) - prox_values_temp[7];
-        	sum_sensors_y = (prox_values_temp[0]>>2) + (prox_values_temp[1]>>1) + prox_values_temp[2] + (prox_values_temp[3]>>1) - (prox_values_temp[4]>>1) - prox_values_temp[5] - (prox_values_temp[6]>>1) - (prox_values_temp[7]>>2);
+        	sum_sensors_y = (prox_values_temp[0]>>1) + (prox_values_temp[1]>>1) + prox_values_temp[2] + (prox_values_temp[3]>>1) - (prox_values_temp[4]>>1) - prox_values_temp[5] - (prox_values_temp[6]>>1) - (prox_values_temp[7]>>1);
 
         	// Modify the velocity components based on sensor values.
         	if(target_speed_left >= 0) {
-        		left_speed = target_speed_left + (target_speed_left * (sum_sensors_x - sum_sensors_y)>>6);
+        		left_speed = target_speed_left + ((sum_sensors_x>>1) - (sum_sensors_y<<2));
         	} else {
-        		left_speed = target_speed_left - (target_speed_left * (sum_sensors_x + sum_sensors_y)>>6);
+        		left_speed = target_speed_left - ((sum_sensors_x>>1) + (sum_sensors_y<<2));
         	}
         	if(target_speed_right >=0) {
-        		right_speed = target_speed_right + (target_speed_right * (sum_sensors_x + sum_sensors_y)>>6);
+        		right_speed = target_speed_right + ((sum_sensors_x>>1) + (sum_sensors_y<<2));
         	} else {
-        		right_speed = target_speed_right - (target_speed_right * (sum_sensors_x - sum_sensors_y)>>6);
+        		right_speed = target_speed_right - ((sum_sensors_x>>1) - (sum_sensors_y<<2));
         	}
+
         	motor_set_speed(&left_motor, left_speed);
         	motor_set_speed(&right_motor, right_speed);
+
         }
 
-        chThdSleepUntilWindowed(time, time + MS2ST(10)); // Refresh @ 100 Hz
+        chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz
     }
 }
 

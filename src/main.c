@@ -108,6 +108,9 @@ static THD_FUNCTION(selector_thd, arg)
 	double rab_bearing = 0.0;
 	uint16_t rab_range = 0;
 	uint16_t rab_sensor = 0;
+	uint8_t rab_buff[35];
+	uint16_t rab_tx_data = 0;
+	uint8_t rab_counter = 0;
 
 	uint8_t back_and_forth_state = 0;
 	float turn_angle_rad = 0.0;
@@ -220,7 +223,9 @@ static THD_FUNCTION(selector_thd, arg)
 
 					case 1:
 					    if((i2c_err = read_reg(rab_addr, 0, &regValue[0])) != MSG_OK) {
-					    	chprintf((BaseSequentialStream *)&SDU1, "err\r\n");
+							memset(rab_buff, 0x00, 35);
+							sprintf((char*)rab_buff, "err reading\r\n");
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
 					        break;
 					    }
 					    if(regValue[0] != 0) {
@@ -239,35 +244,90 @@ static THD_FUNCTION(selector_thd, arg)
 							read_reg(rab_addr, 9, &regValue[0]);
 							rab_sensor = regValue[0];
 
-		    	if (SDU1.config->usbp->state != USB_ACTIVE) { // Skip printing if port not opened.
-								break;
-							}
-
-							chprintf((BaseSequentialStream *)&SDU1, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
-		    	}
+							memset(rab_buff, 0x00, 35);
+							sprintf((char*)rab_buff, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+					    }
 						break;
 				}
 				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.
 				break;
 
-			case 5: // Range and bearing - transmitter.
+			case 5: // Range and bearing - clustering demo (simultaneous transmitter and receiver).
 				switch(rab_state) {
 					case 0:
 						write_reg(rab_addr, 12, 150); // Set range.
 						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
-							chprintf((BaseSequentialStream *)&SDU1, "set range to %d\r\n", regValue[0]);
+							memset(rab_buff, 0x00, 35);
+							sprintf((char*)rab_buff, "set range to %d\r\n", regValue[0]);
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
 						}
 						write_reg(rab_addr, 17, 0); // Onboard calculation.
 						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
-							chprintf((BaseSequentialStream *)&SDU1, "onboard calculation enabled = %d\r\n", regValue[0]);
+							memset(rab_buff, 0x00, 35);
+							sprintf((char*)rab_buff, "onboard calculation enabled = %d\r\n", regValue[0]);
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
 						}
-						write_reg(rab_addr, 16, 0); // Store light conditions.
+						//write_reg(rab_addr, 16, 0); // Store light conditions.
+
+						srand(get_prox(0)+get_prox(1)+get_prox(2)+get_prox(3));
+						rab_tx_data = rand()%10000; // Random number between 0 and 9999.
+						memset(rab_buff, 0x00, 35);
+						sprintf((char*)rab_buff, "tx data = %d\r\n", rab_tx_data);
+						chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+
+						enable_obstacle_avoidance();
+						left_motor_set_speed(600);
+						right_motor_set_speed(600);
+
 						rab_state = 1;
 						break;
 
 					case 1:
-						write_reg(rab_addr, 13, 0xAA);
-						write_reg(rab_addr, 14, 0xFF);
+						write_reg(rab_addr, 13, rab_tx_data>>8);
+						write_reg(rab_addr, 14, rab_tx_data&0xFF);
+
+					    if((i2c_err = read_reg(rab_addr, 0, &regValue[0])) != MSG_OK) {
+							memset(rab_buff, 0x00, 50);
+							sprintf((char*)rab_buff, "err reading\r\n");
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+					        break;
+					    }
+					    if(regValue[0] != 0) {
+					    	rab_counter = 0;
+					    	read_reg(rab_addr, 1, &regValue[0]);
+							read_reg(rab_addr, 2, &regValue[1]);
+							rab_data = (((uint16_t)regValue[0])<<8) + regValue[1];
+
+					    	read_reg(rab_addr, 3, &regValue[0]);
+							read_reg(rab_addr, 4, &regValue[1]);
+							rab_bearing = ((double)((((uint16_t)regValue[0])<<8) + regValue[1])) * 0.0001;
+
+					    	read_reg(rab_addr, 5, &regValue[0]);
+							read_reg(rab_addr, 6, &regValue[1]);
+							rab_range = (((uint16_t)regValue[0])<<8) + regValue[1];
+
+							read_reg(rab_addr, 9, &regValue[0]);
+							rab_sensor = regValue[0];
+
+							memset(rab_buff, 0x00, 35);
+							sprintf((char*)rab_buff, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+
+							if(rab_data != rab_tx_data) { // Stop moving when receiving something from another robot to form a cluster. Avoid to stop when receiving bouncing transmitted data.
+								disable_obstacle_avoidance();
+								left_motor_set_speed(0);
+								right_motor_set_speed(0);
+							}
+					    } else {
+					    	rab_counter++;
+					    	if(rab_counter >= 100) { // Two seconds passed
+					    		rab_counter = 0;
+					    		enable_obstacle_avoidance();
+					    		left_motor_set_speed(600);
+					    		right_motor_set_speed(600);
+					    	}
+					    }
 						break;
 				}
 				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.

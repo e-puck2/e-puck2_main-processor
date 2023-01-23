@@ -39,7 +39,7 @@ typedef enum {
 /*! \brief Turn on/off the specified LED
  *
  * The e-puck2 has 4 red LEDs placed on front, right, back and left; these LEDs are directly controllable from the main processor (F407).
- * There are also 4 RGB LEDs placed at 45, 135, 225, 315 degrees; these LEDs are connected to the ESP32 and can be controlled thorugh SPI.
+ * There are also 4 RGB LEDs placed at 45, 135, 225, 315 degrees; these LEDs are connected to the ESP32 and can be controlled through SPI.
  * With this function, you can change the state of the 4 red LEDs, not the RGB LEDs.
  * \param led_number: LED1, LED3, LED5 or LED7 (LED1 is the front led, then continue clockwise)
  * \param value 0 (off), 1 (on) otherwise toggle the state

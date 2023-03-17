@@ -8,6 +8,8 @@ extern "C" {
 #include <stdint.h>
 
 #define PROXIMITY_NB_CHANNELS 8
+#define FAST_UPDATE 0	// Proximity sensors updated at 100 Hz
+#define SLOW_UPDATE 1	// Proximity sensors updated at 20 Hz
 
 /** Struct containing a proximity measurement message. */
 typedef struct {
@@ -28,8 +30,10 @@ typedef struct {
  * @brief   Starts the proximity measurement module. Make sure that the "ircom" module wasn't started when using this function otherwise there will be conflicts.
  * 			This module also broadcasts the measures through a proximity_msg_t message
  * 			on the /proximity topic
+ *
+ * @param freq	FAST_UPDATE or SLOW_UPDATE. SLOW_UPDATE only used when working with the "range and bearing" extension.
  */
-void proximity_start(void);
+void proximity_start(uint8_t mode);
 
 /**
 * @brief   Stop the proximity measurement module

@@ -10,7 +10,7 @@ unsigned int e_last_mic_scan_id = MIC_SAMP_NB-1; // ID of the last scan in the m
 void e_init_ad_scan(unsigned char only_micro)
 {
 	(void)only_micro;
-	proximity_start();
+	proximity_start(FAST_UPDATE);
 	imu_start();
 	mic_start(NULL);
 	e_mic_scan = mic_get_buffer_ptr();

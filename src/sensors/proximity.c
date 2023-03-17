@@ -30,11 +30,18 @@
 // - [sampling (112 cycles) + conversion (12 cycles)] x 1'000'000/10'500'000 = about 11.81 us
 
 #define PWM_CLK_FREQ 1000000
-#define PWM_FREQUENCY 800
-#define PWM_CYCLE (PWM_CLK_FREQ / PWM_FREQUENCY)
+
+#define FAST_PWM_FREQUENCY 800
+#define FAST_PWM_CYCLE (PWM_CLK_FREQ / FAST_PWM_FREQUENCY)
 /* Max duty cycle is 0.071, 2x safety margin. */
-#define TCRT1000_DC 0.24 // 0.24*1000/PWM_FREQUENCY=0.3 ms
-#define ON_MEASUREMENT_POS 0.208 // 0.208*1000/PWM_FREQUENCY=0.26 ms
+#define FAST_TCRT1000_DC 0.24 // 0.24*1000/FAST_PWM_FREQUENCY=0.3 ms
+#define FAST_ON_MEASUREMENT_POS 0.208 // 0.208*1000/PWM_FREQUENCY=0.26 ms
+
+#define SLOW_PWM_FREQUENCY 160
+#define SLOW_PWM_CYCLE (PWM_CLK_FREQ / SLOW_PWM_FREQUENCY)
+/* Max duty cycle is 0.071, 2x safety margin. */
+#define SLOW_TCRT1000_DC 0.048 // 0.048*1000/SLOW_PWM_FREQUENCY=0.3 ms
+#define SLOW_ON_MEASUREMENT_POS 0.0416 // 0.0416*1000/SLOW_PWM_FREQUENCY=0.26 ms
 
 #define PROXIMITY_ADC_SAMPLE_TIME ADC_SAMPLE_112
 #define DMA_BUFFER_SIZE 1 // 1 sample for each ADC channel
@@ -291,17 +298,17 @@ static void pwm_ch1_cb(PWMDriver *pwmp) {
 
 /****************************PUBLIC FUNCTIONS*************************************/
 
-void proximity_start(void)
+void proximity_start(uint8_t mode)
 {
 	if(ADCD1.state != ADC_STOP) {
 		return;
 	}
 
-    static const PWMConfig pwmcfg_proximity = {
+    static PWMConfig pwmcfg_proximity = {
         /* timer clock frequency */
         .frequency = PWM_CLK_FREQ,
         /* timer period */
-        .period = PWM_CYCLE,
+        .period = FAST_PWM_CYCLE,
         .cr2 = 0,
         .callback = pwm_reset_cb,
         .channels = {
@@ -314,7 +321,10 @@ void proximity_start(void)
             {.mode = PWM_OUTPUT_DISABLED, .callback = NULL},
         },
     };
-	
+	if(mode==SLOW_UPDATE) {
+		pwmcfg_proximity.period = SLOW_PWM_CYCLE;
+	}
+
     adcStart(&ADCD1, NULL);
     //adcAcquireBus(&ADCD1);
     // ADC waiting for the trigger from the timer.
@@ -323,10 +333,18 @@ void proximity_start(void)
     /* Init PWM */
     pwmStart(&PWMD2, &pwmcfg_proximity);
 	// Enable channel 1 to set duty cycle for TCRT1000 drivers.
-    pwmEnableChannel(&PWMD2, 0, (pwmcnt_t) (PWM_CYCLE * TCRT1000_DC)); 
+    if(mode==FAST_UPDATE) {
+    	pwmEnableChannel(&PWMD2, 0, (pwmcnt_t) (FAST_PWM_CYCLE * FAST_TCRT1000_DC));
+    } else {
+    	pwmEnableChannel(&PWMD2, 0, (pwmcnt_t) (SLOW_PWM_CYCLE * SLOW_TCRT1000_DC));
+    }
 	pwmEnableChannelNotification(&PWMD2, 0); // Channel 1 interrupt enable to handle pulse shutdown.
     pwmEnablePeriodicNotification(&PWMD2); // PWM general interrupt at the beginning of the period to handle pulse ignition.
-    pwmEnableChannel(&PWMD2, 1, (pwmcnt_t) (PWM_CYCLE * ON_MEASUREMENT_POS)); // Enable channel 2 to trigger the measures.
+    if(mode==FAST_UPDATE) {
+    	pwmEnableChannel(&PWMD2, 1, (pwmcnt_t) (FAST_PWM_CYCLE * FAST_ON_MEASUREMENT_POS)); // Enable channel 2 to trigger the measures.
+    } else {
+    	pwmEnableChannel(&PWMD2, 1, (pwmcnt_t) (SLOW_PWM_CYCLE * SLOW_ON_MEASUREMENT_POS)); // Enable channel 2 to trigger the measures.
+    }
 
     prox_thd_handle = chThdCreateStatic(proximity_thd_wa, sizeof(proximity_thd_wa), NORMALPRIO, proximity_thd, NULL);
 }
@@ -342,6 +360,10 @@ void proximity_stop(void) {
 	adcStopConversion(&ADCD1);
 	adcStop(&ADCD1);
 	//adcReleaseBus(&ADCD1);
+	palClearPad(GPIOB, GPIOB_PULSE_0);
+	palClearPad(GPIOB, GPIOB_PULSE_1);
+	palClearPad(GPIOE, GPIOE_PULSE_2);
+	palClearPad(GPIOE, GPIOE_PULSE_3);
 }
 
 void calibrate_ir(void) {

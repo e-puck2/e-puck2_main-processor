@@ -212,20 +212,49 @@ static THD_FUNCTION(selector_thd, arg)
 				stop_loop = 1;
 				break;
 
-			case 4: // Range and bearing - receiver.
+			case 4: // Range and bearing - receiver or transmitter (change with button).
 				switch(rab_state) {
 					case 0:
-						write_reg(rab_addr, 12, 150);	// Set range.
-						write_reg(rab_addr, 17, 0);		// Onboard calculation.
+						proximity_stop(); // Stop proximity sampling to avoid general interference on all sensors of the range and bearing extension.
+						VL53L0X_stop(); // Stop ToF to avoid interference on the front receivers of the range and bearing extension.
+						write_reg(rab_addr, 12, 150); // Set range.
+						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
+							memset(rab_buff, 0x00, 35);
+							sprintf((char*)rab_buff, "set range to %d\r\n", regValue[0]);
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+							}
+						}
+						write_reg(rab_addr, 17, 0); // Onboard calculation.
+						if((i2c_err = read_reg(rab_addr, 17, &regValue[0])) == MSG_OK) {
+							memset(rab_buff, 0x00, 35);
+							sprintf((char*)rab_buff, "onboard calculation enabled = %d\r\n", regValue[0]);
+							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+							}
+						}
 						write_reg(rab_addr, 16, 0);		// Store light conditions.
+						rab_tx_data = 0xAA;
+						set_led(LED1, 1);
+						set_led(LED3, 1);
+						set_led(LED5, 1);
+						set_led(LED7, 1);
 						rab_state = 1;
 						break;
 
-					case 1:
-					    if((i2c_err = read_reg(rab_addr, 0, &regValue[0])) != MSG_OK) {
+					case 1: // Receiver mode
+					    if((i2c_err = read_reg(rab_addr, 0, &regValue[0])) != MSG_OK) { // Check if data available (register 0)
 							memset(rab_buff, 0x00, 35);
 							sprintf((char*)rab_buff, "err reading\r\n");
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+							}
 					        break;
 					    }
 					    if(regValue[0] != 0) {
@@ -247,50 +276,99 @@ static THD_FUNCTION(selector_thd, arg)
 							memset(rab_buff, 0x00, 35);
 							sprintf((char*)rab_buff, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
+							}
+					    }
+					    if(button_is_pressed()) {
+					    	clear_leds();
+					    	set_body_led(1);
+					    	rab_state = 2;
+					    }
+						break;
+					case 2: // Transmitter mode
+						write_reg(rab_addr, 13, rab_tx_data>>8);
+						write_reg(rab_addr, 14, rab_tx_data&0xFF);
+						sprintf((char*)rab_buff, "tx data = %d\r\n", rab_tx_data);
+						chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+						if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+							chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+							chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+						}
+					    if(button_is_pressed()) {
+					    	set_body_led(0);
+					    	set_led(LED1, 1);
+					    	set_led(LED3, 1);
+					    	set_led(LED5, 1);
+					    	set_led(LED7, 1);
+					    	rab_state = 1;
 					    }
 						break;
 				}
-				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.
+				chThdSleepUntilWindowed(time, time + MS2ST(100)); // Refresh @ 10 Hz.
 				break;
 
 			case 5: // Range and bearing - clustering demo (simultaneous transmitter and receiver).
 				switch(rab_state) {
 					case 0:
+						set_body_led(1);
+						VL53L0X_stop(); // Stop ToF to avoid interference on the front receivers of the range and bearing extension.
+						proximity_stop(); // Stop the proximity before calibration of the range and bearing sensors.
 						write_reg(rab_addr, 12, 150); // Set range.
 						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
 							memset(rab_buff, 0x00, 35);
 							sprintf((char*)rab_buff, "set range to %d\r\n", regValue[0]);
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+							}
 						}
 						write_reg(rab_addr, 17, 0); // Onboard calculation.
 						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
 							memset(rab_buff, 0x00, 35);
 							sprintf((char*)rab_buff, "onboard calculation enabled = %d\r\n", regValue[0]);
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+							}
 						}
-						//write_reg(rab_addr, 16, 0); // Store light conditions.
+						write_reg(rab_addr, 16, 0); // Store light conditions.
+
+						proximity_start(SLOW_UPDATE); // Start proximity sampling at a lower rate to avoid too much interference with the "range and bearing" sensors.
 
 						srand(get_prox(0)+get_prox(1)+get_prox(2)+get_prox(3));
 						rab_tx_data = rand()%10000; // Random number between 0 and 9999.
 						memset(rab_buff, 0x00, 35);
 						sprintf((char*)rab_buff, "tx data = %d\r\n", rab_tx_data);
 						chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+						if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+							chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+							chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+						}
 
 						enable_obstacle_avoidance();
 						left_motor_set_speed(600);
 						right_motor_set_speed(600);
 
+						set_body_led(0);
 						rab_state = 1;
 						break;
 
 					case 1:
 						write_reg(rab_addr, 13, rab_tx_data>>8);
+						proximity_stop(); // Stop the proximity sampling to avoid interference with the message sent with the range and bearing extension. This increases the probability that the message will be received correctly by others extensions.
 						write_reg(rab_addr, 14, rab_tx_data&0xFF);
 
 					    if((i2c_err = read_reg(rab_addr, 0, &regValue[0])) != MSG_OK) {
 							memset(rab_buff, 0x00, 50);
 							sprintf((char*)rab_buff, "err reading\r\n");
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
+								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
+							}
 					        break;
 					    }
 					    if(regValue[0] != 0) {
@@ -313,7 +391,9 @@ static THD_FUNCTION(selector_thd, arg)
 							memset(rab_buff, 0x00, 35);
 							sprintf((char*)rab_buff, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
-
+							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+								chprintf((BaseSequentialStream *)&SDU1, "%d %3.2f %d %d\r\n", rab_data, (rab_bearing*180.0/M_PI), rab_range, rab_sensor);
+							}
 							if(rab_data != rab_tx_data) { // Stop moving when receiving something from another robot to form a cluster. Avoid to stop when receiving bouncing transmitted data.
 								disable_obstacle_avoidance();
 								left_motor_set_speed(0);
@@ -330,6 +410,8 @@ static THD_FUNCTION(selector_thd, arg)
 					    }
 						break;
 				}
+				chThdSleepUntilWindowed(time, time + MS2ST(11));
+				proximity_start(SLOW_UPDATE); // Restart proximity sampling at a lower rate only after 11 ms to let the message be transmitted completely (included a small pause) by the range and bearing extension.
 				chThdSleepUntilWindowed(time, time + MS2ST(20)); // Refresh @ 50 Hz.
 				break;
 
@@ -780,7 +862,7 @@ int main(void)
 	dcmi_start();
 	cam_start();
 	motors_init();
-	proximity_start();
+	proximity_start(FAST_UPDATE);
 	battery_level_start();
 	dac_start();
 	exti_start();

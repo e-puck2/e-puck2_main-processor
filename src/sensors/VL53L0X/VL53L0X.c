@@ -50,6 +50,8 @@ static THD_FUNCTION(VL53L0XThd, arg) {
     	}
 		chThdSleepMilliseconds(100);
     }
+
+    VL53L0X_stopMeasure(&device);
 }
 
 

@@ -218,26 +218,8 @@ static THD_FUNCTION(selector_thd, arg)
 						proximity_stop(); // Stop proximity sampling to avoid general interference on all sensors of the range and bearing extension.
 						VL53L0X_stop(); // Stop ToF to avoid interference on the front receivers of the range and bearing extension.
 						write_reg(rab_addr, 12, 150); // Set range.
-						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
-							memset(rab_buff, 0x00, 35);
-							sprintf((char*)rab_buff, "set range to %d\r\n", regValue[0]);
-							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
-							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
-								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
-								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-							}
-						}
 						write_reg(rab_addr, 17, 0); // Onboard calculation.
-						if((i2c_err = read_reg(rab_addr, 17, &regValue[0])) == MSG_OK) {
-							memset(rab_buff, 0x00, 35);
-							sprintf((char*)rab_buff, "onboard calculation enabled = %d\r\n", regValue[0]);
-							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
-							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
-								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
-								chprintf((BaseSequentialStream *)&SDU1, "\r\n");
-							}
-						}
-						write_reg(rab_addr, 16, 0);		// Store light conditions.
+						//write_reg(rab_addr, 16, 0);		// Store light conditions.
 						rab_tx_data = 0xAA;
 						set_led(LED1, 1);
 						set_led(LED3, 1);

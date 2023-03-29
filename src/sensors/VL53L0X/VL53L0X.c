@@ -237,6 +237,9 @@ void VL53L0X_start(void){
 }
 
 void VL53L0X_stop(void) {
+	if(VL53L0X_configured == false) {
+		return;
+	}
     chThdTerminate(distThd);
     chThdWait(distThd);
     distThd = NULL;

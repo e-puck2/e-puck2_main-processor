@@ -657,6 +657,71 @@ int run_asercom2(void) {
                         	// Magnetometer stop not yet implemented.
                         }
 
+                        buffer[i++] = 0; // success
+
+						break;
+
+					case 0x10: // Set proximity state (0=disable, 1=enable fast sampling, 2=enable slow sampling)
+                        if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                        } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                        	chSequentialStreamRead(&SD3, (uint8_t*)rx_buff, 1);
+                        } else { // Communicate with the pc (usb).
+                        	if (SDU1.config->usbp->state == USB_ACTIVE) {
+                        		chSequentialStreamRead(&SDU1, (uint8_t*)rx_buff, 1);
+                        	}
+                        	//otherwise there is no wait state, this means the other threads can not be processed
+                        	chThdSleepMilliseconds(10);
+                        }
+
+                        // In case of errors, skip the packet.
+                        if(serial_get_last_errors() != 0) {
+                        	//sprintf(buffer, "skip packet\r\n");
+                        	//uart2_send_text(buffer);
+                        	serial_clear_last_errors();
+                        	break;
+                        }
+
+                        proximity_stop();
+                        if(rx_buff[0] == 1) {
+                        	proximity_start(FAST_UPDATE);
+                        } else if(rx_buff[0] == 2) {
+                        	proximity_start(SLOW_UPDATE);
+                        }
+
+                        buffer[i++] = 0; // success
+
+						break;
+
+					case 0x11: // Enable/disable time of flight (0=disable, 1=enable)
+                        if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                        } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                        	chSequentialStreamRead(&SD3, (uint8_t*)rx_buff, 1);
+                        } else { // Communicate with the pc (usb).
+                        	if (SDU1.config->usbp->state == USB_ACTIVE) {
+                        		chSequentialStreamRead(&SDU1, (uint8_t*)rx_buff, 1);
+                        	}
+                        	//otherwise there is no wait state, this means the other threads can not be processed
+                        	chThdSleepMilliseconds(10);
+                        }
+
+                        // In case of errors, skip the packet.
+                        if(serial_get_last_errors() != 0) {
+                        	//sprintf(buffer, "skip packet\r\n");
+                        	//uart2_send_text(buffer);
+                        	serial_clear_last_errors();
+                        	break;
+                        }
+
+                        if(rx_buff[0] == 0) {
+                        	VL53L0X_stop();
+                        } else {
+                        	VL53L0X_start();
+                        }
+
+                        buffer[i++] = 0; // success
+
 						break;
 
                     case 'a': // Read acceleration sensors in a non filtered way, same as ASCII

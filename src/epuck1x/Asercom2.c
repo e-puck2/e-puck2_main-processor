@@ -1013,7 +1013,22 @@ int run_asercom2(void) {
                             e_i2cp_write((unsigned char)176, (unsigned char)145, (unsigned char)1);
                             e_i2cp_disable();
                         }
-			break;
+                        break;
+                    case 'Y': // read I2C message
+                        if (gumstix_connected == 0) {
+                        	if (use_bt) { // Communicate with ESP32 (uart) => BT.
+								while (e_getchar_uart1((char*)&mod)==0);
+								while (e_getchar_uart1((char*)&reg)==0);
+                        	} else {
+                        		while (e_getchar_uart2((char*)&mod)==0);
+                        		while (e_getchar_uart2((char*)&reg)==0);
+                        	}
+                            e_i2cp_enable();
+                            val = e_i2cp_read((char) mod, (char) reg); // read I2C
+                            e_i2cp_disable();
+                            buffer[i++] = val;
+                        }
+                        break;
                     default: // silently ignored
                         break;
                 }
@@ -1568,7 +1583,6 @@ int run_asercom2(void) {
                         val = e_i2cp_read((char) mod, (char) reg); // read I2C
                         e_i2cp_disable();
                         sprintf(buffer, "y,%d\r\n", val);
-                        uart1_send_text(buffer);
                         if (use_bt) { // Communicate with ESP32 (uart) => BT.
                         	uart1_send_text(buffer);
                         } else { // Communicate with the pc (usb).

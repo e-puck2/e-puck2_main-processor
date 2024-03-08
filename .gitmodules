@@ -6,25 +6,25 @@
 	url = https://github.com/e-puck2/ChibiOS_3.1.0.git
 [submodule "src/chibios-syscalls"]
 	path = src/chibios-syscalls
-	url = https://github.com/cvra/chibios-syscalls
+	url = https://github.com/e-puck2/chibios-syscalls
 [submodule "src/cmp"]
 	path = src/cmp
-	url = https://github.com/cvra/cmp
+	url = https://github.com/e-puck2/cmp
 [submodule "src/cmp_mem_access"]
 	path = src/cmp_mem_access
-	url = https://github.com/cvra/cmp_mem_access
+	url = https://github.com/e-puck2/cmp_mem_access
 [submodule "src/crc"]
 	path = src/crc
-	url = https://github.com/cvra/crc
+	url = https://github.com/e-puck2/crc
 [submodule "src/parameter"]
 	path = src/parameter
-	url = https://github.com/cvra/parameter
+	url = https://github.com/e-puck2/parameter
 [submodule "src/test-runner"]
 	path = src/test-runner
-	url = https://github.com/cvra/test-runner
+	url = https://github.com/e-puck2/test-runner
 [submodule "src/msgbus"]
 	path = src/msgbus
-	url = https://github.com/cvra/msgbus
+	url = https://github.com/e-puck2/msgbus
 [submodule "src/serial-datagram"]
 	path = src/serial-datagram
-	url = https://github.com/cvra/serial-datagram.git
+	url = https://github.com/e-puck2/serial-datagram.git

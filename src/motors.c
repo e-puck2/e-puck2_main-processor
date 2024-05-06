@@ -192,18 +192,22 @@ void left_motor_disable_power_save(void) {
 /****************************PUBLIC FUNCTIONS*************************************/
 
 void left_motor_set_speed(int speed) {
-	if(obstacle_avoidance_enabled()) {
-		obstacle_avoidance_set_speed_left(speed);
-	} else {
-		motor_set_speed(&left_motor, speed);
+	if (left_motor_get_desired_speed() != speed){ // this ensure that the motor speed is only changed when different from the previous one.
+		if(obstacle_avoidance_enabled()) { // see https://github.com/e-puck2/e-puck2_main-processor/issues/2
+			obstacle_avoidance_set_speed_left(speed);
+		} else {
+			motor_set_speed(&left_motor, speed);
+		}
 	}
 }
 
 void right_motor_set_speed(int speed) {
-	if(obstacle_avoidance_enabled()) {
-		obstacle_avoidance_set_speed_right(speed);
-	} else {
-		motor_set_speed(&right_motor, speed);
+	if (right_motor_get_desired_speed() != speed){ // this ensure that the motor speed is only changed when different from the previous one.
+		if(obstacle_avoidance_enabled()) { // see https://github.com/e-puck2/e-puck2_main-processor/issues/2
+			obstacle_avoidance_set_speed_right(speed);
+		} else {
+			motor_set_speed(&right_motor, speed);
+		}
 	}
 }
 

@@ -298,7 +298,7 @@ $(BUILDDIR)/lib$(PROJECT).a: $(OBJS)
 
 clean:
 	@echo Cleaning
-	-rm -fR .dep $(BUILDDIR)
+	-rm -fR .dep libssp_nonshared.a libssp.a $(BUILDDIR)
 	@echo
 	@echo Done
 

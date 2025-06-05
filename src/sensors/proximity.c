@@ -67,8 +67,6 @@ static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n)
     (void) adcp;
     (void) n;
 
-    binary_semaphore_t *sem = &adc2_ready;
-
     /* Reset all samples to zero. */
     memset(adc2_values, 0, adcp->grpp->num_channels * sizeof(unsigned int));
 
@@ -79,7 +77,7 @@ static void adc_cb(ADCDriver *adcp, adcsample_t *samples, size_t n)
 
     /* Signal the proximity thread that the ADC measurements are done. */
     chSysLockFromISR();
-    chBSemSignalI(sem);
+    chBSemSignalI(&adc2_ready);
     chSysUnlockFromISR();
 
     pulseSeqState = 1; // Sync with the timer since the first time we get here the ADC and timer could be desync.
@@ -189,7 +187,10 @@ static THD_FUNCTION(proximity_thd, arg)
     	prox_values.reflected[6] = adc2_values[11];
     	prox_values.reflected[7] = adc2_values[15];
 
-        for (int i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
+        for (uint8_t i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
+			// Ambient values are higher than reflected values because the sensors pull from 3V to GND when light is reflected.
+			// As a result, the adc values are lower when much light is perceived by the sensor.
+			// Hence we substract reflected from ambient and not the other way around.
         	prox_values.delta[i] = prox_values.ambient[i] - prox_values.reflected[i];
         }
 
@@ -335,17 +336,17 @@ void calibrate_ir(void) {
 	}
 }
 
-int get_prox(unsigned int sensor_number) {
-	if (sensor_number > 7) {
+int get_prox(uint8_t sensor_number) {
+	if (sensor_number >= PROXIMITY_NB_CHANNELS) {
 		return 0;
 	} else {
 		return prox_values.delta[sensor_number];
 	}
 }
 
-int get_calibrated_prox(unsigned int sensor_number) {
+int get_calibrated_prox(uint8_t sensor_number) {
 	int temp;
-	if (sensor_number > 7) {
+	if (sensor_number >= PROXIMITY_NB_CHANNELS) {
 		return 0;
 	} else {
 		temp = prox_values.delta[sensor_number] - prox_values.initValue[sensor_number];
@@ -357,8 +358,8 @@ int get_calibrated_prox(unsigned int sensor_number) {
 	}
 }
 
-int get_ambient_light(unsigned int sensor_number) {
-	if (sensor_number > 7) {
+unsigned int get_ambient_light(uint8_t sensor_number) {
+	if (sensor_number >= PROXIMITY_NB_CHANNELS) {
 		return 0;
 	} else {
 		return prox_values.ambient[sensor_number];

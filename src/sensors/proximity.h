@@ -18,7 +18,7 @@ typedef struct {
     unsigned int reflected[PROXIMITY_NB_CHANNELS];
 
     /** Difference between ambient and reflected. */
-    unsigned int delta[PROXIMITY_NB_CHANNELS];
+    int delta[PROXIMITY_NB_CHANNELS];
 
     /** Initial values saved during calibration. */
     unsigned int initValue[PROXIMITY_NB_CHANNELS];
@@ -43,7 +43,7 @@ void calibrate_ir(void);
  * 
  * @return					Last value measured by the sensor
  */
-int get_prox(unsigned int sensor_number);
+int get_prox(uint8_t sensor_number);
 
  /**
  * @brief   Returns the calibration value for the chosen sensor
@@ -52,7 +52,7 @@ int get_prox(unsigned int sensor_number);
  * 
  * @return					Calibration value of the sensor
  */
-int get_calibrated_prox(unsigned int sensor_number);
+int get_calibrated_prox(uint8_t sensor_number);
 
  /**
  * @brief   Returns the last ambiant light value measured by the chosen sensor
@@ -61,7 +61,7 @@ int get_calibrated_prox(unsigned int sensor_number);
  * 
  * @return					Last ambiant light value measured by the sensor
  */
-int get_ambient_light(unsigned int sensor_number);
+unsigned int get_ambient_light(uint8_t sensor_number);
 
 #ifdef __cplusplus
 }

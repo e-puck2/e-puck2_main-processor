@@ -32,7 +32,7 @@
 
 #define I2S_AUDIOFREQ_16K					((uint32_t)16000U)
 #define I2S_AUDIOFREQ_32K					((uint32_t)32000U)
-#define AUDIO_IN_VOLUME						4 //64
+#define AUDIO_IN_VOLUME						64
 
 #define CHANNEL_DEMUX_MASK					0x55
 

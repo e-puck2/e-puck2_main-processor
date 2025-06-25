@@ -1,4 +1,3 @@
-#include <hal.h>
 #include "leds.h"
 #include <string.h>
 

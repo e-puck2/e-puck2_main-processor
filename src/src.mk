@@ -52,6 +52,7 @@ CSRC += $(GLOBAL_PATH)/src/panic.c
 CSRC += $(GLOBAL_PATH)/src/selector.c
 CSRC += $(GLOBAL_PATH)/src/sensors/battery_level.c
 CSRC += $(GLOBAL_PATH)/src/sensors/ground.c
+CSRC += $(GLOBAL_PATH)/src/sensors/icm20948/ICM_20948_C.c
 CSRC += $(GLOBAL_PATH)/src/sensors/imu.c
 CSRC += $(GLOBAL_PATH)/src/sensors/mpu9250.c
 CSRC += $(GLOBAL_PATH)/src/sensors/proximity.c

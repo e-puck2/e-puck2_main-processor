@@ -123,6 +123,11 @@ static THD_FUNCTION(selector_thd, arg)
 	double heading = 0.0;
 	float mag_values[3];
 
+	static float geo_offsets[3] = {0, 0, 0};
+	static float geo_offsets_max[3] = {-1000, -1000, -1000};
+	static float geo_offsets_min[3] = {1000, 1000, 1000};
+	static float compass = 0;
+
 	calibrate_acc();
 	calibrate_gyro();
 	calibrate_ir();
@@ -309,7 +314,7 @@ static THD_FUNCTION(selector_thd, arg)
 						write_reg(rab_addr, 17, 0); // Onboard calculation.
 						if((i2c_err = read_reg(rab_addr, 12, &regValue[0])) == MSG_OK) {
 							memset(rab_buff, 0x00, 35);
-							sprintf((char*)rab_buff, "onboard calculation enabled = %d\r\n", regValue[0]);
+							sprintf((char*)rab_buff, "onboard calc enabled = %d\r\n", regValue[0]);
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
 							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
 								chprintf((BaseSequentialStream *)&SDU1, "%s,", rab_buff);
@@ -344,7 +349,7 @@ static THD_FUNCTION(selector_thd, arg)
 						write_reg(rab_addr, 14, rab_tx_data&0xFF);
 
 					    if((i2c_err = read_reg(rab_addr, 0, &regValue[0])) != MSG_OK) {
-							memset(rab_buff, 0x00, 50);
+							memset(rab_buff, 0x00, 35);
 							sprintf((char*)rab_buff, "err reading\r\n");
 							chSequentialStreamWrite(&SD3, rab_buff, strlen((char*)rab_buff));
 							if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
@@ -606,6 +611,46 @@ static THD_FUNCTION(selector_thd, arg)
 				break;
 
 			case 12: // Hardware test.
+				/*
+				// Debug ICM20948 IMU
+				messagebus_topic_wait(imu_topic, &imu_values, sizeof(imu_values));
+				chprintf((BaseSequentialStream *)&SDU1, "IMU\r\n");
+		    	chprintf((BaseSequentialStream *)&SDU1, "Ax=%-7d Ay=%-7d Az=%-7d Gx=%-7d Gy=%-7d Gz=%-7d\r\n", imu_values.acc_raw[0], imu_values.acc_raw[1], imu_values.acc_raw[2], imu_values.gyro_raw[0], imu_values.gyro_raw[1], imu_values.gyro_raw[2]);
+		    	chprintf((BaseSequentialStream *)&SDU1, "Mx=%f My=%f Mz=%f\r\n", imu_values.magnetometer[0], imu_values.magnetometer[1], imu_values.magnetometer[2]);
+		    	if(geo_offsets_max[0] < imu_values.magnetometer[0])
+		    	{
+		    	    geo_offsets_max[0] = imu_values.magnetometer[0];
+		    	}
+		    	if(geo_offsets_max[1] < imu_values.magnetometer[1])
+		    	{
+		    	    geo_offsets_max[1] = imu_values.magnetometer[1];
+		    	}
+		    	if(geo_offsets_max[2] < imu_values.magnetometer[2])
+		    	{
+		    	    geo_offsets_max[2] = imu_values.magnetometer[2];
+		    	}
+		    	if(geo_offsets_min[0] > imu_values.magnetometer[0])
+		    	{
+		    	    geo_offsets_min[0] = imu_values.magnetometer[0];
+		    	}
+		    	if(geo_offsets_min[1] > imu_values.magnetometer[1])
+		    	{
+		    	    geo_offsets_min[1] = imu_values.magnetometer[1];
+		    	}
+		    	if(geo_offsets_min[2] > imu_values.magnetometer[2])
+		    	{
+		    	    geo_offsets_min[2] = imu_values.magnetometer[2];
+		    	}
+		    	geo_offsets[0] = (geo_offsets_max[0] + geo_offsets_min[0])/2;
+		    	geo_offsets[1] = (geo_offsets_max[1] + geo_offsets_min[1])/2;
+		    	geo_offsets[2] = (geo_offsets_max[2] + geo_offsets_min[2])/2;
+		    	chprintf((BaseSequentialStream *)&SDU1, "mag_offs: x=%f y=%f z=%f\r\n\n", geo_offsets[0], geo_offsets[1], geo_offsets[2]);
+		        compass = atan2(imu_values.magnetometer[0]-geo_offsets[0], imu_values.magnetometer[1]-geo_offsets[1]);
+		        compass = compass * 180 / M_PI;
+		        chprintf((BaseSequentialStream *)&SDU1, "comp deg: x=%f\r\n", compass);
+		        chThdSleepMilliseconds(100);
+		        */
+
 				switch(hw_test_state) {
 					case 0: // Init hardware.
 						// Calibrate proximity.

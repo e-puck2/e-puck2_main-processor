@@ -5,7 +5,15 @@
 #include "chprintf.h"
 #include "i2c_bus.h"
 #include "imu.h"
+#include "../leds.h"
 //#include "exti.h"
+#include "icm20948/ICM_20948_REGISTERS.h"
+#include "icm20948/AK09916_REGISTERS.h"
+#include <math.h>
+
+#define IMU_NOT_FOUND -1
+#define IMU_MPU9250 0
+#define IMU_ICM20948 1
 
 static imu_msg_t imu_values;
 
@@ -27,12 +35,93 @@ static uint8_t magCalibrationState = 0;
 static thread_t *imuThd;
 static bool imu_configured = false;
 
+static int8_t imuModel = IMU_NOT_FOUND;
+
 /***************************INTERNAL FUNCTIONS************************************/
+
+ICM_20948_Status_e startup_magnetometer(void)
+{
+	ICM_20948_Status_e status = ICM_20948_Stat_Ok;
+	//status = ICM_20948_i2c_master_passthrough(&icmDevice, false); //Do not connect the SDA/SCL pins to AUX_DA/AUX_CL
+	status = ICM_20948_i2c_master_enable(&icmDevice, false);
+
+	uint8_t temp = 0x01;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_MST_DELAY_CTRL, &temp, 1);
+
+
+	// Read magnetometer ID
+	ICM_20948_set_bank(&icmDevice, 3);
+	temp = (0x80 | MAG_AK09916_I2C_ADDR);
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_ADDR, &temp, 1);
+	temp = AK09916_REG_WIA2;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_REG, &temp, 1);
+	temp = 0x81;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_CTRL, &temp, 1);
+
+	ICM_20948_set_bank(&icmDevice, 0);
+	ICM_20948_execute_r(&icmDevice, AGB0_REG_USER_CTRL, &temp, 1); // Enable master i2c to actually perform the read operation
+	uint8_t temp2 = temp|0x20;
+	ICM_20948_execute_w(&icmDevice, AGB0_REG_USER_CTRL, &temp2, 1);
+	chThdSleepMilliseconds(10);
+	ICM_20948_execute_w(&icmDevice, AGB0_REG_USER_CTRL, &temp, 1);
+
+	uint8_t ak09916_id_ = 0;
+	ICM_20948_execute_r(&icmDevice, AGB0_REG_EXT_PERIPH_SENS_DATA_00, &ak09916_id_, 1);
+	//chprintf((BaseSequentialStream *)&SDU1, "id=%d\r\n", ak09916_id_);
+	if(ak09916_id_ != 0x09)
+	{
+		set_led(LED7, 1);
+	}
+
+	// Reset magnetometer through ICM20948 (not direct communication)
+	ICM_20948_set_bank(&icmDevice, 3);
+	temp = MAG_AK09916_I2C_ADDR;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_ADDR, &temp, 1);
+	temp = AK09916_REG_CNTL3;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_REG, &temp, 1);
+	temp = 1;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_DO, &temp, 1);
+	ICM_20948_set_bank(&icmDevice, 0);
+	ICM_20948_execute_r(&icmDevice, AGB0_REG_USER_CTRL, &temp, 1); // Enable master i2c to actually perform the i2c operation
+	temp2 = temp|0x20;
+	ICM_20948_execute_w(&icmDevice, AGB0_REG_USER_CTRL, &temp2, 1);
+	chThdSleepMilliseconds(10);
+	ICM_20948_execute_w(&icmDevice, AGB0_REG_USER_CTRL, &temp, 1);
+
+	chThdSleepMilliseconds(10); // Needed?
+
+	// Configure magnetometer to continuous mode, 100 Hz
+	ICM_20948_set_bank(&icmDevice, 3);
+	temp = MAG_AK09916_I2C_ADDR;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_ADDR, &temp, 1);
+	temp = AK09916_REG_CNTL2;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_REG, &temp, 1);
+	temp = 8;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_DO, &temp, 1);
+	ICM_20948_set_bank(&icmDevice, 0);
+	ICM_20948_execute_r(&icmDevice, AGB0_REG_USER_CTRL, &temp, 1); // Enable master i2c to actually perform the i2c operation
+	temp2 = temp|0x20;
+	ICM_20948_execute_w(&icmDevice, AGB0_REG_USER_CTRL, &temp2, 1);
+	chThdSleepMilliseconds(10);
+	ICM_20948_execute_w(&icmDevice, AGB0_REG_USER_CTRL, &temp, 1);
+
+	// Configure ICM20948 to automatically read from magnetometer 9 bytes starting from register ST1, basically from ST1 to ST2
+	ICM_20948_set_bank(&icmDevice, 3);
+	temp = MAG_AK09916_I2C_ADDR | 0x80;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_ADDR, &temp, 1);
+	temp = AK09916_REG_ST1;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_REG, &temp, 1);
+	temp = 0x89;
+	ICM_20948_execute_w(&icmDevice, AGB3_REG_I2C_PERIPH0_CTRL, &temp, 1);
+
+	return status;
+
+}
 
  /**
  * @brief   Thread which updates the measures and publishes them
  */
-static THD_WORKING_AREA(imu_reader_thd_wa, 512);
+static THD_WORKING_AREA(imu_reader_thd_wa, 1024);
 static THD_FUNCTION(imu_reader_thd, arg) {
      (void) arg;
      chRegSetThreadName(__FUNCTION__);
@@ -82,9 +171,18 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
     	if(imu_configured == true){
 	 		/* Reads the incoming measurement. */
-			mpu9250_read(	imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature, 
-							imu_values.magnetometer, imu_values.gyro_raw, imu_values.acc_raw, 
-							imu_values.gyro_offset, imu_values.acc_offset, &imu_values.status);
+    		if(imuModel == IMU_MPU9250)
+    		{
+				mpu9250_read(	imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature,
+								imu_values.magnetometer, imu_values.gyro_raw, imu_values.acc_raw,
+								imu_values.gyro_offset, imu_values.acc_offset, &imu_values.status);
+    		}
+    		else
+    		{
+				icm20948_read(	&icmDevice, imu_values.gyro_rate, imu_values.acceleration, &imu_values.temperature,
+								imu_values.magnetometer, imu_values.gyro_raw, imu_values.acc_raw,
+								imu_values.gyro_offset, imu_values.acc_offset, &imu_values.status);
+    		}
     	}
 
 
@@ -228,10 +326,90 @@ int8_t imu_start(void)
 
 	i2c_start();
 
-    status = mpu9250_setup(MPU9250_ACC_FULL_RANGE_2G
-		                  | MPU9250_GYRO_FULL_RANGE_250DPS
-		                  | MPU9250_SAMPLE_RATE_DIV(100));
-		                  //| MPU60X0_LOW_PASS_FILTER_6)
+	if(mpu9250_ping()) // MPU9250
+	{
+		imuModel = IMU_MPU9250;
+	    status = mpu9250_setup(MPU9250_ACC_FULL_RANGE_2G
+			                  | MPU9250_GYRO_FULL_RANGE_250DPS
+			                  | MPU9250_SAMPLE_RATE_DIV(100));
+			                  //| MPU60X0_LOW_PASS_FILTER_6)
+	}
+	else // ICM20948
+	{
+		imuModel = IMU_ICM20948;
+
+		//status = icm20948_init();
+		icmDevice._dmp_firmware_available = false;
+		ICM_20948_link_serif(&icmDevice, &icmSerif);
+		//chThdSleepMilliseconds(100); // Power-on time
+		if(ICM_20948_check_id(&icmDevice) == ICM_20948_Stat_Ok)
+		{
+			status = MSG_OK;
+		}
+		else
+		{
+			status = -1;
+			set_led(LED1, 1);
+		}
+
+		// Here we are doing a SW reset to make sure the device starts in a known state
+		ICM_20948_sw_reset(&icmDevice);
+		chThdSleepMilliseconds(250);
+		ICM_20948_set_clock_source(&icmDevice, ICM_20948_Clock_Auto);
+
+		uint8_t temp = 0x00;
+		ICM_20948_set_bank(&icmDevice, 0);
+
+		temp = 0x80;
+		ICM_20948_execute_w(&icmDevice, AGB0_REG_PWR_MGMT_1, &temp, 1);
+		chThdSleepMilliseconds(10);
+        temp = 0x01;
+        ICM_20948_execute_w(&icmDevice, AGB0_REG_PWR_MGMT_1, &temp, 1);
+
+		temp = 0x00;
+		ICM_20948_execute_w(&icmDevice, AGB0_REG_PWR_MGMT_2, &temp, 1); // Turn on gyro and acc.
+
+		// Set Gyro and Accelerometer to continuous sample mode
+		//ICM_20948_set_sample_mode(&icmDevice, (ICM_20948_InternalSensorID_bm)(ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr | ICM_20948_Internal_Mst), ICM_20948_Sample_Mode_Continuous); // options: ICM_20948_Sample_Mode_Continuous. ICM_20948_Sample_Mode_Cycled
+
+		// Set full scale ranges for both acc (+-2g) and gyr (+-250dps)
+		ICM_20948_fss_t myfss;
+		myfss.a = gpm2;   // (ICM_20948_ACCEL_CONFIG_FS_SEL_e)
+		myfss.g = dps250; // (ICM_20948_GYRO_CONFIG_1_FS_SEL_e)
+		ICM_20948_set_full_scale(&icmDevice, (ICM_20948_InternalSensorID_bm)(ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), myfss);
+
+		// Set gyro (100 hz) and acc (~100 hz) sample rates
+		ICM_20948_smplrt_t mySmplrt;
+		mySmplrt.g = 10; // ODR is computed as follows: 1.1 kHz/(1+GYRO_SMPLRT_DIV[7:0]) => 10 = 100Hz.
+		mySmplrt.a = 10; // ODR is computed as follows: 1.125 kHz/(1+ACCEL_SMPLRT_DIV[11:0]). 10 = 102Hz.
+		ICM_20948_set_sample_rate(&icmDevice, (ICM_20948_InternalSensorID_bm)(ICM_20948_Internal_Acc | ICM_20948_Internal_Gyr), mySmplrt);
+
+		// Do not to use DLPF => this inhibit the ODR configuration and thus the fifo fill rate!!!
+		//ICM_20948_enable_dlpf(&icmDevice, ICM_20948_Internal_Acc, false);
+		//ICM_20948_enable_dlpf(&icmDevice, ICM_20948_Internal_Gyr, false);
+
+		// Now wake the sensor up
+		//ICM_20948_sleep(&icmDevice, false);
+		//ICM_20948_low_power(&icmDevice, false);
+
+		temp = 0x30;
+		ICM_20948_set_bank(&icmDevice, 0);
+		ICM_20948_execute_w(&icmDevice, AGB0_REG_INT_PIN_CONFIG, &temp, 1);
+
+		if(startup_magnetometer() != ICM_20948_Stat_Ok)
+		{
+			set_led(LED3, 1);
+		}
+
+		ICM_20948_set_bank(&icmDevice, 0);
+		temp = 1;
+		ICM_20948_execute_w(&icmDevice, AGB0_REG_FIFO_EN_1, &temp, 1); // Enable fifo from slave0
+		temp = 0x1E;
+		ICM_20948_execute_w(&icmDevice, AGB0_REG_FIFO_EN_2, &temp, 1); // Enable fifo from accel and gyro
+		temp = 0x60;
+		ICM_20948_execute_w(&icmDevice, AGB0_REG_USER_CTRL, &temp, 1); // Enable master i2c and fifo
+
+	}
 
     //not tested yet because the auxilliary I2C of the MPU-9250 is condamned due
     //to PCB correction on the e-puck2-F4, so the magnetometer cannot be read...

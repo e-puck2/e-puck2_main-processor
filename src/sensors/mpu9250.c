@@ -2,6 +2,7 @@
 #include <math.h>
 #include "mpu9250.h"
 #include "../i2c_bus.h"
+#include "imu.h"
 
 #define STANDARD_GRAVITY    9.80665f 
 #define DEG2RAD(deg) (deg / 180 * M_PI)
@@ -88,7 +89,7 @@ int8_t mpu9250_setup(int config) {
         chThdSleepMilliseconds(1);
     }
 	
-    // Gyro full scale.
+    // Gyro full scale and enable DLPF.
     if((err = write_reg(imu_addr, GYRO_CONFIG, (config << 1) & 0x18)) != MSG_OK) {
     	mpu9250_change_addr();
     	if((err = write_reg(imu_addr, GYRO_CONFIG, (config << 1) & 0x18)) != MSG_OK) {
@@ -107,6 +108,7 @@ int8_t mpu9250_setup(int config) {
     chThdSleepMilliseconds(1);
 
     // Sample rate divisor.
+    // If CONFIG.DLPF_CFG is zero then sampling rate is 8 KHz independently of SMPLRT_DIV.
     if((err = write_reg(imu_addr, SMPLRT_DIV, (config >> 8) & 0xff)) != MSG_OK) {
     	mpu9250_change_addr();
     	if((err = write_reg(imu_addr, SMPLRT_DIV, (config >> 8) & 0xff)) != MSG_OK) {
@@ -237,7 +239,7 @@ int8_t mpu9250_magnetometer_read_sens_adj(float *values) {
 bool mpu9250_ping(void) {
 	uint8_t id = 0;
 	mpu9250_read_id(&id);
-	return id == 0x68;
+	return id == 0x71;
 }
 
 int8_t mpu9250_read(float *gyro, float *acc, float *temp, float *magnet, int16_t *gyro_raw, int16_t *acc_raw, int16_t *gyro_offset, int16_t *acc_offset, uint8_t *status) {

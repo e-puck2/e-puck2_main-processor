@@ -58,6 +58,17 @@ int8_t write_reg(uint8_t addr, uint8_t reg, uint8_t value);
  */
 int8_t read_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len);
 
+/**
+ * @brief 		Write a register bigger than 8bits or multiple sequentials registers over I2C
+ *
+ * @param addr	8bits address of the peripherical to write to
+ * @param reg	8bits address of the starting register to write
+ * @param buf	Pointer to a buffer used to store the values to write
+ * @param len	Length of the requested write. the buf must be this size or greater
+ *
+ * @return		The error code. msg_t format
+ */
+int8_t write_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len);
 
 void i2c_update_last_error(void);
 

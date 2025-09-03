@@ -1,3 +1,4 @@
+#include <string.h>
 #include <hal.h>
 #include <ch.h>
 #include "i2c_bus.h"
@@ -116,3 +117,29 @@ int8_t read_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len) {
 
 	return MSG_OK;
 }
+
+int8_t write_reg_multi(uint8_t addr, uint8_t reg, uint8_t *buf, int8_t len) {
+
+    uint8_t txbuf[len + 1]; 		// Create a buffer for transmission
+    uint8_t rxbuf[1] = {0};
+    txbuf[0] = reg;         		// First byte is the register address
+    memcpy(&txbuf[1], buf, len);	// Copy data into txbuf
+
+	i2cAcquireBus(&I2CD1);
+	if(I2CD1.state != I2C_STOP) {
+		msg_t status = i2cMasterTransmitTimeout(&I2CD1, addr, txbuf, len+1, rxbuf, 0, timeout);
+		if (status != MSG_OK){
+			errors = i2cGetErrors(&I2CD1);
+			if(I2CD1.state == I2C_LOCKED){
+				i2c_stop();
+				i2c_start();
+			}
+			i2cReleaseBus(&I2CD1);
+			return status;
+		}
+	}
+	i2cReleaseBus(&I2CD1);
+
+	return MSG_OK;
+}
+

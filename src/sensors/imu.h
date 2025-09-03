@@ -7,6 +7,14 @@ extern "C" {
 
 #include <hal.h>
 #include "sensors/mpu9250.h"
+#include "sensors/icm20948/ICM_20948_C.h"
+
+typedef enum{
+    X_AXIS = 0,
+    Y_AXIS,
+    Z_AXIS,
+    NB_AXIS,
+} imu_axis_t;
 
 /** Message containing one measurement from the IMU. */
 typedef struct {

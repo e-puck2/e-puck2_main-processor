@@ -5,13 +5,6 @@
 #include <stdint.h>
 #include "mpu9250_registers.h"
 
-typedef enum{
-    X_AXIS = 0,
-    Y_AXIS,
-    Z_AXIS,
-    NB_AXIS,
-}imu_axis_t;
-
 // mpu60X0_setup() config options
 #define MPU9250_ACC_FULL_RANGE_2G           (0 << 0)
 #define MPU9250_ACC_FULL_RANGE_4G           (1 << 0)

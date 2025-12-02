@@ -571,6 +571,9 @@ int run_asercom2(void) {
                     		e_close_sound();
                     		stopCurrentMelody();
                     	}
+                    	if(rx_buff[18] & 0x40) {
+                    		playMelody(WE_WISH_YOU, ML_FORCE_CHANGE, NULL);
+						}
 						break;
 
 					case 0xA: // RGB setting => ESP32

@@ -125,7 +125,7 @@ typedef enum{
 	STARWARS,
 	SANDSTORMS,
 	SEVEN_NATION_ARMY,
-
+	WE_WISH_YOU,
 	NB_SONGS,	//tell the number of internal songs
 	//the following should be used if an external song has to be used 
 	EXTERNAL_SONG

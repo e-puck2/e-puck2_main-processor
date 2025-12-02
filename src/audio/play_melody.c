@@ -630,6 +630,51 @@ static const float seven_nation_army_tempo[] = {
 
 };
 
+// We Wish You a Merry Christmas melody
+static const uint16_t wish_melody[] = {
+  // We wish you a merry Christmas
+  NOTE_C4,
+  NOTE_F4, NOTE_F4, NOTE_G4, NOTE_F4, NOTE_E4,
+  NOTE_D4, NOTE_D4,
+  
+  // We wish you a merry Christmas
+  NOTE_D4,
+  NOTE_G4, NOTE_G4, NOTE_A4, NOTE_G4, NOTE_F4,
+  NOTE_E4, NOTE_C4,
+  
+  // We wish you a merry Christmas
+  NOTE_C4,
+  NOTE_A4, NOTE_A4, NOTE_AS4, NOTE_A4, NOTE_G4,
+  NOTE_F4, NOTE_D4,
+  
+  // And a happy New Year
+  NOTE_C4, NOTE_C4,
+  NOTE_D4, NOTE_G4, NOTE_E4,
+  NOTE_F4, 0
+};
+
+// We Wish You a Merry Christmas tempo
+static const float wish_tempo[] = {
+  // We wish you a merry Christmas
+  4,
+  4, 8, 8, 4, 4,
+  4, 4,
+  
+  // We wish you a merry Christmas
+  4,
+  4, 8, 8, 4, 4,
+  4, 4,
+  
+  // We wish you a merry Christmas
+  4,
+  4, 8, 8, 4, 4,
+  4, 4,
+  
+  // And a happy New Year
+  8, 8,
+  4, 4, 4,
+  2, 4
+};
 
 static const melody_t melody[NB_SONGS] = {
   //MISSION_IMPOSSIBLE
@@ -717,6 +762,12 @@ static const melody_t melody[NB_SONGS] = {
     .tempo = seven_nation_army_tempo,
     .length = sizeof(seven_nation_army_melody)/sizeof(uint16_t),
 
+  },
+  //WE_WISH_YOU
+  {
+    .notes = wish_melody,
+    .tempo = wish_tempo,
+    .length = sizeof(wish_melody)/sizeof(uint16_t),
   },
 };
 

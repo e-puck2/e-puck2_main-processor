@@ -15,6 +15,8 @@
 
 #define VL53L0X_ADDR 0x52
 
+extern bool tof_measuring;
+
 //////////////////// PROTOTYPES PUBLIC FUNCTIONS /////////////////////
 
 /**

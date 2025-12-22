@@ -11,6 +11,11 @@ extern "C" {
 #define FAST_UPDATE 0	// Proximity sensors updated at 100 Hz
 #define SLOW_UPDATE 1	// Proximity sensors updated at 20 Hz
 
+//extern unsigned int ambientTemp[100];
+//extern unsigned int reflectedTemp[100];
+//extern uint8_t measuringTof[100];
+//extern uint8_t proxNumSamples;
+
 /** Struct containing a proximity measurement message. */
 typedef struct {
     /** Ambient light level (LED is OFF). */

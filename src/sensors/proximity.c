@@ -4,6 +4,8 @@
 #include "hal.h"
 #include "proximity.h"
 #include <main.h>
+#include "VL53L0X/VL53L0X.h"
+#include "../leds.h"
 
 // The proximity sensors sampling is designed in order to sample two sensors at one time, the couples are chosen
 // in order to have as less interference as possible and divided as follow:
@@ -58,6 +60,11 @@ static uint8_t calibrationNumSamples = 0;
 static int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
 static proximity_msg_t prox_values;
 static thread_t *prox_thd_handle = NULL;
+//unsigned int ambientTemp[100];
+//unsigned int reflectedTemp[100];
+//uint8_t measuringTof[100] = {0};
+//uint8_t proxNumSamples = 0;
+uint8_t discardNum = 0; // This is the number of samples to discard due to ToF interference
 
 /***************************INTERNAL FUNCTIONS************************************/
 
@@ -179,23 +186,47 @@ static THD_FUNCTION(proximity_thd, arg)
 
     	chBSemWait(&adc2_ready);
 
-    	prox_values.ambient[0] = adc2_values[0];
+    	if(tof_measuring) // ToF measure was started, discard 5 samples from front prox sensors (prox0 and prox7) to avoid dirty values
+    	{
+    		discardNum++;
+    		if(discardNum == 5)
+    		{
+    			discardNum = 0;
+    			tof_measuring = false;
+    		}
+    	}
+    	else
+    	{
+    		prox_values.ambient[0] = adc2_values[0];
+    		prox_values.ambient[7] = adc2_values[13];
+    		prox_values.reflected[0] = adc2_values[2];
+    		prox_values.reflected[7] = adc2_values[15];
+    	}
     	prox_values.ambient[1] = adc2_values[4];
     	prox_values.ambient[2] = adc2_values[8];
     	prox_values.ambient[3] = adc2_values[12];
     	prox_values.ambient[4] = adc2_values[1];
     	prox_values.ambient[5] = adc2_values[5];
     	prox_values.ambient[6] = adc2_values[9];
-    	prox_values.ambient[7] = adc2_values[13];
 
-    	prox_values.reflected[0] = adc2_values[2];
     	prox_values.reflected[1] = adc2_values[6];
     	prox_values.reflected[2] = adc2_values[10];
     	prox_values.reflected[3] = adc2_values[14];
     	prox_values.reflected[4] = adc2_values[3];
     	prox_values.reflected[5] = adc2_values[7];
     	prox_values.reflected[6] = adc2_values[11];
-    	prox_values.reflected[7] = adc2_values[15];
+
+    	/*
+    	// Debugging code related to ToF interference on proximity sampling
+    	if(proxNumSamples < 100)
+    	{
+    		ambientTemp[proxNumSamples] = prox_values.ambient[1];
+    		reflectedTemp[proxNumSamples] = prox_values.reflected[1];
+    		measuringTof[proxNumSamples] = tof_measuring;
+    		tof_measuring = false;
+    		proxNumSamples++;
+    	}
+		*/
 
         for (int i = 0; i < PROXIMITY_NB_CHANNELS; i++) {
         	if(prox_values.reflected[i] > prox_values.ambient[i]) {

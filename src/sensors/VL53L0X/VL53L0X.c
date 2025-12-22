@@ -13,11 +13,14 @@
 #include "chprintf.h"
 #include "i2c_bus.h"
 #include "usbcfg.h"
+#include "../proximity.h"
+#include "../../leds.h"
 
 static uint16_t dist_mm = 0;
 static thread_t *distThd;
 static bool VL53L0X_configured = false;
-
+bool tof_measuring = false;
+//unsigned int i=0;
 //////////////////// PUBLIC FUNCTIONS /////////////////////////
 static THD_WORKING_AREA(waVL53L0XThd, 512);
 static THD_FUNCTION(VL53L0XThd, arg) {
@@ -36,7 +39,7 @@ static THD_FUNCTION(VL53L0XThd, arg) {
 		VL53L0X_configAccuracy(&device, VL53L0X_LONG_RANGE);
 	}
 	if(status == VL53L0X_ERROR_NONE){
-		VL53L0X_startMeasure(&device, VL53L0X_DEVICEMODE_CONTINUOUS_RANGING);
+		//VL53L0X_startMeasure(&device, VL53L0X_DEVICEMODE_CONTINUOUS_RANGING);
 	}
 	if(status == VL53L0X_ERROR_NONE){
 		VL53L0X_configured = true;
@@ -45,8 +48,23 @@ static THD_FUNCTION(VL53L0XThd, arg) {
     /* Reader thread loop.*/
     while (chThdShouldTerminateX() == false) {
     	if(VL53L0X_configured){
+    		tof_measuring = true;
+    		VL53L0X_PerformSingleMeasurement(&device);
     		VL53L0X_getLastMeasure(&device);
    			dist_mm = device.Data.LastRangeMeasure.RangeMilliMeter;
+   			/*
+   			// Debugging code related to ToF interference on proximity sampling
+   			if(proxNumSamples == 100)
+   			{
+				if (SDU1.config->usbp->state == USB_ACTIVE) { // Skip printing if port not opened.
+					for(i=0; i<proxNumSamples; i++)
+					{
+						chprintf((BaseSequentialStream *)&SDU1, "%d,%d,%d, %d\r\n", i, ambientTemp[i], reflectedTemp[i], measuringTof[i]);
+					}
+				}
+				proxNumSamples = 0;
+   			}
+   			*/
     	}
 		chThdSleepMilliseconds(100);
     }

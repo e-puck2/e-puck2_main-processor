@@ -25,7 +25,7 @@
 #include "spi_comm.h"
 
 #define TEST_WA_SIZE        THD_WORKING_AREA_SIZE(256)
-#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(2048)
+#define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(1024)
 
 /*
  * SDC related variables and definitions.
@@ -1312,6 +1312,7 @@ static THD_FUNCTION(shell_spawn_thd, p)
         if (!shelltp) {
             if (SDU1.config->usbp->state == USB_ACTIVE) {
                 shelltp = shellCreate(&shell_cfg, SHELL_WA_SIZE, NORMALPRIO);
+                chprintf((BaseSequentialStream *)&SDU1, "shell created");
             }
         } else {
             if (chThdTerminatedX(shelltp)) {

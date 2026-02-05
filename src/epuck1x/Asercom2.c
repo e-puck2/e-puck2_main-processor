@@ -17,8 +17,10 @@
 #include "sensors/ground.h"
 #include "sensors/imu.h"
 #include "sensors/proximity.h"
+#include "audio/microphone.h"
 #include "audio/play_melody.h"
 #include "audio/play_sound_file.h"
+#include "audio/audio_thread.h"
 #include "button.h"
 #include "leds.h"
 #include "sdio.h"
@@ -837,6 +839,47 @@ int run_asercom2(void) {
 						buffer[i++] = 0;
 						break;
 
+					case 0x13: // Play frequency
+
+                        if(gumstix_connected) { // Communicate with gumstix (i2c).
+
+                        } else if (use_bt) { // Communicate with ESP32 (uart) => BT.
+                        	chSequentialStreamRead(&SD3, (uint8_t*)rx_buff, 2);
+                        } else { // Communicate with the pc (usb).
+                        	if (SDU1.config->usbp->state == USB_ACTIVE) {
+                        		chSequentialStreamRead(&SDU1, (uint8_t*)rx_buff, 2);
+                        	}
+                        	//otherwise there is no wait state, this means the other threads can not be processed
+                        	chThdSleepMilliseconds(10);
+                        }
+
+                        // In case of errors, skip the packet.
+                        if(serial_get_last_errors() != 0) {
+                        	//sprintf(buffer, "skip packet\r\n");
+                        	//uart2_send_text(buffer);
+                        	serial_clear_last_errors();
+                        	break;
+                        }
+
+                        uint16_t freq = (unsigned char) rx_buff[0] + ((unsigned int) rx_buff[1] << 8);
+                        if(freq == 0)
+                        {
+                        	dac_stop();
+                        }
+                        else
+                        {
+							if(freq < 100)
+							{
+								freq = 100;
+							}
+							if(freq > 10000)
+							{
+								freq = 10000;
+							}
+							dac_play(freq);
+                        }
+						break;
+
                     case 'a': // Read acceleration sensors in a non filtered way, same as ASCII
                         if(gumstix_connected == 0) {
                             accx = e_get_acc_filtered(0, 1);
@@ -1075,16 +1118,9 @@ int run_asercom2(void) {
                         buffer[i++] = n >> 8;
                         break;
                     case 'U': // get micro buffer
-//                        ptr = (char *) e_mic_scan;
-//                    	if(gumstix_connected) { // Communicate with gumstix (i2c).
-//
-//                    	} else if (use_bt) { // Communicate with ESP32 (uart) => BT.
-//                            e_send_uart1_char(ptr, 600); //send sound buffer
-//                        } else { // Communicate with the pc (usb).
-//                            e_send_uart2_char(ptr, 600); //send sound buffer
-//                        }
-//                        n = e_last_mic_scan_id; //send last scan
-//                        buffer[i++] = n & 0xff;
+                    	ptr = (char *) mic_get_buffer_ptr();
+                    	memcpy(buffer, ptr, 1280); // 160 samples (16 bits) for all 4 microphones
+                    	i += 1280;
                         break;
                     case 'W':
                         if (gumstix_connected == 0) {

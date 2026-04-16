@@ -64,8 +64,10 @@ VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device);
 /**
  * @brief Init a thread which uses the distance sensor to
  * continuoulsy measure the distance.
+ * 
+ * @param mode mode to use for the sensor
  */
-void VL53L0X_start(void);
+void VL53L0X_start(VL53L0X_AccuracyMode mode);
 
 /**
 * @brief   Stop the distance measurement.

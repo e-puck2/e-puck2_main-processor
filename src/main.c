@@ -461,7 +461,7 @@ int main(void)
 	imu_start();
 	ir_remote_start();
 	spi_comm_start();
-	VL53L0X_start();
+	VL53L0X_start(VL53L0X_LONG_RANGE);
 	serial_start();
 	mic_start(NULL);
 	sdio_start();

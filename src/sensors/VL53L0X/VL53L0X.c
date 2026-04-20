@@ -17,6 +17,7 @@
 static uint16_t dist_mm = 0;
 static thread_t *distThd;
 static bool VL53L0X_configured = false;
+static VL53L0X_AccuracyMode sensor_mode = VL53L0X_LONG_RANGE;
 
 //////////////////// PUBLIC FUNCTIONS /////////////////////////
 static THD_WORKING_AREA(waVL53L0XThd, 512);
@@ -33,7 +34,7 @@ static THD_FUNCTION(VL53L0XThd, arg) {
 	status = VL53L0X_init(&device);
 
 	if(status == VL53L0X_ERROR_NONE){
-		VL53L0X_configAccuracy(&device, VL53L0X_LONG_RANGE);
+		VL53L0X_configAccuracy(&device, sensor_mode);
 	}
 	if(status == VL53L0X_ERROR_NONE){
 		VL53L0X_startMeasure(&device, VL53L0X_DEVICEMODE_CONTINUOUS_RANGING);
@@ -48,7 +49,14 @@ static THD_FUNCTION(VL53L0XThd, arg) {
     		VL53L0X_getLastMeasure(&device);
    			dist_mm = device.Data.LastRangeMeasure.RangeMilliMeter;
     	}
-		chThdSleepMilliseconds(100);
+
+		if (sensor_mode == VL53L0X_HIGH_ACCURACY){
+			// Timing budget is 200 ms
+			chThdSleepMilliseconds(250);
+		}
+		else {
+			chThdSleepMilliseconds(100);
+		}
     }
 }
 
@@ -219,13 +227,24 @@ VL53L0X_Error VL53L0X_stopMeasure(VL53L0X_Dev_t* device){
 	return VL53L0X_StopMeasurement(device);
 }
 
-void VL53L0X_start(void){
+ /**
+ * @brief   Starts the thread that manages the VL53L0X sensor and
+ * 			configures it with the specified accuracy mode.
+ * 
+ * @param mode  Accuracy mode for the sensor. See VL53L0X_AccuracyMode enum for details.
+ * 
+ */
+void VL53L0X_start(VL53L0X_AccuracyMode mode){
 
 	if(VL53L0X_configured) {
 		return;
 	}
 
 	i2c_start();
+	
+	if(mode == VL53L0X_DEFAULT_MODE || mode == VL53L0X_HIGH_ACCURACY || mode == VL53L0X_LONG_RANGE || mode == VL53L0X_HIGH_SPEED){
+		sensor_mode = mode;
+	}
 
 	distThd = chThdCreateStatic(waVL53L0XThd,
                      sizeof(waVL53L0XThd),

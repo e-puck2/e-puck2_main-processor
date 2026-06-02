@@ -3,6 +3,15 @@
 
 static uint8_t rgb_led[NUM_RGB_LED][NUM_COLOR_LED];
 
+/*! \brief turn on/off the red LEDs
+ *
+ * The e-puck2 has 4 red LEDs placed on front, right, back and left; these LEDs are directly controllable from the main processor (F407).
+ * There are also 4 RGB LEDs placed at 45, 135, 225, 315 degrees; these LEDs are connected to the ESP32 and can be controlled through SPI.
+ * With this function, you can change the state of the 4 red LEDs, not the RGB LEDs.
+ * \param led_number: LED1, LED3, LED5, LED7 (LED1 is the front led, then continue clockwise) or ALL_LEDS for all LEDs
+ * \param value 0 (off), 1 (on), any other value will toggle the state
+
+*/
 void set_led(led_name_t led_number, unsigned int value) {
 	switch(led_number) {
 		case LED1: 
@@ -33,8 +42,9 @@ void set_led(led_name_t led_number, unsigned int value) {
 				value?palClearPad(GPIOD, GPIOD_LED7):palSetPad(GPIOD, GPIOD_LED7);
 			}
 			break;
+		case ALL_LEDS:
 		default:
-			for(int i=0; i<4; i++) {
+			for(int i=0; i<NUM_LED; i++) {
 				set_led(i, value);
 			}
 	}
@@ -72,7 +82,7 @@ void set_body_led(unsigned int value)
  *
  * The e-puck has a red LED in the front. With this function, you can
  * change the state of this LED.
- * \param value 0 (off), 1 (on) otherwise change the state
+ * \param value 0 (off), 1 (on), any other value will toggle the state
  */
 void set_front_led(unsigned int value)
 {
@@ -82,10 +92,17 @@ void set_front_led(unsigned int value)
 		value?palSetPad(GPIOD, GPIOD_LED_FRONT):palClearPad(GPIOD, GPIOD_LED_FRONT);
 }
 
+/*! \brief Turn off all the LEDs around the robot
+ *
+ * The e-puck2 has 4 red LEDs and 4 RGB LEDs placed on top of it. This function turns them all off.
+ * \warning this function does not turn off the "body LED" and "front LED".
+ */
 void clear_leds(void)
 {
-	for(int i=0; i<4; i++) {
+	for(int i=0; i<NUM_LED; i++) {
 		set_led(i, 0);
+	}
+	for (int i=0; i<NUM_RGB_LED; i++) {
 		set_rgb_led(i, 0, 0, 0);
 	}
 }

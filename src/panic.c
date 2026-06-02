@@ -1,16 +1,14 @@
 #include <ch.h>
 #include <hal.h>
+#include "leds.h"
 
 void panic_handler(const char *reason)
 {
     (void)reason;
-
-	palClearPad(GPIOD, GPIOD_LED1);
-	palClearPad(GPIOD, GPIOD_LED3);
-	palClearPad(GPIOD, GPIOD_LED5);
-	palClearPad(GPIOD, GPIOD_LED7);
-	palClearPad(GPIOD, GPIOD_LED_FRONT);
-	palClearPad(GPIOB, GPIOB_LED_BODY);
+	clear_leds();
+	set_body_led(0);
+	set_front_led(0);
+	set_led(ALL_LEDS, 1);
 	
     while (true) {
 

@@ -41,14 +41,16 @@
 
 #define EXTSEL_TIM2_CH2 0x03
 
+typedef enum {
+	REINIT,
+	CALIBRATING
+} CalibrationState;
+
 static unsigned int adc2_values[PROXIMITY_NB_CHANNELS*2] = {0};
 static BSEMAPHORE_DECL(adc2_ready, true);
-static adcsample_t adc2_proximity_samples[PROXIMITY_NB_CHANNELS*2 * DMA_BUFFER_SIZE];
 static uint8_t pulseSeqState = 0;
-static uint8_t calibrationInProgress = 0;
-static uint8_t calibrationState = 0;
-static uint8_t calibrationNumSamples = 0;
-static int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
+static bool calibrationInProgress = false;
+static CalibrationState calibrationState = REINIT;
 static proximity_msg_t prox_values;
 
 /***************************INTERNAL FUNCTIONS************************************/
@@ -165,6 +167,10 @@ static THD_FUNCTION(proximity_thd, arg)
     messagebus_topic_init(&proximity_topic, &prox_topic_lock, &prox_topic_condvar, &prox_values, sizeof(prox_values));
     messagebus_advertise_topic(&bus, &proximity_topic, "/proximity");
 
+	static int32_t calibrationSum[PROXIMITY_NB_CHANNELS] = {0};
+	static uint8_t calibrationNumSamples = 0;
+
+
     while (true) {
 
     	chBSemWait(&adc2_ready);
@@ -198,14 +204,14 @@ static THD_FUNCTION(proximity_thd, arg)
 
         if(calibrationInProgress) {
         	switch(calibrationState) {
-				case 0:
+				case REINIT:
 					memset(prox_values.initValue, 0, PROXIMITY_NB_CHANNELS * sizeof(unsigned int));
 					memset(calibrationSum, 0, PROXIMITY_NB_CHANNELS * sizeof(int32_t));
 					calibrationNumSamples = 0;
-					calibrationState = 1;
+					calibrationState = CALIBRATING;
 					break;
 
-				case 1:
+				case CALIBRATING:
 					for(int i=0; i<PROXIMITY_NB_CHANNELS; i++) {
 						calibrationSum[i] += get_prox(i);
 					}
@@ -214,7 +220,7 @@ static THD_FUNCTION(proximity_thd, arg)
 						for(int i=0; i<PROXIMITY_NB_CHANNELS; i++) {
 							prox_values.initValue[i] = calibrationSum[i]/100;
 						}
-						calibrationInProgress = 0;
+						calibrationInProgress = false;
 					}
 					break;
         	}
@@ -224,7 +230,7 @@ static THD_FUNCTION(proximity_thd, arg)
 }
 
  /**
- * @brief   Calback called before each seuquence of ADC measurement to prepare the 
+ * @brief   Calback called before each sequence of ADC measurement to prepare the 
  * 			power pulse of the proximity sensors
  * 
  * @param pwmp		PWM pointer (not used)
@@ -314,6 +320,7 @@ void proximity_start(void)
     adcStart(&ADCD2, NULL);
     adcAcquireBus(&ADCD2);
     // ADC waiting for the trigger from the timer.
+	static adcsample_t adc2_proximity_samples[PROXIMITY_NB_CHANNELS*2 * DMA_BUFFER_SIZE];
     adcStartConversion(&ADCD2, &adcgrpcfg2, adc2_proximity_samples, DMA_BUFFER_SIZE); 
 
     /* Init PWM */
@@ -329,8 +336,8 @@ void proximity_start(void)
 }
 
 void calibrate_ir(void) {
-	calibrationState = 0;
-	calibrationInProgress = 1;
+	calibrationState = REINIT;
+	calibrationInProgress = true;
 	while(calibrationInProgress) {
 		chThdSleepMilliseconds(20);
 	}

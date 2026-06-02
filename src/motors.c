@@ -35,8 +35,8 @@ struct stepper_motor_s {
     PWMDriver *timer;
 };
 
-struct stepper_motor_s right_motor;
-struct stepper_motor_s left_motor;
+static struct stepper_motor_s right_motor;
+static struct stepper_motor_s left_motor;
 
 /***************************INTERNAL FUNCTIONS************************************/
 

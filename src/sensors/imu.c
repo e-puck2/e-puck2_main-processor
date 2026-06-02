@@ -7,19 +7,24 @@
 #include "imu.h"
 #include "exti.h"
 
+typedef enum {
+	REINIT,
+	CALIBRATING
+} FilteringState;
+
 static imu_msg_t imu_values;
 
-static uint8_t accAxisFilteringInProgress = 0;
-static uint8_t accAxisFilteringState = 0;
+static bool accAxisFilteringInProgress = false;
+static FilteringState accAxisFilteringState = REINIT;
 static uint8_t accAxisSelected = 0;
 static uint8_t accFilterSize = 0;
-static uint8_t accCalibrationInProgress = 0;
+static bool accCalibrationInProgress = false;
 
-static uint8_t gyroAxisFilteringInProgress = 0;
-static uint8_t gyroAxisFilteringState = 0;
+static bool gyroAxisFilteringInProgress = false;
+static FilteringState gyroAxisFilteringState = REINIT;
 static uint8_t gyroAxisSelected = 0;
 static uint8_t gyroFilterSize = 0;
-static uint8_t gyroCalibrationInProgress = 0;
+static bool gyroCalibrationInProgress = false;
 
 static thread_t *imuThd;
 static bool imu_configured = false;
@@ -75,22 +80,22 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
          if(accAxisFilteringInProgress) {
          	switch(accAxisFilteringState) {
- 				case 0:
+ 				case REINIT:
  					imu_values.acc_offset[accAxisSelected] = 0;
  					accCalibrationSum = 0;
  					accCalibrationNumSamples = 0;
- 					accAxisFilteringState = 1;
+ 					accAxisFilteringState = CALIBRATING;
  					break;
 
- 				case 1:
+ 				case CALIBRATING:
  					accCalibrationSum += imu_values.acc_raw[accAxisSelected];
  					accCalibrationNumSamples++;
  					if(accCalibrationNumSamples == accFilterSize) {
  						imu_values.acc_filtered[accAxisSelected] = accCalibrationSum/accFilterSize;
- 						accAxisFilteringInProgress = 0;
- 						if(accCalibrationInProgress == 1) {
+ 						accAxisFilteringInProgress = false;
+ 						if(accCalibrationInProgress == true) {
  							imu_values.acc_offset[accAxisSelected] = imu_values.acc_filtered[accAxisSelected];
- 							accCalibrationInProgress = 0;
+ 							accCalibrationInProgress = false;
  						}
  					}
  					break;
@@ -99,22 +104,22 @@ static THD_FUNCTION(imu_reader_thd, arg) {
 
          if(gyroAxisFilteringInProgress) {
          	switch(gyroAxisFilteringState) {
- 				case 0:
+ 				case REINIT:
  					imu_values.gyro_offset[gyroAxisSelected] = 0;
  					gyroCalibrationSum = 0;
  					gyroCalibrationNumSamples = 0;
- 					gyroAxisFilteringState = 1;
+ 					gyroAxisFilteringState = CALIBRATING;
  					break;
 
- 				case 1:
+ 				case CALIBRATING:
  					gyroCalibrationSum += imu_values.gyro_raw[gyroAxisSelected];
  					gyroCalibrationNumSamples++;
  					if(gyroCalibrationNumSamples == gyroFilterSize) {
  						imu_values.gyro_filtered[gyroAxisSelected] = gyroCalibrationSum/gyroFilterSize;
- 						gyroAxisFilteringInProgress = 0;
- 						if(gyroCalibrationInProgress == 1) {
+ 						gyroAxisFilteringInProgress = false;
+ 						if(gyroCalibrationInProgress == true) {
  							imu_values.gyro_offset[gyroAxisSelected] = imu_values.gyro_filtered[gyroAxisSelected];
- 							gyroCalibrationInProgress = 0;
+ 							gyroCalibrationInProgress = false;
  						}
  					}
  					break;
@@ -184,8 +189,8 @@ void get_acc_all(int16_t *values) {
 int16_t get_acc_filtered(uint8_t axis, uint8_t filter_size) {
 	if(axis < 3) {
 		if(imu_configured == true){
-			accAxisFilteringState = 0;
-			accAxisFilteringInProgress = 1;
+			accAxisFilteringState = REINIT;
+			accAxisFilteringInProgress = true;
 			accAxisSelected = axis;
 			accFilterSize = filter_size;
 			while(accAxisFilteringInProgress) {
@@ -200,13 +205,13 @@ int16_t get_acc_filtered(uint8_t axis, uint8_t filter_size) {
 // Saves an average of the last 50 samples for each axis, these values are the calibration/offset values.
 void calibrate_acc(void) {
 	if(imu_configured == true){
-		accCalibrationInProgress = 1;
+		accCalibrationInProgress = true;
 		get_acc_filtered(0, 50);
-		accCalibrationInProgress = 1;
+		accCalibrationInProgress = true;
 		get_acc_filtered(1, 50);
-		accCalibrationInProgress = 1;
+		accCalibrationInProgress = true;
 		get_acc_filtered(2, 50);
-		accCalibrationInProgress = 0;
+		accCalibrationInProgress = false;
 	}
 }
 
@@ -241,8 +246,8 @@ void get_gyro_all(int16_t *values) {
 int16_t get_gyro_filtered(uint8_t axis, uint8_t filter_size) {
 	if(axis < 3) {
 		if(imu_configured == true){
-			gyroAxisFilteringState = 0;
-			gyroAxisFilteringInProgress = 1;
+			gyroAxisFilteringState = REINIT;
+			gyroAxisFilteringInProgress = true;
 			gyroAxisSelected = axis;
 			gyroFilterSize = filter_size;
 			while(gyroAxisFilteringInProgress) {
@@ -264,13 +269,13 @@ int16_t get_gyro_offset(uint8_t axis) {
 // Saves an average of the last 50 samples for each axis, these values are the calibration/offset values.
 void calibrate_gyro(void) {
 	if(imu_configured == true){
-		gyroCalibrationInProgress = 1;
+		gyroCalibrationInProgress = true;
 		get_gyro_filtered(0, 50);
-		gyroCalibrationInProgress = 1;
+		gyroCalibrationInProgress = true;
 		get_gyro_filtered(1, 50);
-		gyroCalibrationInProgress = 1;
+		gyroCalibrationInProgress = true;
 		get_gyro_filtered(2, 50);
-		gyroCalibrationInProgress = 0;
+		gyroCalibrationInProgress = false;
 	}
 	
 }

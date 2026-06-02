@@ -58,8 +58,6 @@
 
 static mutex_t send_lock;
 
-messagebus_t messagebus;
-
 /*
  * a simple wrapper to the system write function
 */

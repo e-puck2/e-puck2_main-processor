@@ -11,9 +11,6 @@
 //uint8_t spiTxBuff[SPI_COMMAND_SIZE];
 //uint8_t spiHeader[SPI_DATA_HEADER_SIZE];
 
-uint8_t spi_rx_buff[SPI_PACKET_MAX_SIZE];
-uint8_t spi_tx_buff[SPI_PACKET_MAX_SIZE];
-
 event_source_t ss_event;
 
 /*
@@ -23,6 +20,9 @@ static THD_WORKING_AREA(spi_thread_wa, 1024);
 static THD_FUNCTION(spi_thread, p) {
 	(void)p;
 	chRegSetThreadName("SPI thread");
+
+	static uint8_t spi_rx_buff[SPI_PACKET_MAX_SIZE];
+	static uint8_t spi_tx_buff[SPI_PACKET_MAX_SIZE];
 
 //	uint32_t i = 0;
 //	//uint16_t transCount = 0; // image size / SPI_BUFF_LEN

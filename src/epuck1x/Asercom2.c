@@ -658,8 +658,12 @@ int run_asercom2(void) {
                         	break;
                         }
 
+                        // Only the MPU-9250 needs the setup: the ICM-20948 magnetometer is always enabled. Both IMUs
+                        // answer at the I2C address 0x68, so the MPU-9250 setup would write the ICM-20948 registers.
                         if(rx_buff[0] == 1) {
-                        	mpu9250_magnetometer_setup();
+                        	if(get_imu_model() == IMU_MPU9250) {
+                        		mpu9250_magnetometer_setup();
+                        	}
                         } else {
                         	// Magnetometer stop not yet implemented.
                         }

@@ -788,7 +788,9 @@ static THD_FUNCTION(selector_thd, arg)
 			case 14: // Read magnetometer sensors values and compute heading.
 				switch(magneto_state) {
 					case 0: // Setup and calibrate the magnetometer.
-						mpu9250_magnetometer_setup();
+						if(get_imu_model() == IMU_MPU9250) { // The ICM-20948 magnetometer is always enabled.
+							mpu9250_magnetometer_setup();
+						}
 						//set_body_led(1);
 						//calibrate_magnetometer();
 						//set_body_led(0);
@@ -853,7 +855,9 @@ static THD_FUNCTION(selector_thd, arg)
 
 						spi_image_transfer_enable();
 
-						mpu9250_magnetometer_setup();
+						if(get_imu_model() == IMU_MPU9250) { // The ICM-20948 magnetometer is always enabled.
+							mpu9250_magnetometer_setup();
+						}
 
 						// Flush the uart input to avoid interpreting garbage as real commands.
 						while(chnReadTimeout(&SD3, (uint8_t*)&temp_rx, 1, MS2ST(1)>0)) {
